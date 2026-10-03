@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Activity, TrendingUp, Waves, Info, Lock, BookOpen, LineChart as ChartIcon, Cpu, BrainCircuit, Sparkles, Sun, Moon, ZoomIn, ZoomOut } from 'lucide-react';
 import './index.css';
+import Topic2 from './Topic2';
 
 export default function App() {
+  const [activeTopic, setActiveTopic] = useState(1);
   const [data, setData] = useState(null);
   const [activeModel, setActiveModel] = useState('ses');
   
@@ -190,12 +192,12 @@ export default function App() {
         </div>
         
         <nav className="nav-menu" style={{ overflowY: 'auto', paddingRight: '0.5rem', maxHeight: 'calc(100vh - 120px)' }}>
-          <div className="nav-item active">
+          <div className={`nav-item ${activeTopic === 1 ? 'active' : ''}`} onClick={() => setActiveTopic(1)} style={{cursor: 'pointer'}}>
             <BookOpen size={18} />
             <span>1. Basic Forecast</span>
           </div>
-          <div className="nav-item locked">
-            <Lock size={16} />
+          <div className={`nav-item ${activeTopic === 2 ? 'active' : ''}`} onClick={() => setActiveTopic(2)} style={{cursor: 'pointer'}}>
+            <Sparkles size={16} />
             <span>2. ARIMA & Selection</span>
           </div>
           <div className="nav-item locked">
@@ -241,8 +243,8 @@ export default function App() {
       <main className="app-container">
         <header>
           <div>
-            <h1>Topic 1: Exponential Smoothing</h1>
-            <div className="subtitle">Understanding Level, Trend, and Seasonality</div>
+            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : 'Topic 2: ARIMA and Model Selection'}</h1>
+            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : 'Autoregressive, Moving Average, and Exogenous variables'}</div>
           </div>
           <button 
             className="theme-toggle" 
@@ -253,7 +255,9 @@ export default function App() {
           </button>
         </header>
 
-        <div className="dashboard">
+        <div style={{ marginTop: '1rem' }}>
+          {activeTopic === 1 ? (
+            <div className="dashboard">
           {/* Left Column: Chart */}
           <div className="glass chart-container">
             <div className="chart-header">
@@ -404,6 +408,10 @@ export default function App() {
               <p>{modelData.dataset_description}</p>
             </div>
           </div>
+        </div>
+        ) : (
+          <Topic2 />
+        )}
         </div>
       </main>
     </div>
