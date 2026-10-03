@@ -3,23 +3,54 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0d1117;
-  
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
+  /* Dark Theme Variables (Default) */
+  --bg-color: #0d1117;
+  --bg-gradient-start: #1e1b4b;
+  --bg-gradient-end: #0d1117;
+  --text-main: rgba(255, 255, 255, 0.9);
+  --text-muted: #94a3b8;
   --surface: rgba(30, 41, 59, 0.7);
   --border: rgba(255, 255, 255, 0.1);
-  --text-muted: #94a3b8;
+  --primary: #3b82f6;
+  --primary-bg: rgba(59, 130, 246, 0.15);
+  --brand-gradient: linear-gradient(to right, #60a5fa, #a78bfa);
+  --commentary-bg: rgba(59, 130, 246, 0.1);
+  --shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  --nav-hover: rgba(255,255,255,0.05);
+  --chart-grid: rgba(255, 255, 255, 0.1);
+  --chart-tooltip-bg: #1e293b;
+  --chart-tooltip-text: #fff;
+}
+
+.light {
+  /* Light Theme Variables */
+  --bg-color: #f8fafc;
+  --bg-gradient-start: #f0fdf4;
+  --bg-gradient-end: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --surface: rgba(255, 255, 255, 0.8);
+  --border: rgba(0, 0, 0, 0.1);
+  --primary: #2563eb;
+  --primary-bg: rgba(37, 99, 235, 0.1);
+  --brand-gradient: linear-gradient(to right, #2563eb, #7c3aed);
+  --commentary-bg: rgba(241, 245, 249, 0.8);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --nav-hover: rgba(0,0,0,0.05);
+  --chart-grid: rgba(0, 0, 0, 0.05);
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-text: #0f172a;
 }
 
 body {
   margin: 0;
   display: flex;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, #1e1b4b, #0d1117);
+  background: radial-gradient(circle at top right, var(--bg-gradient-start), var(--bg-gradient-end));
+  background-color: var(--bg-color);
+  color: var(--text-main);
   overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -42,7 +73,8 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
 }
 
 /* Sidebar */
@@ -59,7 +91,7 @@ body {
 .brand {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  background: var(--brand-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 2rem;
@@ -72,6 +104,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  max-height: calc(100vh - 120px);
 }
 
 .nav-item {
@@ -88,14 +123,14 @@ body {
 }
 
 .nav-item:hover {
-  background: rgba(255,255,255,0.05);
-  color: white;
+  background: var(--nav-hover);
+  color: var(--text-main);
 }
 
 .nav-item.active {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border-color: rgba(59, 130, 246, 0.3);
+  background: var(--primary-bg);
+  color: var(--primary);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .nav-item.locked {
@@ -113,17 +148,37 @@ body {
 
 header {
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 h1 {
   font-size: 2.5rem;
   margin: 0 0 0.5rem 0;
-  color: white;
+  color: var(--text-main);
 }
 
 .subtitle {
   color: var(--text-muted);
   font-size: 1.1rem;
+}
+
+.theme-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.theme-toggle:hover {
+  background: var(--primary-bg);
 }
 
 .dashboard {
@@ -134,7 +189,7 @@ h1 {
 
 .chart-container {
   padding: 1.5rem;
-  min-height: 500px;
+  min-height: 550px;
   display: flex;
   flex-direction: column;
 }
@@ -149,7 +204,7 @@ h1 {
 .tabs {
   display: flex;
   gap: 0.5rem;
-  background: rgba(0,0,0,0.2);
+  background: var(--nav-hover);
   padding: 0.25rem;
   border-radius: 8px;
 }
@@ -174,23 +229,23 @@ h1 {
   padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
 .control-group h3 {
   margin-top: 0;
   font-size: 1.2rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .slider-container {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .slider-container label {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   color: var(--text-muted);
 }
 
@@ -202,14 +257,14 @@ input[type=range] {
 .commentary-box {
   margin-top: auto;
   padding: 1.5rem;
-  background: rgba(59, 130, 246, 0.1);
+  background: var(--commentary-bg);
   border-left: 4px solid var(--primary);
   border-radius: 4px 8px 8px 4px;
 }
 
 .commentary-box h4 {
   margin: 0 0 0.5rem 0;
-  color: #60a5fa;
+  color: var(--primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -217,18 +272,29 @@ input[type=range] {
 
 .commentary-box p {
   margin: 0;
-  color: rgba(255,255,255,0.9);
+  color: var(--text-main);
   line-height: 1.6;
+  font-size: 0.95rem;
 }
 
 /* Recharts customization */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: var(--border);
+  stroke: var(--chart-grid);
 }
 
 .recharts-text {
   fill: var(--text-muted) !important;
+}
+
+.recharts-default-tooltip {
+  background-color: var(--chart-tooltip-bg) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--chart-tooltip-text) !important;
+  border-radius: 8px;
+}
+.recharts-tooltip-item {
+  color: var(--chart-tooltip-text) !important;
 }
 
 @media (max-width: 1100px) {

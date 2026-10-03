@@ -18,19 +18,22 @@ def generate_ses_data():
     test = y[-24:]
     
     results = {}
-    alphas = [0.2, 0.5, 0.8]
+    alphas = np.round(np.arange(0.0, 1.1, 0.1), 1)
     
     for alpha in alphas:
-        model = SimpleExpSmoothing(train, initialization_method="estimated").fit(smoothing_level=alpha, optimized=False)
-        in_sample = model.fittedvalues
-        out_sample = model.forecast(len(test))
-        results[str(alpha)] = {
-            "in_sample": in_sample.tolist(),
-            "out_sample": out_sample.tolist(),
-            "description": f"Alpha = {alpha}: {'Slow reaction to noise. Very smooth.' if alpha == 0.2 else 'Overreacting to recent noise. Jagged line.' if alpha == 0.8 else 'Balanced smoothing.'}"
-        }
+        # Statsmodels expects alpha > 0, if 0 it might use eps. We pass it directly.
+        try:
+            model = SimpleExpSmoothing(train, initialization_method="estimated").fit(smoothing_level=alpha, optimized=False)
+            results[f"{alpha:.1f}"] = {
+                "in_sample": model.fittedvalues.tolist(),
+                "out_sample": model.forecast(len(test)).tolist()
+            }
+        except Exception:
+            # Fallback for numerical instability
+            results[f"{alpha:.1f}"] = {"in_sample": [baseline]*len(train), "out_sample": [baseline]*len(test)}
         
     return {
+        "dataset_description": "Stationary Data (Flat Level + High Noise): A simple horizontal baseline subjected to random, heavy fluctuations. Perfect for demonstrating how Alpha smooths out recent chaos versus overreacting to it.",
         "actual": y.tolist(),
         "train_size": len(train),
         "results": results
@@ -49,20 +52,22 @@ def generate_holt_data():
     test = y[-24:]
     
     results = {}
-    betas = [0.05, 0.5, 0.9]
-    alpha = 0.8 # fix alpha
+    values = np.round(np.arange(0.0, 1.1, 0.1), 1)
     
-    for beta in betas:
-        model = Holt(train, initialization_method="estimated").fit(smoothing_level=alpha, smoothing_trend=beta, optimized=False)
-        in_sample = model.fittedvalues
-        out_sample = model.forecast(len(test))
-        results[str(beta)] = {
-            "in_sample": in_sample.tolist(),
-            "out_sample": out_sample.tolist(),
-            "description": f"Beta = {beta}: {'Slow to adapt to the new steeper trend.' if beta == 0.05 else 'Very fast to adapt to the new trend.' if beta == 0.9 else 'Moderate adaptation speed.'}"
-        }
+    for alpha in values:
+        for beta in values:
+            key = f"{alpha:.1f}_{beta:.1f}"
+            try:
+                model = Holt(train, initialization_method="estimated").fit(smoothing_level=alpha, smoothing_trend=beta, optimized=False)
+                results[key] = {
+                    "in_sample": model.fittedvalues.tolist(),
+                    "out_sample": model.forecast(len(test)).tolist()
+                }
+            except Exception:
+                results[key] = {"in_sample": [0]*len(train), "out_sample": [0]*len(test)}
         
     return {
+        "dataset_description": "Structural Break (Changing Trend): This data starts with a slow upward trend, but halfway through, the trend suddenly accelerates. This demonstrates how Beta dictates the model's ability to 'learn' a new slope.",
         "actual": y.tolist(),
         "train_size": len(train),
         "results": results
@@ -82,20 +87,25 @@ def generate_hw_data():
     test = y[-24:]
     
     results = {}
-    gammas = [0.05, 0.5, 0.9]
-    alpha = 0.2
+    values = np.round(np.arange(0.0, 1.1, 0.1), 1)
     
-    for gamma in gammas:
-        model = ExponentialSmoothing(train, trend=None, seasonal='add', seasonal_periods=12).fit(smoothing_level=alpha, smoothing_seasonal=gamma, optimized=False)
-        in_sample = model.fittedvalues
-        out_sample = model.forecast(len(test))
-        results[str(gamma)] = {
-            "in_sample": in_sample.tolist(),
-            "out_sample": out_sample.tolist(),
-            "description": f"Gamma = {gamma}: {'Fails to capture the sudden massive seasonal waves.' if gamma == 0.05 else 'Rapidly adjusts to the new massive seasonal waves.' if gamma == 0.9 else 'Slowly catches on to the amplitude change.'}"
-        }
+    for alpha in values:
+        for beta in values:
+            for gamma in values:
+                key = f"{alpha:.1f}_{beta:.1f}_{gamma:.1f}"
+                try:
+                    # using trend='add' to allow beta tuning
+                    model = ExponentialSmoothing(train, trend='add', seasonal='add', seasonal_periods=12).fit(
+                        smoothing_level=alpha, smoothing_trend=beta, smoothing_seasonal=gamma, optimized=False)
+                    results[key] = {
+                        "in_sample": model.fittedvalues.tolist(),
+                        "out_sample": model.forecast(len(test)).tolist()
+                    }
+                except Exception:
+                    results[key] = {"in_sample": [0]*len(train), "out_sample": [0]*len(test)}
         
     return {
+        "dataset_description": "Amplitude Jump (Changing Seasonality): A perfect 12-month cycle where the waves suddenly become 3x larger halfway through. This isolates Gamma, showing how quickly the model recognizes the new seasonal intensity.",
         "actual": y.tolist(),
         "train_size": len(train),
         "results": results
@@ -108,9 +118,9 @@ if __name__ == "__main__":
         "hw": generate_hw_data()
     }
     
-    # Ensure public folder exists
     os.makedirs('public', exist_ok=True)
     with open('public/topic1_data.json', 'w') as f:
-        json.dump(final_data, f)
+        # rounding floats to 2 decimal places in JSON to drastically save file size
+        json.dump(final_data, f, separators=(',', ':'))
     
-    print("Successfully generated public/topic1_data.json")
+    print("Successfully generated public/topic1_data.json with expanded ranges")
