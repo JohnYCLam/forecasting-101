@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Activity, TrendingUp, Waves, Info, Lock, BookOpen, LineChart as ChartIcon, Cpu, BrainCircuit, Sparkles, Sun, Moon, ZoomIn, ZoomOut } from 'lucide-react';
+import { Activity, TrendingUp, Waves, Info, Lock, BookOpen, LineChart as ChartIcon, Cpu, BrainCircuit, Sparkles, Sun, Moon, ZoomIn, ZoomOut, Menu, X } from 'lucide-react';
 import './index.css';
 import Topic2 from './Topic2';
 
@@ -16,7 +16,11 @@ export default function App() {
   const [gamma, setGamma] = useState(0.5);
   
   // Theme state
+  // Theme state
   const [theme, setTheme] = useState('light');
+  
+  // Mobile Menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Zoom and Pan states
   const maxTime = 119;
@@ -228,40 +232,57 @@ export default function App() {
 
   return (
     <div className="main-layout" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+      
+      {/* Mobile Menu Button */}
+      <div className="mobile-header">
+        <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="brand" style={{ margin: 0, paddingLeft: '10px' }}>
+          <ChartIcon size={20} color="#60a5fa" />
+          <span>Forecasting 101</span>
+        </div>
+      </div>
+
+      {/* Overlay for mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
+
       {/* Sidebar Navigation */}
-      <aside className="glass sidebar">
-        <div className="brand">
+      <aside className={`glass sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="brand desktop-only">
           <ChartIcon size={24} color="#60a5fa" />
           <span>Forecasting 101</span>
         </div>
         
         <nav className="nav-menu" style={{ overflowY: 'auto', paddingRight: '0.5rem', maxHeight: 'calc(100vh - 120px)' }}>
-          <div className={`nav-item ${activeTopic === 1 ? 'active' : ''}`} onClick={() => setActiveTopic(1)} style={{cursor: 'pointer'}}>
+          <div className={`nav-item ${activeTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveTopic(1); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer'}}>
             <BookOpen size={18} />
             <span>1. Basic Forecast</span>
           </div>
-          <div className={`nav-item ${activeTopic === 2 ? 'active' : ''}`} onClick={() => setActiveTopic(2)} style={{cursor: 'pointer'}}>
+          <div className={`nav-item ${activeTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveTopic(2); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer'}}>
             <Sparkles size={16} />
             <span>2. ARIMA & Selection</span>
           </div>
           {activeTopic === 2 && (
             <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => setActiveSubTopic(1)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.1 ARMA(p, q) Basics</span>
               </div>
-              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => setActiveSubTopic(2)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.2 ARIMA vs HW Behaviours</span>
               </div>
-              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => setActiveSubTopic(3)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.3 Real World Data</span>
               </div>
-              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => setActiveSubTopic(4)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.4 Auto ARIMA</span>
               </div>
-              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => setActiveSubTopic(5)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.5 SARIMA vs HW</span>
               </div>
-              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => setActiveSubTopic(6)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.6 SARIMAX</span>
               </div>
             </div>
@@ -326,7 +347,7 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               {/* Top Panels */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="top-panels">
                 {/* Left: Commentary */}
                 <div className="glass controls-panel">
                   <div className="commentary-box" style={{ height: '100%' }}>
@@ -434,7 +455,7 @@ export default function App() {
                 
                 <div 
                   ref={chartRef}
-                  style={{ flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab' }}
+                  style={{ flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
                   onWheel={handleWheel}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}

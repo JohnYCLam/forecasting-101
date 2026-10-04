@@ -187,6 +187,13 @@ h1 {
   gap: 2rem;
 }
 
+.top-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .chart-container {
   padding: 1.5rem;
   min-height: 550px;
@@ -297,9 +304,13 @@ input[type=range] {
   color: var(--chart-tooltip-text) !important;
 }
 
+.mobile-header, .mobile-menu-overlay {
+  display: none;
+}
+
 @media (max-width: 1100px) {
   .dashboard {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -309,19 +320,56 @@ input[type=range] {
     flex-direction: column;
   }
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    background: var(--surface);
+    transition: left 0.3s ease;
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar.mobile-open {
+    left: 0;
+  }
+  .mobile-header {
+    display: flex;
+    align-items: center;
     padding: 1rem;
-    border-right: none;
+    background: var(--surface);
     border-bottom: 1px solid var(--border);
   }
-  .brand {
-    margin-bottom: 1rem;
-    font-size: 1.25rem;
+  .mobile-menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
   }
   .nav-menu {
-    flex-direction: row;
-    overflow-x: auto;
+    flex-direction: column;
+    overflow-y: auto;
     max-height: none;
-    padding-bottom: 0.5rem;
+    padding-bottom: 2rem;
+  }
+  .desktop-only {
+    display: none;
   }
   .nav-item {
     white-space: nowrap;

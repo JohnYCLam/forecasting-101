@@ -152,7 +152,7 @@ function ChartWithZoom({ chartData, lines, trainSize, timeLabels, yDomain = ['au
       </div>
       <div 
         ref={chartRef}
-        style={{ width: '100%', flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab' }}
+        style={{ width: '100%', flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -193,7 +193,7 @@ function ChartWithZoom({ chartData, lines, trainSize, timeLabels, yDomain = ['au
 const Layout = ({ commentary, dataset, controls, chart }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
     {/* Top Panels */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }} className="top-panels">
+    <div className="top-panels">
       <div className="glass controls-panel">
         <div className="commentary-box" style={{ height: '100%' }}>
           <h4><BrainCircuit size={18} /> Model Behaviour</h4>
