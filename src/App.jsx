@@ -6,6 +6,7 @@ import Topic2 from './Topic2';
 
 export default function App() {
   const [activeTopic, setActiveTopic] = useState(1);
+  const [activeSubTopic, setActiveSubTopic] = useState(1);
   const [data, setData] = useState(null);
   const [activeModel, setActiveModel] = useState('ses');
   
@@ -26,6 +27,7 @@ export default function App() {
   const chartRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [lastClientX, setLastClientX] = useState(0);
+  const [initialPinchDist, setInitialPinchDist] = useState(null);
 
   useEffect(() => {
     // Apply theme class to body
@@ -180,6 +182,48 @@ export default function App() {
     setIsDragging(false);
     document.body.style.cursor = 'default';
   };
+
+  // ---- Touch Zoom & Pan (Mobile) ----
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      setInitialPinchDist(dist);
+    } else if (e.touches.length === 1) {
+      setIsDragging(true);
+      setLastClientX(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && initialPinchDist) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      const delta = dist - initialPinchDist;
+      if (Math.abs(delta) > 10) {
+        if (delta > 0) handleZoomIn(hoveredTime); else handleZoomOut(hoveredTime);
+        setInitialPinchDist(dist);
+      }
+    } else if (e.touches.length === 1 && isDragging && chartRef.current) {
+      const deltaX = e.touches[0].clientX - lastClientX;
+      const width = chartRef.current.getBoundingClientRect().width;
+      const range = zoomDomain[1] - zoomDomain[0];
+      const pixelsPerUnit = width / range;
+      const domainShift = -(deltaX / pixelsPerUnit);
+      setZoomDomain(prev => {
+        let newLeft = prev[0] + domainShift;
+        let newRight = prev[1] + domainShift;
+        if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
+        if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
+        return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
+      });
+      setLastClientX(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setInitialPinchDist(null);
+  };
   // -----------------------------------
 
   return (
@@ -200,41 +244,63 @@ export default function App() {
             <Sparkles size={16} />
             <span>2. ARIMA & Selection</span>
           </div>
+          {activeTopic === 2 && (
+            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => setActiveSubTopic(1)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>2.1 ARMA(p, q) Basics</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => setActiveSubTopic(2)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>2.2 ARIMA vs HW Behaviours</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => setActiveSubTopic(3)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>2.3 Real World Data</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => setActiveSubTopic(4)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>2.4 Auto ARIMA</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => setActiveSubTopic(5)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>2.5 SARIMA vs HW</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => setActiveSubTopic(6)} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>2.6 SARIMAX</span>
+              </div>
+            </div>
+          )}
           <div className="nav-item locked">
             <Lock size={16} />
             <span>3. Metrics & Validation</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>4. VARIMA</span>
+            <span>4. Volatility: GARCH</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>5. Traditional ML</span>
+            <span>5. VARIMA</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>6. Facebook Prophet</span>
+            <span>6. Traditional ML</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>7. Traditional DL</span>
+            <span>7. Facebook Prophet</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>8. Modern DL</span>
+            <span>8. Traditional DL</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>9. RAG Demo</span>
+            <span>9. Modern DL</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>10. Foundation Models</span>
+            <span>10. RAG Demo</span>
           </div>
           <div className="nav-item locked">
             <Lock size={16} />
-            <span>11. Volatility: GARCH</span>
+            <span>11. Foundation Models</span>
           </div>
         </nav>
       </aside>
@@ -257,160 +323,169 @@ export default function App() {
 
         <div style={{ marginTop: '1rem' }}>
           {activeTopic === 1 ? (
-            <div className="dashboard">
-          {/* Left Column: Chart */}
-          <div className="glass chart-container">
-            <div className="chart-header">
-              <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                Forecast Visualization
-                {/* Zoom Controls */}
-                <div style={{ display: 'flex', gap: '0.25rem', opacity: 0.7 }}>
-                  <button onClick={() => handleZoomOut()} title="Zoom Out" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-                    <ZoomOut size={18} />
-                  </button>
-                  <button onClick={() => handleZoomIn()} title="Zoom In" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-                    <ZoomIn size={18} />
-                  </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Top Panels */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                {/* Left: Commentary */}
+                <div className="glass controls-panel">
+                  <div className="commentary-box" style={{ height: '100%' }}>
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {config.icon}
+                      {config.name}
+                    </h4>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                      {config.description}
+                    </p>
+                  </div>
                 </div>
-              </h2>
-              <div className="tabs">
-                <button 
-                  className={`tab ${activeModel === 'ses' ? 'active' : ''}`}
-                  onClick={() => { setActiveModel('ses'); setAlpha(0.2); setZoomDomain([0, maxTime]); }}
-                >
-                  SES
-                </button>
-                <button 
-                  className={`tab ${activeModel === 'holt' ? 'active' : ''}`}
-                  onClick={() => { setActiveModel('holt'); setAlpha(0.8); setBeta(0.5); setZoomDomain([0, maxTime]); }}
-                >
-                  Holt's Linear
-                </button>
-                <button 
-                  className={`tab ${activeModel === 'hw' ? 'active' : ''}`}
-                  onClick={() => { setActiveModel('hw'); setAlpha(0.2); setBeta(0.5); setGamma(0.5); setZoomDomain([0, maxTime]); }}
-                >
-                  Holt-Winters
-                </button>
-              </div>
-            </div>
-            
-            <div 
-              ref={chartRef}
-              style={{ flex: 1, minHeight: '400px', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab' }}
-              onWheel={handleWheel}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-            >
-              <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                <LineChart 
-                  data={chartData} 
-                  margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                  style={{ pointerEvents: 'auto' }}
-                  onMouseMove={(e) => {
-                    // Track which data point the mouse is hovering over for mouse-centered zooming
-                    if (e && e.activeLabel !== undefined && !isDragging) {
-                      setHoveredTime(e.activeLabel);
-                    }
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="time" 
-                    type="number"
-                    domain={zoomDomain}
-                    allowDataOverflow={true}
-                    tick={{ fill: 'var(--text-muted)' }}
-                    tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
-                  />
-                  <YAxis 
-                    domain={['auto', 'auto']} 
-                    tick={{ fill: 'var(--text-muted)' }}
-                    tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
-                  />
-                  <Tooltip 
-                    isAnimationActive={false}
-                    contentStyle={{ pointerEvents: 'none' }}
-                    formatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
-                    labelFormatter={(label) => `Time: ${typeof label === 'number' ? Number(label.toFixed(4)).toString() : label}`}
-                  />
-                  <Legend verticalAlign="top" height={36} style={{ pointerEvents: 'none' }}/>
-                  <ReferenceLine x={modelData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
-                  
-                  <Line type="monotone" dataKey="actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} name="Actual Data" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="inSample" stroke="var(--primary)" strokeWidth={3} dot={false} name="In-Sample Fit" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Forecast" isAnimationActive={false} />
-                  
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
 
-          {/* Right Column: Controls & Commentary */}
-          <div className="glass controls-panel">
-            <div className="control-group">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {config.icon}
-                {config.name}
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                {config.description}
-              </p>
-            </div>
-
-            <div className="control-group">
-              {/* Alpha Slider (Always visible) */}
-              <div className="slider-container">
-                <label>
-                  <span>Alpha (Level)</span>
-                  <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{alpha.toFixed(1)}</span>
-                </label>
-                <input 
-                  type="range" min="0" max="1" step="0.1" 
-                  value={alpha}
-                  onChange={(e) => setAlpha(parseFloat(e.target.value))}
-                />
+                {/* Right: Dataset Details */}
+                <div className="glass controls-panel">
+                  <div className="commentary-box" style={{ height: '100%' }}>
+                    <h4><Info size={18} /> Dataset Details</h4>
+                    <p>{modelData.dataset_description}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Beta Slider (Holt and HW) */}
-              {(activeModel === 'holt' || activeModel === 'hw') && (
-                <div className="slider-container">
+              {/* Middle: Controls */}
+              <div className="glass controls-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'center' }}>
+                {/* Alpha Slider */}
+                <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
                   <label>
-                    <span>Beta (Trend)</span>
-                    <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{beta.toFixed(1)}</span>
+                    <span>Alpha (Level)</span>
+                    <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{alpha.toFixed(1)}</span>
                   </label>
                   <input 
                     type="range" min="0" max="1" step="0.1" 
-                    value={beta}
-                    onChange={(e) => setBeta(parseFloat(e.target.value))}
+                    value={alpha}
+                    onChange={(e) => setAlpha(parseFloat(e.target.value))}
                   />
                 </div>
-              )}
 
-              {/* Gamma Slider (HW only) */}
-              {activeModel === 'hw' && (
-                <div className="slider-container">
-                  <label>
-                    <span>Gamma (Seasonality)</span>
-                    <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{gamma.toFixed(1)}</span>
-                  </label>
-                  <input 
-                    type="range" min="0" max="1" step="0.1" 
-                    value={gamma}
-                    onChange={(e) => setGamma(parseFloat(e.target.value))}
-                  />
+                {/* Beta Slider */}
+                {(activeModel === 'holt' || activeModel === 'hw') && (
+                  <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
+                    <label>
+                      <span>Beta (Trend)</span>
+                      <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{beta.toFixed(1)}</span>
+                    </label>
+                    <input 
+                      type="range" min="0" max="1" step="0.1" 
+                      value={beta}
+                      onChange={(e) => setBeta(parseFloat(e.target.value))}
+                    />
+                  </div>
+                )}
+
+                {/* Gamma Slider */}
+                {activeModel === 'hw' && (
+                  <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
+                    <label>
+                      <span>Gamma (Seasonality)</span>
+                      <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{gamma.toFixed(1)}</span>
+                    </label>
+                    <input 
+                      type="range" min="0" max="1" step="0.1" 
+                      value={gamma}
+                      onChange={(e) => setGamma(parseFloat(e.target.value))}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom: Wide Chart */}
+              <div className="glass chart-container" style={{ width: '100%', height: '550px', display: 'flex', flexDirection: 'column' }}>
+                <div className="chart-header">
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    Forecast Visualization
+                    {/* Zoom Controls */}
+                    <div style={{ display: 'flex', gap: '0.25rem', opacity: 0.7 }}>
+                      <button onClick={() => handleZoomOut()} title="Zoom Out" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
+                        <ZoomOut size={18} />
+                      </button>
+                      <button onClick={() => handleZoomIn()} title="Zoom In" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
+                        <ZoomIn size={18} />
+                      </button>
+                    </div>
+                  </h2>
+                  <div className="tabs">
+                    <button 
+                      className={`tab ${activeModel === 'ses' ? 'active' : ''}`}
+                      onClick={() => { setActiveModel('ses'); setAlpha(0.2); setZoomDomain([0, maxTime]); }}
+                    >
+                      SES
+                    </button>
+                    <button 
+                      className={`tab ${activeModel === 'holt' ? 'active' : ''}`}
+                      onClick={() => { setActiveModel('holt'); setAlpha(0.8); setBeta(0.5); setZoomDomain([0, maxTime]); }}
+                    >
+                      Holt's Linear
+                    </button>
+                    <button 
+                      className={`tab ${activeModel === 'hw' ? 'active' : ''}`}
+                      onClick={() => { setActiveModel('hw'); setAlpha(0.2); setBeta(0.5); setGamma(0.5); setZoomDomain([0, maxTime]); }}
+                    >
+                      Holt-Winters
+                    </button>
+                  </div>
                 </div>
-              )}
+                
+                <div 
+                  ref={chartRef}
+                  style={{ flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab' }}
+                  onWheel={handleWheel}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                    <LineChart 
+                      data={chartData} 
+                      margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                      style={{ pointerEvents: 'auto' }}
+                      onMouseMove={(e) => {
+                        if (e && e.activeLabel !== undefined && !isDragging) {
+                          setHoveredTime(e.activeLabel);
+                        }
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis 
+                        dataKey="time" 
+                        type="number"
+                        domain={zoomDomain}
+                        allowDataOverflow={true}
+                        tick={{ fill: 'var(--text-muted)' }}
+                        tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(0)).toString() : val}
+                      />
+                      <YAxis 
+                        domain={['auto', 'auto']} 
+                        tick={{ fill: 'var(--text-muted)' }}
+                        tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
+                      />
+                      <Tooltip 
+                        isAnimationActive={false}
+                        contentStyle={{ pointerEvents: 'none' }}
+                        formatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
+                        labelFormatter={(label) => `Time: ${typeof label === 'number' ? Number(label.toFixed(0)).toString() : label}`}
+                      />
+                      <Legend verticalAlign="top" height={36} style={{ pointerEvents: 'none' }}/>
+                      <ReferenceLine x={modelData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
+                      
+                      <Line type="monotone" dataKey="actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} name="Actual Data" isAnimationActive={false} />
+                      <Line type="monotone" dataKey="inSample" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} name="In-Sample Fit" isAnimationActive={false} />
+                      <Line type="monotone" dataKey="forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Forecast" isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
-
-            <div className="commentary-box">
-              <h4><Info size={18} /> Dataset Details</h4>
-              <p>{modelData.dataset_description}</p>
-            </div>
-          </div>
-        </div>
         ) : (
-          <Topic2 />
+          <Topic2 activeTab={activeSubTopic} />
         )}
         </div>
       </main>

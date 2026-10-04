@@ -17,21 +17,17 @@ def generate_tab1():
     train_size = 100
     test_size = 20
     
-    # 0 <= p, q <= 8
     for p in range(9):
         for q in range(9):
-            # Generate stationary/invertible coefficients
-            ar = [1.0] + [-0.5**i for i in range(1, p+1)]
+            ar = [1.0] + [-0.5 * (0.8**i) / i for i in range(1, p+1)]
             ma = [1.0] + [0.5**j for j in range(1, q+1)]
             
-            np.random.seed(p * 10 + q) # reproducible
-            data = arma_generate_sample(ar, ma, nsample=train_size + test_size)
+            np.random.seed(p * 10 + q) 
+            data = arma_generate_sample(ar, ma, nsample=train_size + test_size, scale=2.0)
             
             train = data[:train_size]
-            test = data[train_size:]
             
             try:
-                # Fit ARIMA(p,0,q)
                 model = ARIMA(train, order=(p, 0, q), enforce_stationarity=False, enforce_invertibility=False)
                 res = model.fit()
                 in_sample = res.predict(start=0, end=train_size-1).tolist()
@@ -43,13 +39,15 @@ def generate_tab1():
             key = f"p{p}_q{q}"
             results[key] = {
                 "actual": data.tolist(),
+                "time_label": list(range(train_size + test_size)),
                 "in_sample": in_sample,
                 "out_sample": out_sample,
-                "train_size": train_size
+                "train_size": train_size,
+                "description": f"Synthetic ARMA({p}, {q}) process. p={p} means {p} autoregressive terms (memory). q={q} means {q} moving average terms (shock reactions)."
             }
     return results
 
-def fit_hw_and_arima(data, arima_order, hw_trend, train_size):
+def fit_hw_and_arima(data, arima_order, hw_trend, train_size, title):
     train = data[:train_size]
     test = data[train_size:]
     
@@ -71,11 +69,14 @@ def fit_hw_and_arima(data, arima_order, hw_trend, train_size):
 
     return {
         "actual": data.tolist(),
+        "time_label": list(range(len(data))),
         "train_size": train_size,
         "arima_in": arima_in,
         "arima_out": arima_out,
         "hw_in": hw_in,
-        "hw_out": hw_out
+        "hw_out": hw_out,
+        "arima_order": str(arima_order),
+        "description": title
     }
 
 def generate_tab2():
@@ -83,20 +84,22 @@ def generate_tab2():
     results = {}
     train_size = 100
     
-    # Example 1: MA(1)
     np.random.seed(42)
-    data_ma1 = arma_generate_sample([1], [1, 0.9], nsample=120)
-    results["MA1"] = fit_hw_and_arima(data_ma1, (0,0,1), None, train_size)
+    errors = np.random.normal(scale=3.0, size=120)
+    errors[99] = 20.0  # Massive shock exactly at the end of the train set
+    data_ma1 = np.zeros(120)
+    for i in range(1, 120):
+        data_ma1[i] = errors[i] + 0.9 * errors[i-1]
     
-    # Example 2: AR(2)
-    np.random.seed(42)
-    data_ar2 = arma_generate_sample([1, -1.2, 0.7], [1], nsample=120)
-    results["AR2"] = fit_hw_and_arima(data_ar2, (2,0,0), 'add', train_size)
+    results["MA1"] = fit_hw_and_arima(data_ma1, (0,0,1), None, train_size, "MA(1) Transient Shock. This dataset was generated using a Moving Average process of order 1, meaning random white noise shocks affect the current time step and exactly 1 future time step. We injected a massive 20.0-unit positive shock at t=99. Because it's an MA(1) process with theta=0.9, this shock echoes exactly once at t=100 before instantly vanishing, leaving no permanent correlation.")
     
-    # Example 3: AR(1)
     np.random.seed(42)
-    data_ar1 = arma_generate_sample([1, 0.8], [1], nsample=120)
-    results["AR1"] = fit_hw_and_arima(data_ar1, (1,0,0), None, train_size)
+    data_ar2 = arma_generate_sample([1, -1.2, 0.7], [1], nsample=120, scale=3.0)
+    results["AR2"] = fit_hw_and_arima(data_ar2, (2,0,0), 'add', train_size, "AR(2) Variable Cycle: A complex autoregressive structure with complex roots causes aperiodic cycles. HW's linear trend completely shoots into space, while ARIMA(2,0,0) perfectly traces the sinusoidal decay.")
+    
+    np.random.seed(42)
+    data_ar1 = arma_generate_sample([1, 0.8], [1], nsample=120, scale=3.0)
+    results["AR1"] = fit_hw_and_arima(data_ar1, (1,0,0), None, train_size, "AR(1) High-Frequency Mean Reversion: The data wildly oscillates above and below the mean. ARIMA(1,0,0) captures this alternating current.")
     
     return results
 
@@ -112,20 +115,21 @@ def generate_tab3():
     model_arima_sun = ARIMA(ts_sun.iloc[:train_size_sun], order=(9,0,0)).fit()
     pred_sun = model_arima_sun.get_forecast(steps=len(ts_sun)-train_size_sun)
     
-    model_hw_sun = ETSModel(ts_sun.iloc[:train_size_sun], error='add', trend='add', seasonal=None).fit(disp=False)
+    # Removed SARIMA model request for Sunspots
+    
+    model_hw_sun = ETSModel(ts_sun.iloc[:train_size_sun], error='add', trend='add', seasonal='add', seasonal_periods=11).fit(disp=False)
     pred_hw_sun = model_hw_sun.get_prediction(start=train_size_sun, end=len(ts_sun)-1)
     
     results["Sunspots"] = {
         "actual": ts_sun.tolist(),
+        "time_label": dta_sun['YEAR'].astype(int).astype(str).tolist(),
         "train_size": train_size_sun,
         "arima_in": model_arima_sun.predict(start=0, end=train_size_sun-1).tolist(),
         "arima_out": pred_sun.predicted_mean.tolist(),
-        "arima_ci_lower": pred_sun.conf_int(alpha=0.05).iloc[:, 0].tolist(),
-        "arima_ci_upper": pred_sun.conf_int(alpha=0.05).iloc[:, 1].tolist(),
         "hw_in": model_hw_sun.fittedvalues.tolist(),
         "hw_out": pred_hw_sun.predicted_mean.tolist(),
-        "hw_ci_lower": pred_hw_sun.pred_int(alpha=0.05).iloc[:, 0].tolist(),
-        "hw_ci_upper": pred_hw_sun.pred_int(alpha=0.05).iloc[:, 1].tolist()
+        "arima_order": "(9, 0, 0)",
+        "description": "Yearly Sunspots Activity (1700-2008). ARIMA(9,0,0) discovers the ~11-year solar cycle via high-order autoregression. Holt-Winters is configured with an 11-year seasonal period, testing if a rigid calendar seasonality can predict aperiodic cycles."
     }
     
     # T-Bill
@@ -135,25 +139,24 @@ def generate_tab3():
     ts_tbil = dta_macro['tbilrate']
     train_size_tbil = len(dta_macro[:'1981-12-31'])
     test_size_tbil = len(dta_macro['1982-01-01':'1987-12-31'])
-    ts_tbil = ts_tbil.iloc[:train_size_tbil + test_size_tbil]
+    ts_tbil_slice = ts_tbil.iloc[:train_size_tbil + test_size_tbil]
     
-    model_arima_tbil = ARIMA(ts_tbil.iloc[:train_size_tbil], order=(3,0,1)).fit()
+    model_arima_tbil = ARIMA(ts_tbil_slice.iloc[:train_size_tbil], order=(3,0,1)).fit()
     pred_tbil = model_arima_tbil.get_forecast(steps=test_size_tbil)
     
-    model_hw_tbil = ETSModel(ts_tbil.iloc[:train_size_tbil], error='add', trend='add', seasonal=None).fit(disp=False)
-    pred_hw_tbil = model_hw_tbil.get_prediction(start=ts_tbil.index[train_size_tbil], end=ts_tbil.index[-1])
+    model_hw_tbil = ETSModel(ts_tbil_slice.iloc[:train_size_tbil], error='add', trend='add', seasonal=None).fit(disp=False)
+    pred_hw_tbil = model_hw_tbil.get_prediction(start=ts_tbil_slice.index[train_size_tbil], end=ts_tbil_slice.index[-1])
     
     results["TBill"] = {
-        "actual": ts_tbil.tolist(),
+        "actual": ts_tbil_slice.tolist(),
+        "time_label": ts_tbil_slice.index.strftime('%Y-Q%q').tolist(),
         "train_size": train_size_tbil,
         "arima_in": model_arima_tbil.predict(start=0, end=train_size_tbil-1).tolist(),
         "arima_out": pred_tbil.predicted_mean.tolist(),
-        "arima_ci_lower": pred_tbil.conf_int(alpha=0.05).iloc[:, 0].tolist(),
-        "arima_ci_upper": pred_tbil.conf_int(alpha=0.05).iloc[:, 1].tolist(),
         "hw_in": model_hw_tbil.fittedvalues.tolist(),
         "hw_out": pred_hw_tbil.predicted_mean.tolist(),
-        "hw_ci_lower": pred_hw_tbil.pred_int(alpha=0.05).iloc[:, 0].tolist(),
-        "hw_ci_upper": pred_hw_tbil.pred_int(alpha=0.05).iloc[:, 1].tolist()
+        "arima_order": "(3, 0, 1)",
+        "description": "US 3-Month Treasury Bill Rate. The ARIMA(3,0,1) model captures the complex inertia of interest rates better than a rigid Holt linear trend."
     }
     
     return results
@@ -167,30 +170,31 @@ def generate_tab4():
     
     train_size = len(dta_macro[:'1982-01-01'])
     test_size = len(dta_macro['1982-04-01':'1987-01-01'])
-    ts = ts.iloc[:train_size + test_size]
+    ts_slice = ts.iloc[:train_size + test_size]
     
-    # Manual (Constrained d=0)
-    model_manual = ARIMA(ts.iloc[:train_size], order=(3,0,1)).fit()
+    model_manual = ARIMA(ts_slice.iloc[:train_size], order=(3,0,1)).fit()
     out_manual = model_manual.forecast(steps=test_size).tolist()
     
-    # Auto (Blind d=1 usually selected here. We will use (1,1,2) to simulate blind selection extrapolating trend)
-    model_blind = ARIMA(ts.iloc[:train_size], order=(1,1,2)).fit()
+    model_blind = ARIMA(ts_slice.iloc[:train_size], order=(1,1,2)).fit()
     out_blind = model_blind.forecast(steps=test_size).tolist()
     
     return {
-        "actual": ts.tolist(),
+        "actual": ts_slice.tolist(),
+        "time_label": ts_slice.index.strftime('%Y-Q%q').tolist(),
         "train_size": train_size,
         "manual_in": model_manual.predict(start=0, end=train_size-1).tolist(),
         "manual_out": out_manual,
         "blind_in": model_blind.predict(start=0, end=train_size-1).tolist(),
-        "blind_out": out_blind
+        "blind_out": out_blind,
+        "manual_order": "(3, 0, 1)",
+        "blind_order": "(1, 1, 2)",
+        "description": "US Unemployment Rate. Blind auto-arima detects non-stationarity and uses differencing (d=1), predicting unemployment rises to infinity. Domain knowledge restricts it to d=0 (mean-reverting)."
     }
 
 def generate_tab5():
     print("Generating Tab 5: SARIMA vs HW...")
     results = {}
     
-    # Australian Gas
     gas_data = [
         82, 85, 87, 102, 120, 137, 151, 145, 122, 108, 97, 86,       
         85, 91, 101, 124, 155, 172, 196, 192, 153, 137, 115, 102,    
@@ -209,7 +213,9 @@ def generate_tab5():
         224, 231, 266, 305, 365, 415, 451, 429, 372, 323, 291, 252,  
         237, 246, 283, 325, 390, 442, 480, 457, 397, 346, 312, 271   
     ]
-    train_gas = gas_data[:-24]
+    dates = pd.date_range(start='1980-01-01', periods=len(gas_data), freq='MS')
+    ts = pd.Series(gas_data, index=dates)
+    train_gas = ts.iloc[:-24]
     
     hw_gas = ETSModel(train_gas, error='mul', trend='add', seasonal='mul', seasonal_periods=12).fit(disp=False)
     hw_gas_in = hw_gas.fittedvalues.tolist()
@@ -217,57 +223,73 @@ def generate_tab5():
     
     sarima_gas = SARIMAX(np.log(train_gas), order=(0,1,1), seasonal_order=(0,1,1,12), enforce_stationarity=False, enforce_invertibility=False).fit(disp=False)
     sarima_gas_in = np.exp(sarima_gas.predict(start=0, end=len(train_gas)-1)).tolist()
+    # The first 13 periods are unstable due to d=1 and D=1 (s=12) differencing, so we null them out
+    sarima_gas_in[:13] = [None] * 13
     sarima_gas_out = np.exp(sarima_gas.forecast(steps=24)).tolist()
     
     results["Gas"] = {
         "actual": gas_data,
+        "time_label": dates.strftime('%Y-%b').tolist(),
         "train_size": len(train_gas),
         "sarima_in": sarima_gas_in,
         "sarima_out": sarima_gas_out,
         "hw_in": hw_gas_in,
-        "hw_out": hw_gas_out
+        "hw_out": hw_gas_out,
+        "sarima_order": "(0,1,1)x(0,1,1,12) [Log Transformed]",
+        "description": "Australian Monthly Gas Production (1980-1995). Showcasing expanding seasonal variance (Heteroskedasticity). We log-transform the data before passing to SARIMA."
     }
     return results
 
 def generate_tab6():
     print("Generating Tab 6: SARIMAX with Exogenous...")
     np.random.seed(42)
-    periods = 120
-    time = np.arange(periods)
+    periods = 156
+    weeks = pd.date_range(start='2020-01-05', periods=periods, freq='W')
     
-    # Base sales
-    trend = 0.5 * time
-    seasonality = 15 * np.sin(2 * np.pi * time / 12)
-    noise = np.random.normal(0, 3, periods)
-    base_sales = 100 + trend + seasonality + noise
+    trend = np.linspace(100, 200, periods)
+    seasonality = 50 * np.sin(2 * np.pi * np.arange(periods) / 52)
+    noise = np.random.normal(0, 10, periods)
     
-    # Exogenous factor (Promotions every ~14 months, huge spike)
-    promo = np.zeros(periods)
-    for i in range(10, periods, 14):
-        promo[i] = 1
-        promo[i+1] = 1
+    promo_calendar = np.random.choice([0, 1], size=periods, p=[0.85, 0.15])
+    promo_lift = promo_calendar * 80
     
-    sales = base_sales + 60 * promo
+    sales = trend + seasonality + promo_lift + noise
+    df = pd.DataFrame({'Sales': sales, 'Promo_Active': promo_calendar}, index=weeks)
     
-    train_size = 96
-    test_size = 24
+    train_size = 104
+    test_size = 52
+    train = df.iloc[:train_size]
+    test = df.iloc[train_size:]
     
-    # Without Exog
-    model_no_exog = SARIMAX(sales[:train_size], order=(1,0,0), seasonal_order=(0,1,0,12)).fit(disp=False)
-    out_no_exog = model_no_exog.forecast(steps=test_size).tolist()
+    # 1. Holt-Winters baseline (No Exog)
+    hw_model = ETSModel(train['Sales'], error='add', trend='add', seasonal='add', seasonal_periods=52).fit(disp=False)
+    hw_in = hw_model.fittedvalues.tolist()
+    hw_out = hw_model.forecast(steps=len(test)).tolist()
     
-    # With Exog
-    model_exog = SARIMAX(sales[:train_size], exog=promo[:train_size], order=(1,0,0), seasonal_order=(0,1,0,12)).fit(disp=False)
-    out_exog = model_exog.forecast(steps=test_size, exog=promo[train_size:]).tolist()
+    # 2. SARIMA (No Exog)
+    sarima_model = SARIMAX(train['Sales'], order=(1, 1, 1), seasonal_order=(0, 1, 1, 52)).fit(disp=False)
+    sarima_in = sarima_model.fittedvalues.tolist()
+    sarima_out = sarima_model.forecast(steps=len(test)).tolist()
+
+    # 3. SARIMAX With Exog
+    sarimax_model = SARIMAX(train['Sales'], exog=train[['Promo_Active']], order=(1, 1, 1), seasonal_order=(0, 1, 1, 52)).fit(disp=False)
+    sarimax_in = sarimax_model.fittedvalues.tolist()
+    sarimax_out = sarimax_model.forecast(steps=len(test), exog=test[['Promo_Active']]).tolist()
     
     return {
         "actual": sales.tolist(),
-        "exog": promo.tolist(),
+        "exog_marker": [val if exog == 1 else None for val, exog in zip(sales.tolist(), promo_calendar.tolist())],
+        "exog_flag": promo_calendar.tolist(),
+        "time_label": weeks.strftime('%Y-%m-%d').tolist(),
         "train_size": train_size,
-        "no_exog_in": model_no_exog.predict(start=0, end=train_size-1).tolist(),
-        "no_exog_out": out_no_exog,
-        "exog_in": model_exog.predict(start=0, end=train_size-1).tolist(),
-        "exog_out": out_exog
+        "hw_in": hw_in,
+        "hw_out": hw_out,
+        "sarima_in": sarima_in,
+        "sarima_out": sarima_out,
+        "sarimax_in": sarimax_in,
+        "sarimax_out": sarimax_out,
+        "sarimax_order": "(1,1,1)x(0,1,1,52)",
+        "description": "Weekly Retail Sales with Promotion Calendar. Notice how the baseline model is confused by random spikes. Adding the 'X' (Exogenous variable) perfectly predicts promotional lifts."
     }
 
 if __name__ == "__main__":

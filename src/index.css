@@ -305,9 +305,37 @@ input[type=range] {
 
 @media (max-width: 768px) {
   .main-layout {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
   }
   .sidebar {
-    display: none;
+    padding: 1rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  .nav-menu {
+    flex-direction: row;
+    overflow-x: auto;
+    max-height: none;
+    padding-bottom: 0.5rem;
+  }
+  .nav-item {
+    white-space: nowrap;
+  }
+  .app-container {
+    padding: 1rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+  }
+  .top-panels {
+    grid-template-columns: 1fr !important;
+  }
+  .chart-container {
+    height: 400px !important;
   }
 }
