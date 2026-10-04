@@ -326,7 +326,7 @@ input[type=range] {
     width: 280px;
     height: 100vh;
     z-index: 1000;
-    background: var(--surface);
+    background: var(--bg-color);
     transition: left 0.3s ease;
     border-right: 1px solid var(--border);
     padding: 1.5rem 1rem;
