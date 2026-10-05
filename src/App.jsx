@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Activity, TrendingUp, Waves, Info, Lock, BookOpen, LineChart as ChartIcon, Cpu, BrainCircuit, Sparkles, Sun, Moon, ZoomIn, ZoomOut, Menu, X } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import './index.css';
 import Topic2 from './Topic2';
 
@@ -510,6 +511,7 @@ export default function App() {
         )}
         </div>
       </main>
+      <Analytics />
     </div>
   );
 }
