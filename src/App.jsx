@@ -4,6 +4,7 @@ import { Activity, TrendingUp, Waves, Info, Lock, BookOpen, LineChart as ChartIc
 import { Analytics } from '@vercel/analytics/react';
 import './index.css';
 import Topic2 from './Topic2';
+import Topic3 from './Topic3';
 
 export default function App() {
   const [activeTopic, setActiveTopic] = useState(1);
@@ -288,10 +289,20 @@ export default function App() {
               </div>
             </div>
           )}
-          <div className="nav-item locked">
-            <Lock size={16} />
+          <div className={`nav-item ${activeTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveTopic(3); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer'}}>
+            <Activity size={18} />
             <span>3. Metrics & Validation</span>
           </div>
+          {activeTopic === 3 && (
+            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>3.1 MAE vs RMSE</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>3.2 MAPE</span>
+              </div>
+            </div>
+          )}
           <div className="nav-item locked">
             <Lock size={16} />
             <span>4. Volatility: GARCH</span>
@@ -331,8 +342,8 @@ export default function App() {
       <main className="app-container">
         <header>
           <div>
-            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : 'Topic 2: ARIMA and Model Selection'}</h1>
-            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : 'Autoregressive, Moving Average, and Exogenous variables'}</div>
+            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : 'Topic 3: Metrics & Validation'}</h1>
+            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : 'Understanding Errors, Evaluation, and Robustness'}</div>
           </div>
           <button 
             className="theme-toggle" 
@@ -506,9 +517,11 @@ export default function App() {
                 </div>
               </div>
             </div>
-        ) : (
+        ) : activeTopic === 2 ? (
           <Topic2 activeTab={activeSubTopic} />
-        )}
+        ) : activeTopic === 3 ? (
+          <Topic3 activeTab={activeSubTopic} />
+        ) : null}
         </div>
       </main>
       <Analytics />
