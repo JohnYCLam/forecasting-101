@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, BarChart, Bar, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, BarChart, Bar, Cell, ReferenceArea, Scatter } from 'recharts';
 import { ZoomIn, ZoomOut, Info, BrainCircuit } from 'lucide-react';
+import ZoomableChartWrapper from './ZoomableChartWrapper';
+import { formatValue } from './utils';
 
 function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
   const maxTime = chartData.length > 0 ? chartData[chartData.length - 1].time : 100;
@@ -44,13 +46,6 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
     });
   };
 
-  const handleWheel = (e) => {
-    if (Math.abs(e.deltaY) > 0) {
-      if (e.deltaY < 0) handleZoomIn(hoveredTime);
-      else handleZoomOut(hoveredTime);
-    }
-  };
-
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setLastClientX(e.clientX);
@@ -85,12 +80,34 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, []);
 
+  const handleZoomInRef = useRef();
+  const handleZoomOutRef = useRef();
+  const hoveredTimeRef = useRef();
+
+  useEffect(() => {
+    handleZoomInRef.current = handleZoomIn;
+    handleZoomOutRef.current = handleZoomOut;
+    hoveredTimeRef.current = hoveredTime;
+  });
+
   useEffect(() => {
     const el = chartRef.current;
     if (!el) return;
-    const preventScroll = (e) => e.preventDefault();
-    el.addEventListener('wheel', preventScroll, { passive: false });
-    return () => el.removeEventListener('wheel', preventScroll);
+    
+    const handleNativeWheel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (Math.abs(e.deltaY) > 0) {
+        if (e.deltaY < 0) {
+          handleZoomInRef.current && handleZoomInRef.current(hoveredTimeRef.current);
+        } else {
+          handleZoomOutRef.current && handleZoomOutRef.current(hoveredTimeRef.current);
+        }
+      }
+    };
+    
+    el.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleNativeWheel);
   }, []);
 
   const formatXAxis = (val) => {
@@ -117,7 +134,6 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
       <div 
         ref={chartRef}
         style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
       >
@@ -128,8 +144,8 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
             <LineChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }} onMouseMove={(e) => { if (e && e.activeLabel !== undefined && !isDragging) setHoveredTime(e.activeLabel); }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
               <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatXAxis} />
-              <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} />
-              <Tooltip isAnimationActive={false} labelFormatter={(l) => `Time: ${formatXAxis(l)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+              <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+              <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(l) => `Time: ${formatXAxis(l)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
               <Legend />
               {trainSize > 0 && <ReferenceLine x={trainSize - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />}
               <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
@@ -146,8 +162,8 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
             <BarChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
               <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
-              <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-              <Tooltip isAnimationActive={false} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+              <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+              <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
               <ReferenceLine y={0} stroke="var(--text-main)" />
               <Bar dataKey="ResidualA" name="Model A Error">
                 {chartData.map((entry, index) => (
@@ -165,8 +181,8 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
             <BarChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
               <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
-              <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-              <Tooltip isAnimationActive={false} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+              <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+              <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
               <ReferenceLine y={0} stroke="var(--text-main)" />
               <Bar dataKey="ResidualB" name="Model B Error">
                 {chartData.map((entry, index) => (
@@ -181,12 +197,13 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
   );
 }
 
-const Layout = ({ commentary, dataset, controls, chart }) => (
+
+const Layout = ({ title = "Explanation", commentary, dataset, controls, chart, chartHeight = "800px" }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
     <div className="top-panels">
       <div className="glass controls-panel">
         <div className="commentary-box" style={{ height: '100%' }}>
-          <h4><BrainCircuit size={18} /> MAE vs RMSE Explained</h4>
+          <h4><BrainCircuit size={18} /> {title}</h4>
           {commentary}
         </div>
       </div>
@@ -204,7 +221,7 @@ const Layout = ({ commentary, dataset, controls, chart }) => (
       </div>
     )}
 
-    <div className="glass chart-container" style={{ width: '100%', height: '800px', display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+    <div className="glass chart-container" style={{ width: '100%', height: chartHeight, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
       {chart}
     </div>
   </div>
@@ -215,6 +232,10 @@ export default function Topic3({ activeTab = 1 }) {
   const [loading, setLoading] = useState(true);
   const [showTrain, setShowTrain] = useState(false);
   const [baselineSlider, setBaselineSlider] = useState(0);
+  const [tab3Fold, setTab3Fold] = useState(1);
+  const [tab4Fold, setTab4Fold] = useState(1);
+  const [tab4Strategy, setTab4Strategy] = useState('expanding');
+  const [tab4Window, setTab4Window] = useState(30);
 
   useEffect(() => {
     fetch(`/topic3_data.json?t=${new Date().getTime()}`)
@@ -325,7 +346,7 @@ export default function Topic3({ activeTab = 1 }) {
       />
     );
 
-    return <Layout controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} />;
+    return <Layout title="MAE vs RMSE Explained" controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} />;
   };
 
   const renderTab2 = () => {
@@ -423,22 +444,26 @@ export default function Topic3({ activeTab = 1 }) {
     );
 
     const mainChart = (
-      <div style={{ flex: 2, minHeight: '350px' }}>
+      <div style={{ flex: 2, minHeight: '220px' }}>
         <h4 style={{ margin: '0 0 0.5rem 1rem', color: 'var(--text-main)', fontSize: '1rem' }}>Forecast vs Actual (Baseline Shift)</h4>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-            <XAxis dataKey="time" type="number" domain={['dataMin', 'dataMax']} tick={{ fill: 'var(--text-muted)' }} />
-            <YAxis domain={[-30, 80]} tick={{ fill: 'var(--text-muted)' }} />
-            <Tooltip isAnimationActive={false} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
-            <Legend />
-            <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
-            <ReferenceLine x={tabData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Test Set', fill: 'var(--text-muted)' }} />
-            <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={{ r: 2, fill: 'var(--text-muted)' }} isAnimationActive={false} />
-            <Line type="monotone" dataKey="InSample" name="In-Sample Fit" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey="Forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Forecast" />
-          </LineChart>
-        </ResponsiveContainer>
+        <ZoomableChartWrapper defaultDomain={[0, chartData.length > 0 ? chartData.length - 1 : 100]} maxTime={chartData.length > 0 ? chartData.length - 1 : 100}>
+          {(zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
+                <YAxis domain={[-30, 80]} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <Legend />
+                <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
+                <ReferenceLine x={tabData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Test Set', fill: 'var(--text-muted)' }} />
+                <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={{ r: 2, fill: 'var(--text-muted)' }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="InSample" name="In-Sample Fit" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="Forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Forecast" />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </ZoomableChartWrapper>
       </div>
     );
 
@@ -451,10 +476,339 @@ export default function Topic3({ activeTab = 1 }) {
       </div>
     );
 
-    return <Layout controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} />;
+    return <Layout title="The MAPE Family" controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} />;
+  };
+
+  const renderTab3 = () => {
+    const tabData = data.tab3;
+    if (!tabData) return null;
+
+    const chartData = tabData.actual.map((val, idx) => {
+      let forecast = null;
+      let inSample = null;
+      
+      const active = tabData.folds[tab3Fold - 1];
+      if (idx > 1 && idx < active.train_end) inSample = active.sx_in[idx];
+      if (idx >= active.train_end && idx < active.test_end) forecast = active.sx_out[idx - active.train_end];
+      
+      return {
+        time: idx,
+        Actual: val,
+        Forecast: forecast,
+        InSample: inSample,
+      };
+    });
+
+    const getRowStyle = (foldNum) => {
+      return tab3Fold === foldNum ? { background: 'rgba(59, 130, 246, 0.1)', fontWeight: 'bold' } : { opacity: 0.5 };
+    };
+
+    const controls = (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+          {[1, 2, 3].map(f => (
+            <button key={f} className={`nav-btn ${tab3Fold === f ? 'primary' : 'secondary'}`} onClick={() => setTab3Fold(f)}>
+              Highlight Fold {f}
+            </button>
+          ))}
+        </div>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', background: 'var(--surface)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+          <thead>
+            <tr style={{ background: 'var(--surface-hover)' }}>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Training Period</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Test Period</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Test RMSE</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Test MAE</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Test MAPE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tabData.folds.map((fold, idx) => (
+              <tr key={idx} style={getRowStyle(idx + 1)}>
+                <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold {idx + 1}</td>
+                <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Week 0 to {fold.train_end}</td>
+                <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Week {fold.train_end} to {fold.test_end}</td>
+                <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>{Number(fold.metrics_sx.RMSE).toFixed(2)}</td>
+                <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>{Number(fold.metrics_sx.MAE).toFixed(2)}</td>
+                <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>{Number(fold.metrics_sx.MAPE).toFixed(1)}%</td>
+              </tr>
+            ))}
+            <tr style={{ background: 'var(--surface-hover)', fontWeight: 'bold' }}>
+              <td style={{ padding: '0.75rem' }} colSpan={3}>Average (Walk-Forward Result)</td>
+              <td style={{ padding: '0.75rem' }}>{(tabData.folds.reduce((s, f) => s + f.metrics_sx.RMSE, 0) / 3).toFixed(2)}</td>
+              <td style={{ padding: '0.75rem' }}>{(tabData.folds.reduce((s, f) => s + f.metrics_sx.MAE, 0) / 3).toFixed(2)}</td>
+              <td style={{ padding: '0.75rem' }}>{(tabData.folds.reduce((s, f) => s + f.metrics_sx.MAPE, 0) / 3).toFixed(1)}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+
+    const commentary = (
+      <div style={{ fontSize: '0.9rem' }}>
+        <p style={{ margin: '0 0 0.5rem 0' }}>
+          <strong>What is Walk-Forward Validation?</strong> In standard Machine Learning, we randomly split data into a train and test set (Cross-Validation). We cannot do this in Time Series because time flows strictly forward—you cannot use future data to predict the past.
+        </p>
+        <p style={{ margin: '0 0 0.5rem 0' }}>
+          <strong>The Solution:</strong> We create multiple "folds" sequentially. We train on the past, test on the immediate future. Then we <em>walk forward</em>, add the recent data to our training set, and test on the next block of the future. The average error across all folds is our true, robust model performance.
+        </p>
+        <p style={{ margin: 0 }}>
+          <strong>Why is this necessary?</strong> Look at Fold 1. The error is very low (RMSE ~4.5) because the model perfectly predicts the stable linear trend. This gives a false illustration that the model is a perfect fit. But it was just "lucky." Look at Fold 2 and Fold 3: the data suddenly changes behavior and becomes volatile/seasonal. The model fails completely (RMSE ~16-29). Walk-Forward protects you from deploying models based on a single lucky split.
+        </p>
+      </div>
+    );
+
+    const datasetBox = (
+      <p>
+        A synthetic series (156 weeks) evaluated across 3 consecutive 17-week test windows. 
+        <br/><br/>
+        Click the buttons to see how the Training Window (Blue) expands forward in time, and the Test Window (Green) shifts to the next unseen period.
+      </p>
+    );
+
+    // Custom legend
+    const renderLegend = () => (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '15px', height: '15px', backgroundColor: '#3b82f6', opacity: 0.15, border: '1px solid #3b82f6' }}></div>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Training Region</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '15px', height: '15px', backgroundColor: '#10b981', opacity: 0.15, border: '1px solid #10b981' }}></div>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Testing Region</span>
+        </div>
+      </div>
+    );
+
+    const activeFold = tabData.folds[tab3Fold - 1];
+    const xMax = activeFold.test_end;
+    
+    // Physically cut off future data so Recharts doesn't plot it
+    const displayData = chartData.filter(d => d.time <= xMax);
+
+    const chart = (
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', height: '320px' }}>
+          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
+            {(zoomDomain) => (
+              <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                  <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
+                  <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                  <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
+                  <Legend verticalAlign="top" />
+                  
+                  <ReferenceArea x1={0} x2={activeFold.train_end} fill="#3b82f6" fillOpacity={0.15} />
+                  <ReferenceArea x1={activeFold.train_end} x2={activeFold.test_end} fill="#10b981" fillOpacity={0.15} />
+                  
+                  <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="InSample" name="Training Fit" stroke="#3b82f6" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="Forecast" name="Test Forecast" stroke="#f59e0b" strokeWidth={3} dot={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </ZoomableChartWrapper>
+        </div>
+        {renderLegend()}
+      </div>
+    );
+
+    return <Layout title="Walk-Forward Validation" controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} chartHeight="auto" />;
+  };
+
+  const renderTab4 = () => {
+    const tabData = data.tab4;
+    if (!tabData) return null;
+
+    const chartData = tabData.actual.map((val, idx) => {
+      let expForecast = null;
+      let sldForecast = null;
+      let expInSample = null;
+      let sldInSample = null;
+      
+      const activeExp = tabData.expanding[tab4Fold - 1];
+      const sld_data = tabData.sliding["40"] || tabData.sliding["30"];
+      const activeSld = sld_data[tab4Fold - 1];
+      
+      if (idx >= 0 && idx < activeExp.test_start) expInSample = activeExp.exp_in[idx];
+      if (idx >= activeExp.test_start && idx < activeExp.test_end) expForecast = activeExp.exp_out[idx - activeExp.test_start];
+      
+      const window_size = tabData.sliding["40"] ? 40 : 30;
+      const sld_train_start = activeSld.test_start - window_size;
+      if (idx >= sld_train_start && idx < activeSld.test_start) sldInSample = activeSld.sld_in[idx - sld_train_start];
+      if (idx >= activeSld.test_start && idx < activeSld.test_end) sldForecast = activeSld.sld_out[idx - activeSld.test_start];
+      
+      return {
+        time: idx,
+        Actual: val,
+        ExpForecast: expForecast,
+        SldForecast: sldForecast,
+        ExpInSample: expInSample,
+        SldInSample: sldInSample
+      };
+    });
+
+    const getRowStyle = (foldNum) => {
+      return tab4Fold === foldNum ? { background: 'rgba(59, 130, 246, 0.1)', fontWeight: 'bold' } : { opacity: 0.5 };
+    };
+
+    const controls = (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+          {[1, 2, 3, 4].map(f => (
+            <button key={f} className={`nav-btn ${tab4Fold === f ? 'primary' : 'secondary'}`} onClick={() => setTab4Fold(f)}>
+              Highlight Fold {f}
+            </button>
+          ))}
+        </div>
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'center', background: 'var(--surface)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+          <thead>
+            <tr style={{ background: 'var(--surface-hover)' }}>
+              <th rowSpan={2} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold</th>
+              <th colSpan={3} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', color: '#3b82f6' }}>Expanding Window Strategy</th>
+              <th colSpan={3} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', color: '#f97316' }}>Sliding Window Strategy</th>
+            </tr>
+            <tr style={{ background: 'var(--surface-hover)' }}>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', fontSize: '0.85rem' }}>Train Period</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>Test Period</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>Test RMSE</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', fontSize: '0.85rem' }}>Train Period</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>Test Period</th>
+              <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>Test RMSE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3, 4].map((f, idx) => {
+              const window_size = tabData.sliding["40"] ? 40 : 30;
+              const sld_data = tabData.sliding["40"] || tabData.sliding["30"];
+              const exp = tabData.expanding[idx];
+              const sld = sld_data[idx];
+              return (
+                <tr key={idx} style={getRowStyle(f)}>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold {f}</td>
+                  
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}>t=0 to t={exp.test_start - 1}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>t={exp.test_start} to t={exp.test_end - 1}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: exp.metrics.RMSE <= sld.metrics.RMSE ? '#10b981' : 'inherit', fontWeight: exp.metrics.RMSE <= sld.metrics.RMSE ? 'bold' : 'normal' }}>{Number(exp.metrics.RMSE).toFixed(2)}</td>
+                  
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}>t={sld.test_start - window_size} to t={sld.test_start - 1}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>t={sld.test_start} to t={sld.test_end - 1}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: sld.metrics.RMSE < exp.metrics.RMSE ? '#10b981' : 'inherit', fontWeight: sld.metrics.RMSE < exp.metrics.RMSE ? 'bold' : 'normal' }}>{Number(sld.metrics.RMSE).toFixed(2)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+
+    const commentary = (
+      <div style={{ fontSize: '0.9rem' }}>
+        <p style={{ margin: '0 0 0.5rem 0' }}>
+          <strong>Window Strategies:</strong> When performing walk-forward validation, how much historical data do you train on?
+        </p>
+        <ul style={{ paddingLeft: '1.2rem', margin: '0 0 0.5rem 0' }}>
+          <li style={{ marginBottom: '0.25rem' }}><strong>Expanding Window:</strong> Trains on ALL available data from the beginning of time up to the cutoff. <em>Real-world use case:</em> Predicting stable macroeconomic trends (e.g. GDP growth) where long-term historical context makes the model smarter.</li>
+          <li><strong>Sliding Window:</strong> Forgets old data. Only trains on the most recent <em>N</em> periods. <em>Real-world use case:</em> High-frequency stock trading or social media trends, where past data quickly becomes obsolete due to shifting market regimes or viral topics.</li>
+        </ul>
+        <p style={{ margin: 0 }}>
+          <strong>The Demo:</strong> At time t=100, the data undergoes a massive "Regime Shift". Look at Fold 1: both strategies train on the exact same data (t=0 to 39) and produce identical results. In Fold 2, Expanding trains on more data, but both are still fine. But by Fold 3 and 4, the Expanding Window fails catastrophically because it is poisoned by old, pre-shift data. The Sliding Window forgets the old regime and adapts perfectly!
+        </p>
+      </div>
+    );
+
+    const datasetBox = (
+      <p>
+        A synthetic series (200 points) that undergoes a violent regime shift exactly at t=100. <br/><br/>
+        Click the fold buttons to visualize what the two strategies are "looking at".
+      </p>
+    );
+
+    const renderLegend = () => (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '15px', height: '15px', backgroundColor: '#3b82f6', opacity: 0.15, border: '1px solid #3b82f6' }}></div>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Expanding Window</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '15px', height: '15px', backgroundColor: '#f97316', opacity: 0.15, border: '1px solid #f97316' }}></div>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Sliding Window</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '15px', height: '15px', backgroundColor: '#10b981', opacity: 0.15, border: '1px solid #10b981' }}></div>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Test Window</span>
+        </div>
+      </div>
+    );
+
+    const activeExp = tabData.expanding[tab4Fold - 1];
+    const activeSld = tabData.sliding["40"][tab4Fold - 1];
+    const xMax = activeExp.test_end;
+    const displayData = chartData.filter(d => d.time <= xMax);
+
+    const chart = (
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', height: '500px', display: 'flex', flexDirection: 'column' }}>
+          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
+            {(zoomDomain) => (
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', gap: '2.5rem' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 1rem', color: '#3b82f6', fontSize: '0.9rem' }}>Expanding Strategy</h4>
+                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                    <LineChart data={displayData} syncId="tab4Sync" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                      <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
+                      <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                      <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
+                      
+                      <ReferenceArea x1={0} x2={activeExp.test_start} fill="#3b82f6" fillOpacity={0.05} ifOverflow="hidden" />
+                      <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#10b981" fillOpacity={0.15} ifOverflow="hidden" />
+                      <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#ef4444' }} />
+                      
+                      <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="ExpInSample" name="Expanding Train" stroke="#3b82f6" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="ExpForecast" name="Expanding Forecast" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 1rem', color: '#f97316', fontSize: '0.9rem' }}>Sliding Strategy</h4>
+                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                    <LineChart data={displayData} syncId="tab4Sync" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                      <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
+                      <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                      <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
+                      
+                      <ReferenceArea x1={activeSld.test_start - 40} x2={activeSld.test_start} fill="#f97316" fillOpacity={0.15} ifOverflow="hidden" />
+                      <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#10b981" fillOpacity={0.15} ifOverflow="hidden" />
+                      <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#ef4444' }} />
+                      
+                      <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="SldInSample" name="Sliding Train" stroke="#f97316" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="SldForecast" name="Sliding Forecast" stroke="#f97316" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </ZoomableChartWrapper>
+        </div>
+        {renderLegend()}
+      </div>
+    );
+
+    return <Layout title="Sliding vs Expanding Windows" controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} chartHeight="auto" />;
   };
 
   if (activeTab === 1) return renderTab1();
   if (activeTab === 2) return renderTab2();
+  if (activeTab === 3) return renderTab3();
+  if (activeTab === 4) return renderTab4();
+
   return null;
 }

@@ -2,128 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { ZoomIn, ZoomOut, Info, BrainCircuit } from 'lucide-react';
 
+import ZoomableChartWrapper from './ZoomableChartWrapper';
+import { formatValue } from './utils';
+
 function ChartWithZoom({ chartData, lines, trainSize, timeLabels, yDomain = ['auto', 'auto'], hideXAxis = false }) {
   const maxTime = chartData.length > 0 ? chartData[chartData.length - 1].time : 100;
-  const [zoomDomain, setZoomDomain] = useState([0, maxTime]);
-  const [hoveredTime, setHoveredTime] = useState(maxTime / 2);
-  const chartRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastClientX, setLastClientX] = useState(0);
-
-  useEffect(() => {
-    setZoomDomain([0, maxTime]);
-  }, [maxTime, chartData]);
-
-  const handleZoomIn = (anchor = (zoomDomain[0] + zoomDomain[1]) / 2) => {
-    setZoomDomain(prev => {
-      const range = prev[1] - prev[0];
-      if (range <= 15) return prev;
-      const shrink = range * 0.15;
-      const anchorRatio = Math.max(0, Math.min(1, (anchor - prev[0]) / range));
-      return [prev[0] + shrink * anchorRatio, prev[1] - shrink * (1 - anchorRatio)];
-    });
-  };
-
-  const handleZoomOut = (anchor = (zoomDomain[0] + zoomDomain[1]) / 2) => {
-    setZoomDomain(prev => {
-      const range = prev[1] - prev[0];
-      if (range >= maxTime) return [0, maxTime];
-      const expand = range * 0.15;
-      const anchorRatio = Math.max(0, Math.min(1, (anchor - prev[0]) / range));
-      let newLeft = prev[0] - expand * anchorRatio;
-      let newRight = prev[1] + expand * (1 - anchorRatio);
-      if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-      if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-      newLeft = Math.max(0, newLeft);
-      newRight = Math.min(maxTime, newRight);
-      return [newLeft, newRight];
-    });
-  };
-
-  const handleWheel = (e) => {
-    if (Math.abs(e.deltaY) > 0) {
-      if (e.deltaY < 0) handleZoomIn(hoveredTime);
-      else handleZoomOut(hoveredTime);
-    }
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setLastClientX(e.clientX);
-    document.body.style.cursor = 'grabbing';
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging && chartRef.current) {
-      const deltaX = e.clientX - lastClientX;
-      const width = chartRef.current.getBoundingClientRect().width;
-      const range = zoomDomain[1] - zoomDomain[0];
-      const pixelsPerUnit = width / range;
-      const domainShift = -(deltaX / pixelsPerUnit);
-      setZoomDomain(prev => {
-        let newLeft = prev[0] + domainShift;
-        let newRight = prev[1] + domainShift;
-        if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-        if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-        return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
-      });
-      setLastClientX(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    document.body.style.cursor = 'default';
-  };
-
-  // ---- Touch Zoom & Pan (Mobile) ----
-  const [initialPinchDist, setInitialPinchDist] = useState(null);
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 2) {
-      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      setInitialPinchDist(dist);
-    } else if (e.touches.length === 1) {
-      setIsDragging(true);
-      setLastClientX(e.touches[0].clientX);
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (e.touches.length === 2 && initialPinchDist) {
-      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      const delta = dist - initialPinchDist;
-      if (Math.abs(delta) > 10) {
-        if (delta > 0) handleZoomIn(hoveredTime); else handleZoomOut(hoveredTime);
-        setInitialPinchDist(dist);
-      }
-    } else if (e.touches.length === 1 && isDragging && chartRef.current) {
-      const deltaX = e.touches[0].clientX - lastClientX;
-      const width = chartRef.current.getBoundingClientRect().width;
-      const range = zoomDomain[1] - zoomDomain[0];
-      const pixelsPerUnit = width / range;
-      const domainShift = -(deltaX / pixelsPerUnit);
-      setZoomDomain(prev => {
-        let newLeft = prev[0] + domainShift;
-        let newRight = prev[1] + domainShift;
-        if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-        if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-        return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
-      });
-      setLastClientX(e.touches[0].clientX);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    setInitialPinchDist(null);
-  };
-  // -----------------------------------
-
-  useEffect(() => {
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => window.removeEventListener('mouseup', handleMouseUp);
-  }, []);
 
   const formatXAxis = (val) => {
     const idx = Math.round(val);
@@ -138,53 +21,33 @@ function ChartWithZoom({ chartData, lines, trainSize, timeLabels, yDomain = ['au
     return typeof val === 'number' ? Number(val.toFixed(0)).toString() : val;
   };
 
-  const formatDecimals = (val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val;
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem', marginBottom: '0.5rem', opacity: 0.7 }}>
-        <button onClick={() => handleZoomOut()} title="Zoom Out" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-          <ZoomOut size={18} />
-        </button>
-        <button onClick={() => handleZoomIn()} title="Zoom In" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-          <ZoomIn size={18} />
-        </button>
-      </div>
-      <div 
-        ref={chartRef}
-        style={{ width: '100%', flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-          <LineChart 
-            data={chartData} 
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            style={{ pointerEvents: 'auto' }}
-            onMouseMove={(e) => {
-              if (e && e.activeLabel !== undefined && !isDragging) {
-                setHoveredTime(e.activeLabel);
-              }
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-            <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatXAxis} />
-            <YAxis domain={yDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatDecimals} />
-            <Tooltip 
-              isAnimationActive={false} 
-              formatter={formatDecimals} 
-              labelFormatter={(l) => `Time: ${formatTooltipXAxis(l)}`} 
-              contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} 
-            />
-            <Legend style={{ pointerEvents: 'none' }}/>
-            <ReferenceLine x={trainSize - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
-            {lines}
-          </LineChart>
-        </ResponsiveContainer>
+      <div style={{ width: '100%', flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px' }}>
+        <ZoomableChartWrapper defaultDomain={[0, maxTime]} maxTime={maxTime}>
+          {(zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <LineChart 
+                data={chartData} 
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                style={{ pointerEvents: 'auto' }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatXAxis} />
+                <YAxis domain={yDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <Tooltip 
+                  isAnimationActive={false} 
+                  formatter={formatValue} 
+                  labelFormatter={(l) => `Time: ${formatTooltipXAxis(l)}`} 
+                  contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} 
+                />
+                <Legend style={{ pointerEvents: 'none' }}/>
+                <ReferenceLine x={trainSize - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
+                {lines}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </ZoomableChartWrapper>
       </div>
     </div>
   );

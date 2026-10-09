@@ -157,10 +157,132 @@ def generate_tab2():
         
     return results
 
+def generate_tab3():
+    print("Generating Tab 3.3: Walk-Forward Validation...")
+    n = 156
+    t = np.arange(n)
+    
+    # Base signal: Stable linear trend until t=122, then massive volatility/seasonality
+    np.random.seed(42)
+    data = 50 + 0.3 * t + np.random.normal(0, 1.5, n)
+    
+    # Introduce structural complexity (seasonal wave) from t=122 onwards
+    data[122:] += 25 * np.sin(2 * np.pi * (t[122:] - 122) / 15)
+    
+    folds = [
+        {"train_end": 105, "test_end": 122},
+        {"train_end": 122, "test_end": 139},
+        {"train_end": 139, "test_end": 156}
+    ]
+    
+    results = {
+        "actual": data.tolist(),
+        "folds": []
+    }
+    
+    for i, f in enumerate(folds):
+        train_end = f["train_end"]
+        test_end = f["test_end"]
+        
+        train = data[:train_end]
+        test = data[train_end:test_end]
+        
+        # Model: Simple ARIMA(1,1,1)
+        model = ARIMA(train, order=(1,1,1)).fit()
+        forecast = model.forecast(steps=len(test))
+        in_sample = model.fittedvalues
+        
+        metrics = compute_all_metrics(test, forecast, train)
+        
+        results["folds"].append({
+            "fold_idx": i + 1,
+            "train_end": train_end,
+            "test_end": test_end,
+            "sx_in": in_sample.tolist(),
+            "sx_out": forecast.tolist(), # keeping key as sx_out for frontend compatibility
+            "metrics_sx": metrics
+        })
+        
+    return results
+
+def generate_tab4():
+    print("Generating Tab 3.4: Sliding vs Expanding...")
+    n = 200
+    t = np.arange(n)
+    
+    # Regime Shift at t=100
+    np.random.seed(100)
+    data = np.zeros(n)
+    
+    # Regime 1: Mean = 20
+    data[:100] = 20 + np.random.normal(0, 2, 100)
+    
+    # Regime 2: Massive shift in mean to 80
+    data[100:] = 80 + np.random.normal(0, 2, 100)
+    
+    folds = [
+        {"test_start": 40, "test_end": 60},
+        {"test_start": 80, "test_end": 100},
+        {"test_start": 120, "test_end": 140},
+        {"test_start": 160, "test_end": 180},
+    ]
+    
+    window_sizes = [40]
+    results = {
+        "actual": data.tolist(),
+        "folds": folds,
+        "expanding": {},
+        "sliding": {str(w): {} for w in window_sizes}
+    }
+    
+    # Expanding
+    expanding_metrics = []
+    for f in folds:
+        train = data[:f["test_start"]]
+        test = data[f["test_start"]:f["test_end"]]
+        
+        model = ARIMA(train, order=(1,0,0)).fit()
+        forecast = model.forecast(steps=20)
+        metrics = compute_all_metrics(test, forecast, train)
+        
+        expanding_metrics.append({
+            "test_start": f["test_start"],
+            "test_end": f["test_end"],
+            "exp_in": model.fittedvalues.tolist(),
+            "exp_out": forecast.tolist(),
+            "metrics": metrics
+        })
+    results["expanding"] = expanding_metrics
+    
+    # Sliding
+    for w in window_sizes:
+        sliding_metrics = []
+        for f in folds:
+            start_idx = max(0, f["test_start"] - w)
+            train = data[start_idx:f["test_start"]]
+            test = data[f["test_start"]:f["test_end"]]
+            
+            model = ARIMA(train, order=(1,0,0)).fit()
+            forecast = model.forecast(steps=20)
+            metrics = compute_all_metrics(test, forecast, train)
+            
+            sliding_metrics.append({
+                "test_start": f["test_start"],
+                "test_end": f["test_end"],
+                "sld_in": model.fittedvalues.tolist(),
+                "sld_out": forecast.tolist(),
+                "metrics": metrics
+            })
+        results["sliding"][str(w)] = sliding_metrics
+        
+    return results
+
 if __name__ == "__main__":
     final_data = {
         "tab1": generate_tab1(),
         "tab2": generate_tab2(),
+        "tab3": generate_tab3(),
+        "tab4": generate_tab4(),
     }
     
     out_path = os.path.join("public", "topic3_data.json")

@@ -5,6 +5,8 @@ import { Analytics } from '@vercel/analytics/react';
 import './index.css';
 import Topic2 from './Topic2';
 import Topic3 from './Topic3';
+import ZoomableChartWrapper from './ZoomableChartWrapper';
+import { formatValue } from './utils';
 
 export default function App() {
   const [activeTopic, setActiveTopic] = useState(1);
@@ -26,14 +28,6 @@ export default function App() {
 
   // Zoom and Pan states
   const maxTime = 119;
-  const [zoomDomain, setZoomDomain] = useState([0, maxTime]);
-  const [hoveredTime, setHoveredTime] = useState(maxTime / 2);
-  
-  // Dragging states
-  const chartRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastClientX, setLastClientX] = useState(0);
-  const [initialPinchDist, setInitialPinchDist] = useState(null);
 
   useEffect(() => {
     // Apply theme class to body
@@ -96,144 +90,8 @@ export default function App() {
     });
   }
 
-  // ---- Advanced Zoom & Pan Logic ----
-  const handleZoomIn = (anchor = (zoomDomain[0] + zoomDomain[1]) / 2) => {
-    setZoomDomain(prev => {
-      const range = prev[1] - prev[0];
-      if (range <= 15) return prev; // max zoom depth
-      
-      const shrink = range * 0.15;
-      const anchorRatio = Math.max(0, Math.min(1, (anchor - prev[0]) / range));
-      
-      return [prev[0] + shrink * anchorRatio, prev[1] - shrink * (1 - anchorRatio)];
-    });
-  };
-
-  const handleZoomOut = (anchor = (zoomDomain[0] + zoomDomain[1]) / 2) => {
-    setZoomDomain(prev => {
-      const range = prev[1] - prev[0];
-      if (range >= maxTime) return [0, maxTime];
-      
-      const expand = range * 0.15;
-      const anchorRatio = Math.max(0, Math.min(1, (anchor - prev[0]) / range));
-      
-      let newLeft = prev[0] - expand * anchorRatio;
-      let newRight = prev[1] + expand * (1 - anchorRatio);
-      
-      if (newLeft < 0) {
-        newRight -= newLeft; // push remainder to right
-        newLeft = 0;
-      }
-      if (newRight > maxTime) {
-        newLeft -= (newRight - maxTime); // push remainder to left
-        newRight = maxTime;
-      }
-      
-      // Final clamp just in case
-      newLeft = Math.max(0, newLeft);
-      newRight = Math.min(maxTime, newRight);
-      
-      return [newLeft, newRight];
-    });
-  };
-
-  const handleWheel = (e) => {
-    if (Math.abs(e.deltaY) > 0) {
-      if (e.deltaY < 0) {
-        handleZoomIn(hoveredTime);
-      } else {
-        handleZoomOut(hoveredTime);
-      }
-    }
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setLastClientX(e.clientX);
-    document.body.style.cursor = 'grabbing';
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging && chartRef.current) {
-      const deltaX = e.clientX - lastClientX;
-      const width = chartRef.current.getBoundingClientRect().width;
-      const range = zoomDomain[1] - zoomDomain[0];
-      
-      // Calculate how many 'time' units this pixel delta represents
-      const pixelsPerUnit = width / range;
-      const domainShift = -(deltaX / pixelsPerUnit);
-      
-      setZoomDomain(prev => {
-        let newLeft = prev[0] + domainShift;
-        let newRight = prev[1] + domainShift;
-        
-        // Block panning out of bounds
-        if (newLeft < 0) {
-          newRight -= newLeft;
-          newLeft = 0;
-        }
-        if (newRight > maxTime) {
-          newLeft -= (newRight - maxTime);
-          newRight = maxTime;
-        }
-        
-        return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
-      });
-      
-      setLastClientX(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    document.body.style.cursor = 'default';
-  };
-
-  // ---- Touch Zoom & Pan (Mobile) ----
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 2) {
-      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      setInitialPinchDist(dist);
-    } else if (e.touches.length === 1) {
-      setIsDragging(true);
-      setLastClientX(e.touches[0].clientX);
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (e.touches.length === 2 && initialPinchDist) {
-      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      const delta = dist - initialPinchDist;
-      if (Math.abs(delta) > 10) {
-        if (delta > 0) handleZoomIn(hoveredTime); else handleZoomOut(hoveredTime);
-        setInitialPinchDist(dist);
-      }
-    } else if (e.touches.length === 1 && isDragging && chartRef.current) {
-      const deltaX = e.touches[0].clientX - lastClientX;
-      const width = chartRef.current.getBoundingClientRect().width;
-      const range = zoomDomain[1] - zoomDomain[0];
-      const pixelsPerUnit = width / range;
-      const domainShift = -(deltaX / pixelsPerUnit);
-      setZoomDomain(prev => {
-        let newLeft = prev[0] + domainShift;
-        let newRight = prev[1] + domainShift;
-        if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-        if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-        return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
-      });
-      setLastClientX(e.touches[0].clientX);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    setInitialPinchDist(null);
-  };
-  // -----------------------------------
-
   return (
-    <div className="main-layout" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+    <div className="main-layout">
       
       {/* Mobile Menu Button */}
       <div className="mobile-header">
@@ -299,7 +157,13 @@ export default function App() {
                 <span>3.1 MAE vs RMSE</span>
               </div>
               <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
-                <span>3.2 MAPE</span>
+                <span>3.2 MAPE Family</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>3.3 Walk-Forward Validation</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>3.4 Validation Strategy</span>
               </div>
             </div>
           )}
@@ -446,74 +310,64 @@ export default function App() {
                   <div className="tabs">
                     <button 
                       className={`tab ${activeModel === 'ses' ? 'active' : ''}`}
-                      onClick={() => { setActiveModel('ses'); setAlpha(0.2); setZoomDomain([0, maxTime]); }}
+                      onClick={() => { setActiveModel('ses'); setAlpha(0.2); }}
                     >
                       SES
                     </button>
                     <button 
                       className={`tab ${activeModel === 'holt' ? 'active' : ''}`}
-                      onClick={() => { setActiveModel('holt'); setAlpha(0.8); setBeta(0.5); setZoomDomain([0, maxTime]); }}
+                      onClick={() => { setActiveModel('holt'); setAlpha(0.8); setBeta(0.5); }}
                     >
                       Holt's Linear
                     </button>
                     <button 
                       className={`tab ${activeModel === 'hw' ? 'active' : ''}`}
-                      onClick={() => { setActiveModel('hw'); setAlpha(0.2); setBeta(0.5); setGamma(0.5); setZoomDomain([0, maxTime]); }}
+                      onClick={() => { setActiveModel('hw'); setAlpha(0.2); setBeta(0.5); setGamma(0.5); }}
                     >
                       Holt-Winters
                     </button>
                   </div>
                 </div>
                 
-                <div 
-                  ref={chartRef}
-                  style={{ flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-                  onWheel={handleWheel}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                    <LineChart 
-                      data={chartData} 
-                      margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                      style={{ pointerEvents: 'auto' }}
-                      onMouseMove={(e) => {
-                        if (e && e.activeLabel !== undefined && !isDragging) {
-                          setHoveredTime(e.activeLabel);
-                        }
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis 
-                        dataKey="time" 
-                        type="number"
-                        domain={zoomDomain}
-                        allowDataOverflow={true}
-                        tick={{ fill: 'var(--text-muted)' }}
-                        tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(0)).toString() : val}
-                      />
-                      <YAxis 
-                        domain={['auto', 'auto']} 
-                        tick={{ fill: 'var(--text-muted)' }}
-                        tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
-                      />
-                      <Tooltip 
-                        isAnimationActive={false}
-                        contentStyle={{ pointerEvents: 'none' }}
-                        formatter={(val) => typeof val === 'number' ? Number(val.toFixed(4)).toString() : val}
-                        labelFormatter={(label) => `Time: ${typeof label === 'number' ? Number(label.toFixed(0)).toString() : label}`}
-                      />
-                      <Legend verticalAlign="top" height={36} style={{ pointerEvents: 'none' }}/>
-                      <ReferenceLine x={modelData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
-                      
-                      <Line type="monotone" dataKey="actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} name="Actual Data" isAnimationActive={false} />
-                      <Line type="monotone" dataKey="inSample" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} name="In-Sample Fit" isAnimationActive={false} />
-                      <Line type="monotone" dataKey="forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Forecast" isAnimationActive={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <div style={{ flex: 1, minHeight: '400px', height: '100%', paddingBottom: '20px' }}>
+                  <ZoomableChartWrapper key={activeModel} defaultDomain={[0, maxTime]} maxTime={maxTime}>
+                    {(zoomDomain) => (
+                      <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                        <LineChart 
+                          data={chartData} 
+                          margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis 
+                            dataKey="time" 
+                            type="number"
+                            domain={zoomDomain}
+                            allowDataOverflow={true}
+                            tick={{ fill: 'var(--text-muted)' }}
+                            tickFormatter={(val) => typeof val === 'number' ? Number(val.toFixed(0)).toString() : val}
+                          />
+                          <YAxis 
+                            domain={['auto', 'auto']} 
+                            tick={{ fill: 'var(--text-muted)' }}
+                            tickFormatter={formatValue}
+                          />
+                          <Tooltip 
+                            isAnimationActive={false}
+                            contentStyle={{ pointerEvents: 'none', backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }}
+                            formatter={formatValue}
+                            labelFormatter={(label) => `Time: ${typeof label === 'number' ? Number(label.toFixed(0)).toString() : label}`}
+                          />
+                          <Legend verticalAlign="top" height={36} style={{ pointerEvents: 'none' }}/>
+                          <ReferenceLine x={modelData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
+                          
+                          <Line type="monotone" dataKey="actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} name="Actual Data" isAnimationActive={false} />
+                          <Line type="monotone" dataKey="inSample" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} name="In-Sample Fit" isAnimationActive={false} />
+                          <Line type="monotone" dataKey="forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Forecast" isAnimationActive={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </ZoomableChartWrapper>
                 </div>
               </div>
             </div>
