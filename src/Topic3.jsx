@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { ZoomIn, ZoomOut, Info, BrainCircuit } from 'lucide-react';
 import ZoomableChartWrapper from './ZoomableChartWrapper';
 import { formatValue } from './utils';
+import { MathText, MathOperator } from './MathText';
 
 function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
   const maxTime = chartData.length > 0 ? chartData[chartData.length - 1].time : 100;
@@ -309,10 +310,10 @@ export default function Topic3({ activeTab = 1 }) {
     const commentary = (
       <div style={{ fontSize: '0.95rem' }}>
         <p>
-          <strong>MAE (Mean Absolute Error)</strong> strictly measures the average absolute distance from the true line. It treats all errors equally. Model A wins on MAE because its baseline is perfectly accurate 95% of the time.
+          <strong>MAE (Mean Absolute Error)</strong> uses <MathText><MathOperator>MAE</MathOperator> = (1/n) Σ |e<sub>t</sub>|</MathText>. It treats all absolute errors equally. Model A wins because its baseline is accurate 95% of the time.
         </p>
         <p>
-          <strong>RMSE (Root Mean Squared Error)</strong> squares the errors before averaging them, massively punishing large outliers. Model A loses catastrophically on RMSE because it misses the 3 massive events. Model B wins on RMSE because it perfectly predicts the events (avoiding massive squared penalties), even though its day-to-day baseline is sloppy and punishing to its MAE.
+          <strong>RMSE (Root Mean Squared Error)</strong> uses <MathText><MathOperator>RMSE</MathOperator> = √[(1/n) Σ e<sub>t</sub><sup>2</sup>]</MathText>, so large errors receive disproportionate weight. Model A loses because it misses three large events; Model B predicts those events despite a less accurate daily baseline.
         </p>
         <hr style={{ borderColor: 'var(--border)', margin: '1rem 0' }} />
         <p><strong>Real-World Use Cases:</strong></p>
@@ -418,7 +419,7 @@ export default function Topic3({ activeTab = 1 }) {
     const commentary = (
       <div style={{ fontSize: '0.9rem' }}>
         <p style={{ margin: '0 0 0.5rem 0' }}>
-          <strong>What is MAPE?</strong> The Mean Absolute Percentage Error measures the average error as a percentage of the actual value.
+          <strong>What is MAPE?</strong> Mean Absolute Percentage Error averages <MathText>|(y<sub>t</sub> − ŷ<sub>t</sub>)/y<sub>t</sub>| × 100%</MathText>.
         </p>
         <p style={{ margin: '0 0 0.5rem 0' }}>
           <strong>Why use percentages?</strong> MAE and RMSE are tied to the original units (e.g., dollars, quantities). If you want to compare accuracy across series with vastly different scales (a $10/day store vs. a $1,000,000/day store), MAE is useless. MAPE solves this scale problem.
@@ -427,10 +428,10 @@ export default function Topic3({ activeTab = 1 }) {
           <strong>The Limitation of MAPE:</strong> Because MAPE divides by the actual value at each time step, it artificially explodes to infinity as values approach zero. It is also highly asymmetrical, punishing over-forecasting far more severely than under-forecasting.
         </p>
         <p style={{ margin: '0 0 0.5rem 0' }}>
-          <strong>sMAPE (Symmetric MAPE):</strong> sMAPE attempts to fix MAPE's asymmetry by dividing by the average of the actual and forecasted values. However, as you can see by dragging the slider, both MAPE and sMAPE violently explode when the baseline nears zero!
+          <strong>sMAPE (Symmetric MAPE):</strong> sMAPE scales absolute error by the average magnitude of actual and forecast values. Both MAPE and sMAPE become unstable when that denominator approaches zero.
         </p>
         <p style={{ margin: 0 }}>
-          <strong>The Fix: wMAPE (Weighted MAPE)</strong> sums up all the absolute errors over the entire period and divides by the total sum of the actuals. By relying on the <em>total volume</em> rather than dividing point-by-point, it completely eliminates the zero-point explosion!
+          <strong>The Fix: wMAPE (Weighted MAPE)</strong> uses <MathText>Σ |y<sub>t</sub> − ŷ<sub>t</sub>| / Σ |y<sub>t</sub>|</MathText>. It relies on total volume instead of dividing by each individual observation, avoiding pointwise division by zero.
         </p>
       </div>
     );
@@ -555,7 +556,7 @@ export default function Topic3({ activeTab = 1 }) {
           <strong>The Solution:</strong> We create multiple "folds" sequentially. We train on the past, test on the immediate future. Then we <em>walk forward</em>, add the recent data to our training set, and test on the next block of the future. The average error across all folds is our true, robust model performance.
         </p>
         <p style={{ margin: 0 }}>
-          <strong>Why is this necessary?</strong> Look at Fold 1. The error is very low (RMSE ~4.5) because the model perfectly predicts the stable linear trend. This gives a false illustration that the model is a perfect fit. But it was just "lucky." Look at Fold 2 and Fold 3: the data suddenly changes behavior and becomes volatile/seasonal. The model fails completely (RMSE ~16-29). Walk-Forward protects you from deploying models based on a single lucky split.
+          <strong>Why is this necessary?</strong> Fold 1 has low error (<MathText><MathOperator>RMSE</MathOperator> ≈ 4.5</MathText>) because the test block follows a stable trend. Folds 2 and 3 encounter changed behavior and produce much larger errors (<MathText><MathOperator>RMSE</MathOperator> ≈ 16–29</MathText>). Walk-forward validation prevents model selection from depending on one lucky split.
         </p>
       </div>
     );
@@ -691,12 +692,12 @@ export default function Topic3({ activeTab = 1 }) {
                 <tr key={idx} style={getRowStyle(f)}>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold {f}</td>
                   
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}>t=0 to t={exp.test_start - 1}</td>
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>t={exp.test_start} to t={exp.test_end - 1}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText>t = 0</MathText> to <MathText>t = {exp.test_start - 1}</MathText></td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText>t = {exp.test_start}</MathText> to <MathText>t = {exp.test_end - 1}</MathText></td>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: exp.metrics.RMSE <= sld.metrics.RMSE ? '#10b981' : 'inherit', fontWeight: exp.metrics.RMSE <= sld.metrics.RMSE ? 'bold' : 'normal' }}>{Number(exp.metrics.RMSE).toFixed(2)}</td>
                   
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}>t={sld.test_start - window_size} to t={sld.test_start - 1}</td>
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>t={sld.test_start} to t={sld.test_end - 1}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText>t = {sld.test_start - window_size}</MathText> to <MathText>t = {sld.test_start - 1}</MathText></td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText>t = {sld.test_start}</MathText> to <MathText>t = {sld.test_end - 1}</MathText></td>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: sld.metrics.RMSE < exp.metrics.RMSE ? '#10b981' : 'inherit', fontWeight: sld.metrics.RMSE < exp.metrics.RMSE ? 'bold' : 'normal' }}>{Number(sld.metrics.RMSE).toFixed(2)}</td>
                 </tr>
               );
@@ -713,17 +714,17 @@ export default function Topic3({ activeTab = 1 }) {
         </p>
         <ul style={{ paddingLeft: '1.2rem', margin: '0 0 0.5rem 0' }}>
           <li style={{ marginBottom: '0.25rem' }}><strong>Expanding Window:</strong> Trains on ALL available data from the beginning of time up to the cutoff. <em>Real-world use case:</em> Predicting stable macroeconomic trends (e.g. GDP growth) where long-term historical context makes the model smarter.</li>
-          <li><strong>Sliding Window:</strong> Forgets old data. Only trains on the most recent <em>N</em> periods. <em>Real-world use case:</em> High-frequency stock trading or social media trends, where past data quickly becomes obsolete due to shifting market regimes or viral topics.</li>
+          <li><strong>Sliding Window:</strong> Forgets old data. Only trains on the most recent <MathText>N</MathText> periods. <em>Real-world use case:</em> High-frequency stock trading or social media trends, where past data quickly becomes obsolete due to shifting market regimes or viral topics.</li>
         </ul>
         <p style={{ margin: 0 }}>
-          <strong>The Demo:</strong> At time t=100, the data undergoes a massive "Regime Shift". Look at Fold 1: both strategies train on the exact same data (t=0 to 39) and produce identical results. In Fold 2, Expanding trains on more data, but both are still fine. But by Fold 3 and 4, the Expanding Window fails catastrophically because it is poisoned by old, pre-shift data. The Sliding Window forgets the old regime and adapts perfectly!
+          <strong>The Demo:</strong> At <MathText>t = 100</MathText>, the data undergoes a regime shift. In Fold 1, both strategies train on <MathText>t = 0, …, 39</MathText> and produce identical results. By Folds 3 and 4, the expanding window remains influenced by the old regime, while the sliding window discards it and adapts.
         </p>
       </div>
     );
 
     const datasetBox = (
       <p>
-        A synthetic series (200 points) that undergoes a violent regime shift exactly at t=100. <br/><br/>
+        A synthetic series of 200 observations with a regime shift at <MathText>t = 100</MathText>. <br/><br/>
         Click the fold buttons to visualize what the two strategies are "looking at".
       </p>
     );

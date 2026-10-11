@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ComposedChart, Scatter, BarChart, Bar, Cell } from 'recharts';
 import { ZoomIn, ZoomOut, Info, BrainCircuit } from 'lucide-react';
 
 import ZoomableChartWrapper from './ZoomableChartWrapper';
 import { formatValue } from './utils';
+import { MathText, MathOperator, ModelOrder } from './MathText';
+
+const formatOrderLabel = (order) => String(order)
+  .replace('x', ' × ')
+  .replace(' [Log Transformed]', ' (log scale)');
 
 function ChartWithZoom({ chartData, lines, trainSize, timeLabels, yDomain = ['auto', 'auto'], hideXAxis = false }) {
   const maxTime = chartData.length > 0 ? chartData[chartData.length - 1].time : 100;
@@ -53,7 +58,7 @@ function ChartWithZoom({ chartData, lines, trainSize, timeLabels, yDomain = ['au
   );
 }
 
-const Layout = ({ commentary, dataset, controls, chart }) => (
+const Layout = ({ commentary, dataset, controls, chart, chartHeight = '550px' }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
     {/* Top Panels */}
     <div className="top-panels">
@@ -79,7 +84,7 @@ const Layout = ({ commentary, dataset, controls, chart }) => (
     )}
 
     {/* Chart */}
-    <div className="glass chart-container" style={{ width: '100%', height: '550px', display: 'flex', flexDirection: 'column' }}>
+    <div className="glass chart-container" style={{ width: '100%', height: chartHeight, display: 'flex', flexDirection: 'column' }}>
       {chart}
     </div>
   </div>
@@ -91,6 +96,7 @@ export default function Topic2({ activeTab = 1 }) {
 
   const [p, setP] = useState(2);
   const [q, setQ] = useState(1);
+  const [tab1InspectTime, setTab1InspectTime] = useState(80);
   const [tab2Dataset, setTab2Dataset] = useState('MA1');
   const [tab3Dataset, setTab3Dataset] = useState('Sunspots');
   const [autoArimaMode, setAutoArimaMode] = useState('manual');
@@ -119,56 +125,133 @@ export default function Topic2({ activeTab = 1 }) {
   const renderTab1 = () => {
     const tabData = data.tab1[`p${p}_q${q}`];
     if (!tabData) return <div>Data not found</div>;
-    
+    const maxLag = Math.max(p, q, 1);
+    const inspectTime = Math.min(Math.max(tab1InspectTime, maxLag), tabData.train_size - 1);
     const chartData = tabData.actual.map((val, idx) => ({
       time: idx,
       Actual: val,
-      InSample: idx < tabData.train_size ? tabData.in_sample[idx] : null,
+      GeneratedMean: idx < tabData.train_size ? tabData.generated_mean[idx] : null,
       Forecast: idx >= tabData.train_size ? tabData.out_sample[idx - tabData.train_size] : null
     }));
+    const arPoints = tabData.phi.map((coefficient, idx) => ({
+      time: inspectTime - idx - 1,
+      value: tabData.actual[inspectTime - idx - 1],
+      contribution: coefficient * tabData.actual[inspectTime - idx - 1],
+      coefficient
+    }));
+    const shockPoints = tabData.theta.map((coefficient, idx) => ({
+      time: inspectTime - idx - 1,
+      value: tabData.innovations[inspectTime - idx - 1],
+      contribution: coefficient * tabData.innovations[inspectTime - idx - 1],
+      coefficient
+    }));
+    const contributionData = [
+      ...arPoints.map((point, idx) => ({ label: `AR value t−${idx + 1}`, value: point.contribution, coefficient: point.coefficient, color: '#3b82f6' })),
+      ...shockPoints.map((point, idx) => ({ label: `Shock t−${idx + 1}`, value: point.contribution, coefficient: point.coefficient, color: '#f59e0b' }))
+    ];
+    const predictedMean = contributionData.reduce((sum, item) => sum + item.value, tabData.intercept);
+    const xMax = chartData.length - 1;
 
     const controls = (
       <>
         <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
           <label>
-            <span>p (AutoRegressive Order)</span>
+            <span><MathText>p</MathText> (autoregressive order)</span>
             <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{p}</span>
           </label>
           <input type="range" min="0" max="8" step="1" value={p} onChange={(e) => setP(parseInt(e.target.value))} />
         </div>
         <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
           <label>
-            <span>q (Moving Average Order)</span>
+            <span><MathText>q</MathText> (moving-average order)</span>
             <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{q}</span>
           </label>
           <input type="range" min="0" max="8" step="1" value={q} onChange={(e) => setQ(parseInt(e.target.value))} />
+        </div>
+        <div className="slider-container" style={{ flex: 1.4, minWidth: '230px' }}>
+          <label>
+            <span>Inspect training time</span>
+            <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>t = {inspectTime}</span>
+          </label>
+          <input type="range" min={maxLag} max={tabData.train_size - 1} step="1" value={inspectTime} onChange={(e) => setTab1InspectTime(parseInt(e.target.value))} />
         </div>
       </>
     );
 
     const commentary = (
-      <p>
-        {p === 0 && q === 0 && "This is pure white noise. The forecast is simply the long-run mean (0) since there is no memory of the past."}
-        {p > 0 && "The autoregressive (AR) component adds 'memory' to the system. Higher 'p' values mean the forecast considers more distant past values, creating complex decay patterns or cycles back to the mean. "}
-        {q > 0 && "The moving average (MA) component reacts to past unobserved shocks. Higher 'q' values allow the forecast to carry the momentum of recent random spikes forward before returning to the AR-driven path. "}
-        {p > 3 && "With such a high 'p', you can see very complex, oscillating decay in the forecast!"}
-      </p>
+      <div>
+        <p><strong>How an ARMA value is formed:</strong> the conditional mean combines an intercept, the previous <MathText>p</MathText> observations, and the previous <MathText>q</MathText> shocks. The current observation then equals that predictable mean plus a new, unpredictable shock.</p>
+        <p><strong>AR memory:</strong> blue circles mark the observations <MathText tex="y_{t-1},\ldots,y_{t-p}" />. Each contributes <MathText tex="\phi_i y_{t-i}" />. Higher <MathText>p</MathText> means more past values can shape the current conditional mean.</p>
+        <p><strong>MA shock memory:</strong> amber circles mark past innovations <MathText tex="\varepsilon_{t-1},\ldots,\varepsilon_{t-q}" />. Each contributes <MathText tex="\theta_j\varepsilon_{t-j}" />. These are earlier forecast errors, not moving averages of the observed series.</p>
+        <p><strong>How to read the lower graph:</strong> positive bars pull the conditional mean upward and negative bars pull it downward. Their sum is <MathText tex="\hat y_t" />. The difference <MathText tex="y_t-\hat y_t=\varepsilon_t" /> is the new shock that could not have been known at <MathText>t − 1</MathText>.</p>
+        <p><strong>Out-of-sample forecast:</strong> after the dashed split, future shocks are unknown and therefore set to their expectation of zero. AR and MA effects decay as the horizon increases, so a stationary ARMA forecast returns toward its long-run mean.</p>
+        {p === 0 && q === 0 && <p><strong>Current selection:</strong> <ModelOrder name="ARMA">0, 0</ModelOrder> is white noise. It has no past-value or past-shock contributions, so its conditional mean is zero.</p>}
+      </div>
     );
 
     const chart = (
-      <ChartWithZoom 
-        chartData={chartData} 
-        trainSize={tabData.train_size} 
-        timeLabels={tabData.time_label}
-        lines={[
-          <Line key="1" type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />,
-          <Line key="2" type="monotone" dataKey="InSample" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="In-Sample Fit" />,
-          <Line key="3" type="monotone" dataKey="Forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`ARIMA(${p},0,${q}) Forecast`} />
-        ]} 
-      />
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+        <div style={{ width: '100%', height: '500px' }}>
+          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
+            {(zoomDomain) => (
+              <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                <ComposedChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  style={{ pointerEvents: 'auto' }}
+                  onClick={(event) => {
+                    const time = Number(event?.activeLabel);
+                    if (Number.isFinite(time) && time >= maxLag && time < tabData.train_size) setTab1InspectTime(Math.round(time));
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                  <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow tick={{ fill: 'var(--text-muted)' }} />
+                  <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                  <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(value) => `Time: ${value}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                  <Legend />
+                  <ReferenceLine x={tabData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast start', fill: 'var(--text-muted)' }} />
+                  <ReferenceLine x={inspectTime} stroke="var(--text-main)" strokeDasharray="3 3" />
+                  <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={1.6} dot={false} name="Observed series yₜ" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="GeneratedMean" stroke="#ef4444" strokeWidth={2} dot={false} name="Generated conditional mean ŷₜ" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="Forecast" stroke="#7c3aed" strokeWidth={3} strokeDasharray="5 5" dot={false} name={`ARMA(${p},${q}) out-of-sample forecast`} isAnimationActive={false} />
+                  <Scatter data={arPoints} dataKey="value" fill="#3b82f6" name="AR lag inputs" isAnimationActive={false} />
+                  <Scatter data={shockPoints} dataKey="value" fill="#f59e0b" name="Past-shock inputs" isAnimationActive={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
+          </ZoomableChartWrapper>
+        </div>
+        <div style={{ width: '100%', textAlign: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+          <strong>Conditional-mean anatomy at t = {inspectTime}:</strong>{' '}
+          <MathText tex={`\\hat y_t = c + \\sum_{i=1}^{p}\\phi_i y_{t-i} + \\sum_{j=1}^{q}\\theta_j\\varepsilon_{t-j} = ${predictedMean.toFixed(3)}`} />
+        </div>
+        <div style={{ width: '100%', height: '220px' }}>
+          {contributionData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={contributionData} margin={{ top: 8, right: 30, left: 20, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+                <XAxis dataKey="label" interval={0} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <Tooltip
+                  formatter={(value, name, item) => [formatValue(value), `Contribution (coefficient ${item.payload.coefficient.toFixed(3)})`]}
+                  contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }}
+                />
+                <ReferenceLine y={0} stroke="var(--text-main)" />
+                <Bar dataKey="value" name="Contribution to conditional mean" isAnimationActive={false}>
+                  {contributionData.map((entry, idx) => <Cell key={`${entry.label}-${idx}`} fill={entry.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: 'var(--text-muted)' }}>
+              ARMA(0,0) has no lag contributions; its conditional mean is zero.
+            </div>
+          )}
+        </div>
+      </div>
     );
 
-    return <Layout controls={controls} commentary={commentary} dataset={<p>{tabData.description.replace(/Modelling Behaviour.*|Damping Effect.*/s, '')}</p>} chart={chart} />;
+    return <Layout controls={controls} commentary={commentary} dataset={<p>Synthetic <ModelOrder name="ARMA">p, q</ModelOrder> process with 100 training observations and 20 held-out observations. Here <MathText>p = {p}</MathText> is the number of autoregressive lags and <MathText>q = {q}</MathText> is the number of lagged shock terms. Every order uses the same innovation sequence so differences reflect model structure.</p>} chart={chart} chartHeight="800px" />;
   };
 
   const renderTab2 = () => {
@@ -192,11 +275,11 @@ export default function Topic2({ activeTab = 1 }) {
 
     const commentary = (
       <p>
-        <strong>Damping Effect:</strong> ARIMA models correctly understand when a shock is temporary or when the data is strictly stationary. The forecast mathematically "damps" (decays) back to the historical mean. This is mathematically the absolute best forecast under stationary conditions, preventing wild over-extrapolation!
+        <strong>Damping effect:</strong> under a correctly specified stationary model, the minimum-MSE forecast converges toward the unconditional mean as the horizon grows.
         <br/><br/>
-        {tab2Dataset === 'MA1' && "ARIMA(0,0,1) perfectly fits the immediate correlation of the transient shock. Its damping effect is mathematically optimal here: it cuts off its prediction instantly after q lags (1 lag) because it correctly assumes the shock has zero correlation afterwards. Holt-Winters, relying on continuous exponential smoothing, exponentially decays forever and completely fails to capture the sudden, instant snapback to the mean."}
-        {tab2Dataset === 'AR2' && "Holt Winters cannot model aperiodic cycles, so it forecasts a straight line. ARIMA(2,0,0) uses its two autoregressive roots to successfully map the sinusoidal, aperiodic cycle and predict the turns! However, its damping effect causes the forecast to slowly flatten out towards the mean."}
-        {tab2Dataset === 'AR1' && "ARIMA(1,0,0) captures the high-frequency mean reversion. Holt-Winters is too sluggish to keep up with the alternating current."}
+        {tab2Dataset === 'MA1' && <><ModelOrder name="ARIMA">0, 0, 1</ModelOrder> captures a one-lag transient shock. After <MathText>q = 1</MathText> lag, the innovation has no further direct effect, so the forecast snaps back to the mean. Holt-Winters instead decays gradually.</>}
+        {tab2Dataset === 'AR2' && <><ModelOrder name="ARIMA">2, 0, 0</ModelOrder> uses two autoregressive roots to represent an aperiodic oscillation. Its long-horizon forecast still damps toward the mean, while Holt-Winters cannot reproduce the changing cycle length.</>}
+        {tab2Dataset === 'AR1' && <><ModelOrder name="ARIMA">1, 0, 0</ModelOrder> captures high-frequency mean reversion. Holt-Winters responds too slowly to the alternating pattern.</>}
       </p>
     );
 
@@ -215,7 +298,15 @@ export default function Topic2({ activeTab = 1 }) {
       />
     );
 
-    return <Layout controls={controls} commentary={commentary} dataset={<p>{tabData.description.replace(/Modelling Behaviour.*/s, '')}</p>} chart={chart} />;
+    const datasetBox = (
+      <p>
+        {tab2Dataset === 'MA1' && <>Synthetic MA(1) process with coefficient <MathText>θ = 0.9</MathText>. A 20-unit shock is injected at <MathText>t = 99</MathText>, echoes once at <MathText>t = 100</MathText>, and then leaves no direct MA effect.</>}
+        {tab2Dataset === 'AR2' && <>Synthetic AR(2) process with complex roots, producing a damped aperiodic cycle.</>}
+        {tab2Dataset === 'AR1' && <>Synthetic AR(1) process with a negative coefficient, producing rapid alternation around the mean.</>}
+      </p>
+    );
+
+    return <Layout controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} />;
   };
 
   const renderTab3 = () => {
@@ -240,12 +331,12 @@ export default function Topic2({ activeTab = 1 }) {
       <p>
         {tab3Dataset === 'Sunspots' && (
           <>
-            Sunspots follow an aperiodic cycle (ranging from 8-16 years, averaging ~11 years). Look at the Holt-Winters (Blue) forecast—because it forces a rigid 11-year seasonal period, it quickly falls out of phase with reality! Instead, ARIMA(9,0,0) uses its deep autoregressive lags (memory) to organically discover this cycle.
+            Sunspots follow an aperiodic cycle ranging from 8–16 years, with an average near 11 years. Holt-Winters forces a rigid 11-year seasonal period and therefore falls out of phase. <ModelOrder name="ARIMA">9, 0, 0</ModelOrder> instead uses deep autoregressive memory to represent the variable cycle.
             <br/><br/>
             <strong>How to predict cycle AND magnitude for Sunspots?</strong> ARIMA handles the aperiodic cycle frequency nicely but eventually suffers from mean-reversion damping. Holt-Winters and SARIMA completely fail because they force a rigid calendar frequency. Predicting BOTH variable frequencies and amplitudes requires advanced hybrid models (e.g., LSTMs or Dynamic State-Space models with time-varying seasonal components).
           </>
         )}
-        {tab3Dataset === 'TBill' && "Interest rates have strong inertia. The ARIMA(3,0,1) model was NOT randomly guessed—it was carefully discovered using Box-Jenkins methodology (minimizing the AIC/BIC scores over a grid of p,d,q parameters). This optimal ARIMA model elegantly captures the inertia (AR) and reacts to sudden economic shocks (MA). The Holt-Winters linear trend makes a naive assumption that rates will just keep going in a straight line forever."}
+        {tab3Dataset === 'TBill' && <>Interest rates have strong inertia. <ModelOrder name="ARIMA">3, 0, 1</ModelOrder> was selected with Box–Jenkins diagnostics over candidate orders <MathText>(p, d, q)</MathText>. Its AR terms capture persistence and its MA term reacts to innovations; Holt-Winters extrapolates a linear trend.</>}
       </p>
     );
 
@@ -303,7 +394,11 @@ export default function Topic2({ activeTab = 1 }) {
 
     const datasetBox = (
       <div>
-        <p>{tabData.description.replace(/Modelling Behaviour.*/s, '')}</p>
+        <p>
+          {tab3Dataset === 'Sunspots'
+            ? <>Yearly sunspot activity from 1700–2008. <ModelOrder name="ARIMA">9, 0, 0</ModelOrder> is compared with Holt-Winters using an 11-year seasonal period.</>
+            : <>US 3-month Treasury bill rate. <ModelOrder name="ARIMA">3, 0, 1</ModelOrder> is compared with a Holt linear-trend model.</>}
+        </p>
         {tab3Dataset === 'TBill' && (
           <div style={{ marginTop: '1rem' }}>
             <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Box-Jenkins Model Selection (AIC Scores):</strong>
@@ -316,15 +411,15 @@ export default function Topic2({ activeTab = 1 }) {
                 </tr>
               </thead>
               <tbody>
-                <tr><td style={{ padding: '4px' }}>ARIMA(1,0,0)</td><td style={{ padding: '4px' }}>281.43</td><td style={{ padding: '4px' }}>289.00</td></tr>
-                <tr><td style={{ padding: '4px' }}>ARIMA(2,0,0)</td><td style={{ padding: '4px' }}>283.42</td><td style={{ padding: '4px' }}>293.51</td></tr>
-                <tr><td style={{ padding: '4px' }}>ARIMA(3,0,0)</td><td style={{ padding: '4px' }}>279.19</td><td style={{ padding: '4px' }}>291.80</td></tr>
-                <tr><td style={{ padding: '4px' }}>ARIMA(1,0,1)</td><td style={{ padding: '4px' }}>283.40</td><td style={{ padding: '4px' }}>293.49</td></tr>
-                <tr><td style={{ padding: '4px' }}>ARIMA(2,0,1)</td><td style={{ padding: '4px' }}>280.03</td><td style={{ padding: '4px' }}>292.64</td></tr>
-                <tr style={{ background: 'rgba(59, 130, 246, 0.1)' }}><td style={{ padding: '4px' }}><strong>ARIMA(3,0,1)</strong></td><td style={{ padding: '4px' }}><strong>277.02 (Selected)</strong></td><td style={{ padding: '4px' }}><strong>292.15</strong></td></tr>
+                <tr><td style={{ padding: '4px' }}><ModelOrder name="ARIMA">1, 0, 0</ModelOrder></td><td style={{ padding: '4px' }}>281.43</td><td style={{ padding: '4px' }}>289.00</td></tr>
+                <tr><td style={{ padding: '4px' }}><ModelOrder name="ARIMA">2, 0, 0</ModelOrder></td><td style={{ padding: '4px' }}>283.42</td><td style={{ padding: '4px' }}>293.51</td></tr>
+                <tr><td style={{ padding: '4px' }}><ModelOrder name="ARIMA">3, 0, 0</ModelOrder></td><td style={{ padding: '4px' }}>279.19</td><td style={{ padding: '4px' }}>291.80</td></tr>
+                <tr><td style={{ padding: '4px' }}><ModelOrder name="ARIMA">1, 0, 1</ModelOrder></td><td style={{ padding: '4px' }}>283.40</td><td style={{ padding: '4px' }}>293.49</td></tr>
+                <tr><td style={{ padding: '4px' }}><ModelOrder name="ARIMA">2, 0, 1</ModelOrder></td><td style={{ padding: '4px' }}>280.03</td><td style={{ padding: '4px' }}>292.64</td></tr>
+                <tr style={{ background: 'rgba(59, 130, 246, 0.1)' }}><td style={{ padding: '4px' }}><strong><ModelOrder name="ARIMA">3, 0, 1</ModelOrder></strong></td><td style={{ padding: '4px' }}><strong>277.02 (selected)</strong></td><td style={{ padding: '4px' }}><strong>292.15</strong></td></tr>
               </tbody>
             </table>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Note: While an ARIMA(3,1,1) scored slightly lower (270.57), the 'd=1' unit root forces permanent non-stationarity. We correctly bounded our search to stationary models (d=0) because interest rates are mean-reverting.</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Although <ModelOrder name="ARIMA">3, 1, 1</ModelOrder> has a lower AIC (270.57), <MathText>d = 1</MathText> imposes a unit root. The search is constrained to <MathText>d = 0</MathText> because the application assumes mean-reverting rates.</p>
           </div>
         )}
       </div>
@@ -348,24 +443,24 @@ export default function Topic2({ activeTab = 1 }) {
           style={{ flex: 1, padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border)', fontWeight: 500, background: autoArimaMode === 'blind' ? 'var(--primary)' : 'var(--surface)', color: autoArimaMode === 'blind' ? 'white' : 'var(--text-main)' }} 
           onClick={() => setAutoArimaMode('blind')}
         >
-          Blind Auto-ARIMA {tabData.blind_order}
+          Blind Auto-ARIMA <MathText>{tabData.blind_order}</MathText>
         </button>
         <button 
           style={{ flex: 1, padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border)', fontWeight: 500, background: autoArimaMode === 'manual' ? 'var(--primary)' : 'var(--surface)', color: autoArimaMode === 'manual' ? 'white' : 'var(--text-main)' }} 
           onClick={() => setAutoArimaMode('manual')}
         >
-          Constrained ARIMA {tabData.manual_order}
+          Constrained ARIMA <MathText>{tabData.manual_order}</MathText>
         </button>
       </div>
     );
 
     const commentary = (
       <p>
-        Auto-ARIMA automatically searches over thousands of combinations of p, d, and q to find the model with the lowest AIC score. However, it operates blindly on mathematics alone, lacking domain knowledge. 
+        Auto-ARIMA searches candidate orders <MathText>(p, d, q)</MathText> and selects the lowest information criterion. The search still needs domain constraints.
         <br/><br/>
-        {autoArimaMode === 'manual' ? 
-          "In reality, we know Unemployment Rate is mean-reverting (it can't rocket to infinity). We constrained the search to d=0 (stationary). The Constrained ARIMA (3,0,1) correctly damps back down towards the historical long-run average of ~6%." : 
-          "The Blind Auto-ARIMA mathematically selected d=1. A d=1 model contains a 'unit root', making it non-stationary. It blindly assumes the recent massive spike to 8.8% is a permanent structural shift in the economy, and permanently forecasts a high plateau around 9.0% rather than decaying!"}
+        {autoArimaMode === 'manual'
+          ? <>Unemployment is assumed to be mean-reverting, so the search is constrained to <MathText>d = 0</MathText>. The selected <ModelOrder name="ARIMA">3, 0, 1</ModelOrder> forecast damps toward the historical level of approximately 6%.</>
+          : <>The unconstrained search selects <MathText>d = 1</MathText>, introducing a unit root. It treats the recent 8.8% spike as a permanent level shift and forecasts a plateau near 9%.</>}
       </p>
     );
 
@@ -383,7 +478,7 @@ export default function Topic2({ activeTab = 1 }) {
       />
     );
 
-    return <Layout controls={controls} commentary={commentary} dataset={<p>{tabData.description.replace(/Modelling Behaviour.*|Damping Effect.*/s, '')}</p>} chart={chart} />;
+    return <Layout controls={controls} commentary={commentary} dataset={<p>US unemployment rate. The unconstrained search selects <MathText>d = 1</MathText>; the domain-informed search imposes <MathText>d = 0</MathText> to represent mean reversion.</p>} chart={chart} />;
   };
 
   const renderTab5 = () => {
@@ -399,7 +494,7 @@ export default function Topic2({ activeTab = 1 }) {
 
     const commentary = (
       <p>
-        This dataset exhibits heteroskedasticity (variance increases over time). We applied a log-transform before feeding it to SARIMA(0,1,1)x(0,1,1,12), which naturally models the exponential growth when exponentiated back. 
+        This dataset exhibits heteroskedasticity. We apply a log transform before fitting <MathText><MathOperator>SARIMA</MathOperator>(0, 1, 1) × (0, 1, 1)<sub>12</sub></MathText>, then transform forecasts back to the original scale.
         <br/><br/>
         Holt-Winters uses a multiplicative error and seasonality model to achieve a similar result. Holt-Winters is a strong, explainable, and simple baseline. As you can see, it has extremely competitive forecasting power compared to SARIMA. Complex models do not always win!
       </p>
@@ -415,7 +510,7 @@ export default function Topic2({ activeTab = 1 }) {
           <Line key="4" type="monotone" dataKey="HW_InSample" stroke="#3b82f6" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
           <Line key="2" type="monotone" dataKey="SARIMA_InSample" stroke="#ef4444" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`SARIMA In-Sample`} />,
           <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="#3b82f6" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
-          <Line key="3" type="monotone" dataKey="SARIMA_Forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`SARIMA ${tabData.sarima_order} Forecast`} />
+          <Line key="3" type="monotone" dataKey="SARIMA_Forecast" stroke="#ef4444" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`SARIMA ${formatOrderLabel(tabData.sarima_order)} Forecast`} />
         ]} 
       />
     );
@@ -457,7 +552,7 @@ export default function Topic2({ activeTab = 1 }) {
       <p>
         {!useExog ? 
           "The baseline Holt-Winters model sees the random spikes from promotions but doesn't know *why* they happen. It tries to smooth them out into the general trend and seasonality, completely failing to forecast future spikes. SARIMA without exogenous variables suffers the same fate." :
-          "By passing the Promotion Calendar as an Exogenous variable (the 'X' in SARIMAX), the model mathematically isolates the exact lift caused by a promotion. It perfectly predicts future sales spikes whenever a promotion is scheduled! The Yellow Bulbs indicate exactly when a promo was active."}
+          <>By passing the promotion calendar as an exogenous regressor <MathText>X<sub>t</sub></MathText> (the “X” in SARIMAX), the model estimates the promotional lift separately from trend and seasonality. The yellow markers identify promotion dates.</>}
       </p>
     );
 
@@ -477,7 +572,7 @@ export default function Topic2({ activeTab = 1 }) {
       />
     );
 
-    return <Layout controls={controls} commentary={commentary} dataset={<p>{tabData.description.replace(/Modelling Behaviour.*/s, '')}</p>} chart={chart} />;
+    return <Layout controls={controls} commentary={commentary} dataset={<p>Weekly retail sales with a binary promotion indicator <MathText>X<sub>t</sub> ∈ {'{'}0, 1{'}'}</MathText>. Comparing SARIMA with SARIMAX shows the value of known future promotional information.</p>} chart={chart} />;
   };
 
   const tabs = [renderTab1, renderTab2, renderTab3, renderTab4, renderTab5, renderTab6];

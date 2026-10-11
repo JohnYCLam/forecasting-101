@@ -1,143 +1,109 @@
-# Topic 4: Volatility & GARCH — Implementation Plan
+# Topic 4: Volatility & GARCH — Coherence Spec
 
-## Overview
+## Narrative Contract
 
-Topic 4 shifts the focus from forecasting the *mean* (what will the price/sales be?) to forecasting the *variance* (how risky or volatile will it be?). Standard models like ARIMA assume constant variance (homoskedasticity), which spectacularly fails on financial and high-frequency data. This topic teaches three core lessons:
+Every tab must follow the same teaching sequence:
 
-1. **Volatility Clustering** — Large changes tend to be followed by large changes, and small by small. Risk is not constant.
-2. **The GARCH Mechanism** — How to model and forecast time-varying volatility using past shocks and past variance.
-3. **The Leverage Effect** — Why negative shocks (bad news) increase volatility more than positive shocks (good news).
+1. **Background / limitation**
+2. **What the model is**
+3. **What it forecasts**
+4. **Real-world use case**
+5. **Guided demo (what to look for)**
 
-Following the established architecture, we will create:
-- **`generate_topic4_data.py`** → Pre-computes financial return data, GARCH model fits, and conditional volatility paths into `public/topic4_data.json`
-- **`src/Topic4.jsx`** → React component with 4 interactive tabs
-- **Updates to `src/App.jsx`** → Wire Topic 4 into navigation and routing
+Progressive disclosure is required: commentary should react to the active tab control (view, slider, or step), rather than showing all explanation at once.
 
----
+## Tab 4.1 — Introduction to ARCH
 
-## Tab Structure (4 Tabs)
+**Goal:** Bridge from ARIMA to volatility modeling.
 
-### Tab 4.1 — "The Illusion of Randomness" (Volatility Clustering)
+- Start with ARIMA's limitation: constant variance assumption.
+- Explain ARCH in plain language: conditional variance depends on recent shocks.
+- Clarify forecast target: **ARCH forecasts risk magnitude (variance), not return direction**.
+- Use case: short-horizon risk monitoring, position sizing, options risk.
+- Demo flow:
+  - Time-series view: real white noise vs fake white noise.
+  - Rolling variance view: reveal hidden variance clustering in fake noise.
+  - Forecast view: show damping back to unconditional variance and explain why volatility forecasting is usually short-term.
 
-**Goal:** Show users that while financial returns might look like unpredictable white noise (unforecastable mean), their *magnitude* is highly structured and predictable (forecastable variance).
+## Tab 4.2 — The GARCH(p,q) Model
 
-**Dataset:** Simulated financial daily returns featuring distinct periods of calm and crisis (volatility clustering). 
+**Goal:** Show why GARCH is needed and make model order intuition concrete.
 
-**Demo:** Compare an ARIMA model (which assumes constant risk/variance) against a simple GARCH model on generating confidence intervals.
-- **Model A (ARIMA):** Predicts a flat, constant 95% confidence interval for the entire series.
-- **Model B (GARCH):** Predicts dynamic 95% confidence intervals that widen during crises and narrow during calm periods.
+- Start with ARCH limitation: long memory requires many ARCH lags and unstable estimation.
+- Introduce GARCH(p,q): combines lagged shocks and lagged conditional variance.
+- Clarify use case: persistent volatility regimes with compact parameterization.
+- Demo flow:
+  - Interactive **p/q controls** over pre-generated model fits.
+  - Overlay conditional variance on squared returns to show smoothing behavior.
+  - Explain relationship to ARMA on squared returns:
+    - GARCH(1,1) implies ARMA-like behavior in $r_t^2$.
+    - Implication: order selection can use autocorrelation structure in squared returns.
 
-**Interactive Controls:**
-- **Model Toggle:** Show ARIMA Bounds / Show GARCH Bounds
-- **Zoom/Pan controls:** To inspect specific "crisis" events in the dataset.
+## Tab 4.3 — Performance: Validating the Unobservable
 
-**Key Insight:** "If you only forecast the mean, financial returns look like pure noise. But if you look closely, risk clumps together—crises breed crises. GARCH doesn't try to predict tomorrow's return; it predicts tomorrow's risk."
+**Goal:** Explain why volatility evaluation differs from regular forecasting.
 
-**Data Generation:**
-- Generate a 500-point GARCH(1,1) time series.
-- Fit an ARIMA(0,0,0) to get the unconditional constant variance.
-- Fit a GARCH(1,1) to extract the conditional volatility $\sigma_t$.
-- Compute 95% confidence bounds ($\pm 1.96 \times \sigma$) for both models.
+- State core challenge: true volatility is latent (not directly observed).
+- Explain practical proxy: squared returns.
+- Introduce risk-aware scoring:
+  - MSE against latent truth (simulation-only reference),
+  - MSE against noisy proxy,
+  - QLIKE as under-prediction-sensitive metric.
+- Demo flow:
+  - Step 1: observe noisy proxy problem.
+  - Step 2: reveal latent true volatility (simulation).
+  - Step 3: compare model estimates and metric behavior (including constant-vol baseline).
 
----
+## Tab 4.4 — Application: Value at Risk (VaR)
 
-### Tab 4.2 — "The GARCH(1,1) Engine" (Mechanics & Parameters)
+**Goal:** Make VaR motivation and mechanics explicit.
 
-**Goal:** Demystify how a GARCH(1,1) model actually updates its volatility forecast day by day based on the ARCH (news) and GARCH (memory) components.
+- Background: banks/regulators need a downside risk threshold for capital control.
+- Goal: estimate worst expected loss over horizon at confidence level.
+- Problem: historical-window VaR reacts slowly during regime shifts.
+- GARCH link: dynamic volatility estimate maps to dynamic VaR threshold.
+- Demo flow:
+  - Compare historical VaR vs GARCH VaR at the same confidence level.
+  - Clearly define breaches (actual return below threshold).
+  - Show breach counts and visual breach markers.
+  - Label confidence correctly (e.g., 95% VaR = 5% tail).
 
-**Dataset:** A synthetic series where users can dynamically change the data-generating parameters.
+## Tab 4.5 — ARIMA-GARCH Integration
 
-**Demo:** Interactive sliders that control the Alpha ($\alpha$) and Beta ($\beta$) parameters of a GARCH(1,1) process, showing how the generated volatility series responds.
+**Goal:** Explain complementarity and prove why combined modeling improves risk framing.
 
-**Interactive Controls:**
-- **Shock Reaction ($\alpha$ slider):** Controls how much *today's surprise* impacts tomorrow's volatility. (0.01 to 0.30)
-- **Volatility Persistence ($\beta$ slider):** Controls how long a high-volatility state *lasts* before decaying back to the long-run average. (0.50 to 0.95)
-- Constraint indicator: Ensure $\alpha + \beta < 1$ (stationarity condition), displaying a warning if it gets too close to 1.
+- Background: one model for mean, one model for conditional variance.
+- Clarify complementarity:
+  - ARIMA/ARMA estimates expected path.
+  - GARCH estimates time-varying uncertainty around that path.
+- Use case: FX/equity/commodity series with both serial dependence and volatility clustering.
+- Demo flow:
+  - Step 1: mean-only model with constant uncertainty.
+  - Step 2: residual diagnostics showing heteroskedasticity.
+  - Step 3: combined model with adaptive bands and better empirical coverage.
+- Include quantitative comparison (coverage/breaches) to show improvement over mean-only bands.
 
-**Visualization:**
-- **Top Chart:** Simulated Returns (spiky data).
-- **Bottom Chart:** Conditional Volatility (smooth, rolling risk). As sliders move, both charts regenerate to show "jumpy" vs "persistent" markets.
+## Tab 4.6 — EGARCH, APARCH, and Limits of GARCH
 
-**Key Insight:** "High Alpha means the market panics quickly at new information. High Beta means the market has a long memory and takes a long time to calm down after a crisis."
+**Goal:** Show asymmetric volatility modeling and the boundary of classical parametric models.
 
-**Data Generation:**
-- Pre-compute a grid of GARCH(1,1) simulations for various combinations of $\alpha$ and $\beta$.
-- Provide the generated returns and volatility paths for each parameter pair in the JSON.
+- Background: leverage effect (negative shocks often raise volatility more than positive shocks).
+- Limitation of standard GARCH: symmetric response to shock sign.
+- Extensions:
+  - EGARCH for asymmetry in log-variance dynamics.
+  - APARCH for asymmetric and power-transformed volatility response.
+- Use case: equity indices and risk systems sensitive to crash dynamics.
+- Demo flow:
+  - Time-series volatility comparison: GARCH vs EGARCH vs APARCH.
+  - News-impact curve comparison to visualize asymmetry.
+- Final bridge: explain why the GARCH family struggles with high-dimensional cross-asset and unstructured signals, motivating deep learning volatility models.
 
----
+## Deliverables
 
-### Tab 4.3 — "Asymmetric Shocks: The Leverage Effect" (EGARCH)
-
-**Goal:** Demonstrate that in real equity markets, bad news (negative returns) causes a massive spike in volatility, while good news (positive returns) calms the market. Standard GARCH treats $+5\%$ and $-5\%$ identically.
-
-**Dataset:** Real-world equity index data (e.g., S&P 500 during the 2008 or 2020 crash).
-
-**Demo:** Compare standard GARCH(1,1) (symmetric) with EGARCH(1,1) (asymmetric).
-
-**Interactive Controls:**
-- **News Impact Curve Toggle:** Switch the visualization between standard time-series view and a "News Impact Curve" (a U-shaped parabola for GARCH, and an asymmetric skewed shape for EGARCH).
-- **Model Selector:** Highlight standard GARCH vs EGARCH volatility tracking during a market crash.
-
-**Visualization:**
-- The time-series view shows how EGARCH's volatility forecast spikes much higher precisely when the market drops, compared to standard GARCH which underestimates risk during crashes.
-
-**Key Insight:** "Standard GARCH assumes a +5% day and a -5% day create the exact same amount of panic. EGARCH captures the 'Leverage Effect'—the reality that fear (crashes) drives volatility much harder than greed (rallies)."
-
-**Data Generation:**
-- Fetch/Bundle ~1000 days of S&P 500 returns.
-- Fit standard GARCH(1,1) and EGARCH(1,1,1).
-- Extract conditional volatility for both.
-- Generate data points for the theoretical News Impact Curve for both models.
-
----
-
-### Tab 4.4 — "Value at Risk (VaR)" (Application)
-
-**Goal:** Apply GARCH to a real-world risk management scenario: calculating dynamic Value at Risk (VaR) for a portfolio.
-
-**Dataset:** Real stock data (e.g., TSLA, known for high volatility).
-
-**Demo:** Show the portfolio's estimated 1-day maximum loss threshold. Compare a static Historical VaR against a dynamic GARCH VaR.
-
-**Interactive Controls:**
-- **Confidence Level Slider:** 90%, 95%, 99% (shows the VaR line moving further down).
-- **Strategy Toggle:** Historical VaR (trailing 252 days) vs GARCH VaR.
-
-**Visualization:**
-- Daily returns plotted as a bar chart or scatter.
-- A red "VaR Threshold" line drawn below zero.
-- When Historical is selected, the line is blocky and slow to react.
-- When GARCH is selected, the line tightly hugs the return clusters, expanding rapidly when risk increases.
-- **Metric Scorecard:** Show "VaR Breaches" (how many times the actual loss exceeded the predicted VaR). GARCH should have fewer clustered breaches.
-
-**Key Insight:** "Static risk models get you fired during a crisis because they react too slowly. Dynamic GARCH VaR anticipates the clustered nature of risk, tightening the safety belt exactly when the road gets bumpy."
-
-**Data Generation:**
-- Use a volatile stock's daily returns.
-- Calculate 252-day rolling historical VaR (1st, 5th, 10th percentiles).
-- Use a GARCH model to forecast 1-day ahead variance, and compute parametric VaR using the normal (or student-t) distribution.
-- Count breaches for the scorecard.
-
----
-
-## File Deliverables
-
-| File | Description |
-|------|-------------|
-| `generate_topic4_data.py` | Python script using `arch` package to generate `public/topic4_data.json` |
-| `src/Topic4.jsx` | React component with 4 tabs (reuses `ChartWithZoom` and `Layout`) |
-| `src/App.jsx` | Updated to unlock nav item for Topic 4, add routing |
-
-## Architecture Notes
-
-- **New Python Dependency:** We will need to use the `arch` package in Python (`pip install arch`) for GARCH modeling, as `statsmodels` has limited support for ARCH/GARCH variants.
-- **Performance:** Like previous topics, the React frontend remains 100% static. The GARCH grid for Tab 4.2 should be kept to a reasonable resolution (e.g., 5 alphas × 5 betas = 25 paths) to keep JSON size < 1MB.
-- **Visuals:** The News Impact Curve in Tab 4.3 will require a standard Line/Scatter chart rather than a time-series chart.
-
-## Execution Order
-
-1. Write `generate_topic4_data.py` (ensure `arch` is installed in the python environment).
-2. Run data generation to produce `public/topic4_data.json`.
-3. Create `src/Topic4.jsx` building out the 4 tabs.
-4. Update `src/App.jsx` and navigation components to wire in Topic 4.
-5. Test locally with `npm run dev`.
+- `generate_topic4_data.py` updated for:
+  - Tab 2 p/q model grid
+  - Tab 3 constant-vol baseline metrics
+  - Tab 5 coverage and breach comparison
+  - Tab 6 APARCH extension outputs
+- `public/topic4_data.json` regenerated from updated generator
+- `src/Topic4.jsx` rewritten for progressive, control-driven teaching flow

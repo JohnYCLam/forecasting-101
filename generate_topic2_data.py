@@ -16,14 +16,24 @@ def generate_tab1():
     results = {}
     train_size = 100
     test_size = 20
+    burn = 300
+    rng = np.random.default_rng(42)
+    common_innovations = rng.normal(scale=2.0, size=burn + train_size + test_size)
     
     for p in range(9):
         for q in range(9):
-            ar = [1.0] + [-0.5 * (0.8**i) / i for i in range(1, p+1)]
-            ma = [1.0] + [0.5**j for j in range(1, q+1)]
-            
-            np.random.seed(p * 10 + q) 
-            data = arma_generate_sample(ar, ma, nsample=train_size + test_size, scale=2.0)
+            phi = np.array([0.5 * (0.8**i) / i for i in range(1, p + 1)])
+            theta = np.array([0.5**j for j in range(1, q + 1)])
+            series = np.zeros_like(common_innovations)
+            max_lag = max(p, q, 1)
+            for t in range(max_lag, len(series)):
+                ar_term = sum(phi[i] * series[t - i - 1] for i in range(p))
+                ma_term = sum(theta[j] * common_innovations[t - j - 1] for j in range(q))
+                series[t] = ar_term + common_innovations[t] + ma_term
+
+            data = series[burn:]
+            innovations = common_innovations[burn:]
+            generated_mean = data - innovations
             
             train = data[:train_size]
             
@@ -43,6 +53,11 @@ def generate_tab1():
                 "in_sample": in_sample,
                 "out_sample": out_sample,
                 "train_size": train_size,
+                "innovations": innovations.tolist(),
+                "generated_mean": generated_mean.tolist(),
+                "phi": phi.tolist(),
+                "theta": theta.tolist(),
+                "intercept": 0.0,
                 "description": f"Synthetic ARMA({p}, {q}) process. p={p} means {p} autoregressive terms (memory). q={q} means {q} moving average terms (shock reactions)."
             }
     return results

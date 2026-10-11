@@ -5,8 +5,10 @@ import { Analytics } from '@vercel/analytics/react';
 import './index.css';
 import Topic2 from './Topic2';
 import Topic3 from './Topic3';
+import Topic4 from './Topic4';
 import ZoomableChartWrapper from './ZoomableChartWrapper';
 import { formatValue } from './utils';
+import { MathText, ModelOrder } from './MathText';
 
 export default function App() {
   const [activeTopic, setActiveTopic] = useState(1);
@@ -47,17 +49,20 @@ export default function App() {
     ses: {
       name: 'Simple Exponential Smoothing',
       icon: <Activity size={20} />,
-      description: 'SES is the foundation. It calculates a weighted average of past observations. High Alpha means it forgets the past quickly and chases recent noise. Low Alpha means it remembers the deep past, creating a smoother line.'
+      description: <>SES is the foundation. It calculates a weighted average of past observations. High <MathText>α</MathText> means it forgets the past quickly and chases recent noise. Low <MathText>α</MathText> means it remembers the deep past, creating a smoother line.</>,
+      datasetDescription: <>Stationary data (flat level plus high noise): a horizontal baseline subjected to large random fluctuations. This isolates how the level-smoothing parameter <MathText>α</MathText> controls responsiveness.</>
     },
     holt: {
       name: "Holt's Linear",
       icon: <TrendingUp size={20} />,
-      description: "Holt adds a 'Trend' component. When the underlying trend suddenly changes (a structural break), Beta determines how fast the model catches up to the new reality."
+      description: <>Holt adds a trend component. When the underlying trend suddenly changes, <MathText>β</MathText> determines how quickly the estimated slope catches up.</>,
+      datasetDescription: <>Structural break (changing trend): the series begins with a slow upward trend and then accelerates. This isolates how the trend-smoothing parameter <MathText>β</MathText> learns a new slope.</>
     },
     hw: {
       name: 'Holt-Winters',
       icon: <Waves size={20} />,
-      description: "Holt-Winters adds Seasonality. But what happens if the seasonal waves suddenly get bigger? Gamma determines how quickly the model learns the new amplitude of the wave."
+      description: <>Holt-Winters adds seasonality. When the seasonal amplitude changes, <MathText>γ</MathText> determines how quickly the model learns the new seasonal pattern.</>,
+      datasetDescription: <>Amplitude jump (changing seasonality): a 12-month cycle becomes three times larger halfway through. This isolates how the seasonal-smoothing parameter <MathText>γ</MathText> adapts.</>
     }
   };
 
@@ -128,7 +133,7 @@ export default function App() {
           {activeTopic === 2 && (
             <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
               <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
-                <span>2.1 ARMA(p, q) Basics</span>
+                <span>2.1 <ModelOrder name="ARMA">p, q</ModelOrder> Basics</span>
               </div>
               <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
                 <span>2.2 ARIMA vs HW Behaviours</span>
@@ -167,10 +172,32 @@ export default function App() {
               </div>
             </div>
           )}
-          <div className="nav-item locked">
-            <Lock size={16} />
+          <div className={`nav-item ${activeTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveTopic(4); setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer'}}>
+            <Activity size={18} />
             <span>4. Volatility: GARCH</span>
           </div>
+          {activeTopic === 4 && (
+            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>4.1 Introduction to ARCH</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>4.2 The <ModelOrder name="GARCH">p, q</ModelOrder> Model</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>4.3 Performance Validation</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>4.4 Value at Risk (VaR)</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>4.5 ARIMA-GARCH</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); setIsMobileMenuOpen(false); }} style={{cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem'}}>
+                <span>4.6 Extensions & Limits</span>
+              </div>
+            </div>
+          )}
           <div className="nav-item locked">
             <Lock size={16} />
             <span>5. VARIMA</span>
@@ -206,8 +233,8 @@ export default function App() {
       <main className="app-container">
         <header>
           <div>
-            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : 'Topic 3: Metrics & Validation'}</h1>
-            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : 'Understanding Errors, Evaluation, and Robustness'}</div>
+            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : 'Topic 4: Volatility & GARCH'}</h1>
+            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : 'Modeling Dynamic Risk and Market Shocks'}</div>
           </div>
           <button 
             className="theme-toggle" 
@@ -231,7 +258,7 @@ export default function App() {
                       {config.icon}
                       {config.name}
                     </h4>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                    <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: '1.6' }}>
                       {config.description}
                     </p>
                   </div>
@@ -241,7 +268,7 @@ export default function App() {
                 <div className="glass controls-panel">
                   <div className="commentary-box" style={{ height: '100%' }}>
                     <h4><Info size={18} /> Dataset Details</h4>
-                    <p>{modelData.dataset_description}</p>
+                    <p>{config.datasetDescription}</p>
                   </div>
                 </div>
               </div>
@@ -251,7 +278,7 @@ export default function App() {
                 {/* Alpha Slider */}
                 <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
                   <label>
-                    <span>Alpha (Level)</span>
+                    <span><MathText>α</MathText> (level)</span>
                     <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{alpha.toFixed(1)}</span>
                   </label>
                   <input 
@@ -265,7 +292,7 @@ export default function App() {
                 {(activeModel === 'holt' || activeModel === 'hw') && (
                   <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
                     <label>
-                      <span>Beta (Trend)</span>
+                      <span><MathText>β</MathText> (trend)</span>
                       <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{beta.toFixed(1)}</span>
                     </label>
                     <input 
@@ -280,7 +307,7 @@ export default function App() {
                 {activeModel === 'hw' && (
                   <div className="slider-container" style={{ flex: 1, minWidth: '150px' }}>
                     <label>
-                      <span>Gamma (Seasonality)</span>
+                      <span><MathText>γ</MathText> (seasonality)</span>
                       <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{gamma.toFixed(1)}</span>
                     </label>
                     <input 
@@ -375,6 +402,8 @@ export default function App() {
           <Topic2 activeTab={activeSubTopic} />
         ) : activeTopic === 3 ? (
           <Topic3 activeTab={activeSubTopic} />
+        ) : activeTopic === 4 ? (
+          <Topic4 activeTab={activeSubTopic} />
         ) : null}
         </div>
       </main>

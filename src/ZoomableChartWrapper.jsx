@@ -12,25 +12,41 @@ export default function ZoomableChartWrapper({ defaultDomain, maxTime, children 
   const [isDragging, setIsDragging] = useState(false);
   const [lastClientX, setLastClientX] = useState(0);
 
-  const handleZoomIn = () => {
+  const clampDomain = (left, right, range) => {
+    let newLeft = left;
+    let newRight = right;
+    if (newLeft < 0) {
+      newLeft = 0;
+      newRight = range;
+    }
+    if (newRight > maxTime) {
+      newRight = maxTime;
+      newLeft = maxTime - range;
+    }
+    return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
+  };
+
+  const handleZoomIn = (focalFraction = 0.5) => {
     setZoomDomain(prev => {
       const range = prev[1] - prev[0];
       if (range <= 15) return prev;
-      const shrink = range * 0.15;
-      return [prev[0] + shrink * 0.5, prev[1] - shrink * 0.5];
+      const newRange = range * 0.85;
+      const focal = prev[0] + range * focalFraction;
+      const newLeft = focal - newRange * focalFraction;
+      const newRight = newLeft + newRange;
+      return clampDomain(newLeft, newRight, newRange);
     });
   };
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (focalFraction = 0.5) => {
     setZoomDomain(prev => {
       const range = prev[1] - prev[0];
       if (range >= maxTime) return [0, maxTime];
-      const expand = range * 0.15;
-      let newLeft = prev[0] - expand * 0.5;
-      let newRight = prev[1] + expand * 0.5;
-      if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-      if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-      return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
+      const newRange = Math.min(maxTime, range * 1.15);
+      const focal = prev[0] + range * focalFraction;
+      const newLeft = focal - newRange * focalFraction;
+      const newRight = newLeft + newRange;
+      return clampDomain(newLeft, newRight, newRange);
     });
   };
 
@@ -85,11 +101,14 @@ export default function ZoomableChartWrapper({ defaultDomain, maxTime, children 
     const handleNativeWheel = (e) => {
       e.preventDefault();
       e.stopPropagation();
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const focalFraction = Math.max(0, Math.min(1, rect.width > 0 ? x / rect.width : 0.5));
       if (Math.abs(e.deltaY) > 0) {
         if (e.deltaY < 0) {
-          handleZoomInRef.current && handleZoomInRef.current();
+          handleZoomInRef.current && handleZoomInRef.current(focalFraction);
         } else {
-          handleZoomOutRef.current && handleZoomOutRef.current();
+          handleZoomOutRef.current && handleZoomOutRef.current(focalFraction);
         }
       }
     };
