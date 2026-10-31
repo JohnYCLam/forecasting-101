@@ -9,7 +9,7 @@ Working directory for ALL commands: `ts-forecasting-demo/` (this folder). Shell 
 | Path | What it is |
 |---|---|
 | `src/App.jsx` (~450 lines) | Shell, sidebar nav, Topic 1 inline. Holds `activeTopic` / `activeSubTopic` state |
-| `src/Topic2.jsx` ... `src/Topic5.jsx` (700-3400 lines) | One component per topic, switches on subtab (`activeTab`). Each has its own local `Layout` |
+| `src/Topic2.jsx` ... `src/Topic6.jsx` (700-3400 lines) | One component per topic, switches on subtab (`activeTab`). Each has its own local `Layout` |
 | `src/charts/` | Shared zoom/pan chart layer. The ONLY place zoom logic may live |
 | `src/MathText.jsx` | `MathText`, `ModelOrder` (KaTeX) |
 | `src/utils.js` | `formatValue` and helpers |

@@ -7,6 +7,7 @@ import Topic2 from './Topic2';
 import Topic3 from './Topic3';
 import Topic4 from './Topic4';
 import Topic5 from './Topic5';
+import Topic6 from './Topic6';
 import { ZoomableChartShell } from './charts';
 import { formatValue } from './utils';
 import { MathText, ModelOrder } from './MathText';
@@ -256,10 +257,36 @@ export default function App() {
               </div>
             </div>
           )}
-          <div className="nav-item locked">
-            <Lock size={16} />
+          <div className={`nav-item ${activeTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveTopic(6); setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
+            <Cpu size={18} />
             <span>6. Traditional ML</span>
           </div>
+          {activeTopic === 6 && (
+            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                <span>6.1 Supervised Learning Table</span>
+              </div>
+              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                <span>6.2 Tree Ensembles & Boosting</span>
+              </div>
+              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                <Lock size={14} />
+                <span>6.3 The Forecast Arena</span>
+              </div>
+              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                <Lock size={14} />
+                <span>6.4 Multi-Step Forecasting</span>
+              </div>
+              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                <Lock size={14} />
+                <span>6.5 Extrapolation & Drift</span>
+              </div>
+              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                <Lock size={14} />
+                <span>6.6 Probabilistic ML</span>
+              </div>
+            </div>
+          )}
           <div className="nav-item locked">
             <Lock size={16} />
             <span>7. Facebook Prophet</span>
@@ -287,8 +314,8 @@ export default function App() {
       <main className="app-container">
         <header>
           <div>
-            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : activeTopic === 4 ? 'Topic 4: Volatility & GARCH' : activeTopic === 5 ? 'Topic 5: VARIMA — Forecasting Connected Series' : ''}</h1>
-            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : ''}</div>
+            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : activeTopic === 4 ? 'Topic 4: Volatility & GARCH' : activeTopic === 5 ? 'Topic 5: VARIMA — Forecasting Connected Series' : activeTopic === 6 ? 'Topic 6: Traditional Machine Learning' : ''}</h1>
+            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : activeTopic === 6 ? 'Supervised Feature Engineering, Tree Ensembles, Extrapolation Limits, and Calibrated Uncertainty' : ''}</div>
           </div>
           <button
             className="theme-toggle"
@@ -458,6 +485,8 @@ export default function App() {
             <Topic4 activeTab={activeSubTopic} />
           ) : activeTopic === 5 ? (
             <Topic5 activeTab={activeSubTopic} />
+          ) : activeTopic === 6 ? (
+            <Topic6 activeTab={activeSubTopic} />
           ) : null}
         </div>
       </main>
