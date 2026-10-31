@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
+    "build": "npm run test:charts && vite build",
+    "lint": "oxlint && npm run test:charts",
+    "preview": "vite preview",
+    "test": "npm run test:unit && npm run test:charts",
+    "test:unit": "node --test src/charts/zoomMath.test.js",
+    "test:charts": "node scripts/check-chart-components.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

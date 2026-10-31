@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archived topic reviews & thread exports
+docs/archive/
+docs/thread-exports/
+
+# Cursor local plans
+.cursor/plans/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,115 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, BarChart, Bar, Cell, ReferenceArea, Scatter } from 'recharts';
-import { ZoomIn, ZoomOut, Info, BrainCircuit } from 'lucide-react';
-import ZoomableChartWrapper from './ZoomableChartWrapper';
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, BarChart, Bar, Cell, ReferenceArea } from 'recharts';
+import { Info, BrainCircuit } from 'lucide-react';
+import { ZoomableChartShell, SyncedDualChart, SyncedStackedChart } from './charts';
 import { formatValue } from './utils';
-import { MathText, MathOperator } from './MathText';
+import { MathText } from './MathText';
 
 function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
   const maxTime = chartData.length > 0 ? chartData[chartData.length - 1].time : 100;
-  const [zoomDomain, setZoomDomain] = useState([trainSize, maxTime]);
-  const [hoveredTime, setHoveredTime] = useState(maxTime / 2);
-  
-  const chartRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [lastClientX, setLastClientX] = useState(0);
-
-  useEffect(() => {
-    if (showTrain) {
-      setZoomDomain([0, maxTime]);
-    } else {
-      setZoomDomain([trainSize, maxTime]);
-    }
-  }, [showTrain, maxTime, trainSize]);
-
-  // Zoom handling functions
-  const handleZoomIn = (anchor = (zoomDomain[0] + zoomDomain[1]) / 2) => {
-    setZoomDomain(prev => {
-      const range = prev[1] - prev[0];
-      if (range <= 15) return prev;
-      const shrink = range * 0.15;
-      const anchorRatio = Math.max(0, Math.min(1, (anchor - prev[0]) / range));
-      return [prev[0] + shrink * anchorRatio, prev[1] - shrink * (1 - anchorRatio)];
-    });
-  };
-
-  const handleZoomOut = (anchor = (zoomDomain[0] + zoomDomain[1]) / 2) => {
-    setZoomDomain(prev => {
-      const range = prev[1] - prev[0];
-      if (range >= maxTime) return [0, maxTime];
-      const expand = range * 0.15;
-      const anchorRatio = Math.max(0, Math.min(1, (anchor - prev[0]) / range));
-      let newLeft = prev[0] - expand * anchorRatio;
-      let newRight = prev[1] + expand * (1 - anchorRatio);
-      if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-      if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-      return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
-    });
-  };
-
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setLastClientX(e.clientX);
-    document.body.style.cursor = 'grabbing';
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging && chartRef.current) {
-      const deltaX = e.clientX - lastClientX;
-      const width = chartRef.current.getBoundingClientRect().width;
-      const range = zoomDomain[1] - zoomDomain[0];
-      const pixelsPerUnit = width / range;
-      const domainShift = -(deltaX / pixelsPerUnit);
-      setZoomDomain(prev => {
-        let newLeft = prev[0] + domainShift;
-        let newRight = prev[1] + domainShift;
-        if (newLeft < 0) { newRight -= newLeft; newLeft = 0; }
-        if (newRight > maxTime) { newLeft -= (newRight - maxTime); newRight = maxTime; }
-        return [Math.max(0, newLeft), Math.min(maxTime, newRight)];
-      });
-      setLastClientX(e.clientX);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    document.body.style.cursor = 'default';
-  };
-
-  useEffect(() => {
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => window.removeEventListener('mouseup', handleMouseUp);
-  }, []);
-
-  const handleZoomInRef = useRef();
-  const handleZoomOutRef = useRef();
-  const hoveredTimeRef = useRef();
-
-  useEffect(() => {
-    handleZoomInRef.current = handleZoomIn;
-    handleZoomOutRef.current = handleZoomOut;
-    hoveredTimeRef.current = hoveredTime;
-  });
-
-  useEffect(() => {
-    const el = chartRef.current;
-    if (!el) return;
-    
-    const handleNativeWheel = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (Math.abs(e.deltaY) > 0) {
-        if (e.deltaY < 0) {
-          handleZoomInRef.current && handleZoomInRef.current(hoveredTimeRef.current);
-        } else {
-          handleZoomOutRef.current && handleZoomOutRef.current(hoveredTimeRef.current);
-        }
-      }
-    };
-    
-    el.addEventListener('wheel', handleNativeWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleNativeWheel);
-  }, []);
+  const defaultDomain = showTrain ? [0, maxTime] : [trainSize, maxTime];
 
   const formatXAxis = (val) => {
     const idx = Math.round(val);
@@ -122,79 +20,78 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
   const resDomain = [Math.floor(minRes * 1.1), Math.ceil(maxRes * 1.1)];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.25rem', opacity: 0.7 }}>
-        <button onClick={() => handleZoomOut()} title="Zoom Out" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-          <ZoomOut size={18} />
-        </button>
-        <button onClick={() => handleZoomIn()} title="Zoom In" style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
-          <ZoomIn size={18} />
-        </button>
-      </div>
-
-      <div 
-        ref={chartRef}
-        style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem', cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-      >
-        {/* Main Chart */}
-        <div style={{ flex: 2, minHeight: '300px' }}>
-          <h4 style={{ margin: '0 0 0.5rem 1rem', color: 'var(--text-main)', fontSize: '1rem' }}>Forecasts vs Actual</h4>
-          <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-            <LineChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }} onMouseMove={(e) => { if (e && e.activeLabel !== undefined && !isDragging) setHoveredTime(e.activeLabel); }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-              <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatXAxis} />
-              <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
-              <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(l) => `Time: ${formatXAxis(l)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
-              <Legend />
-              {trainSize > 0 && <ReferenceLine x={trainSize - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />}
-              <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="ModelA" name="Model A" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="ModelB" name="Model B" stroke="#ef4444" strokeWidth={2} dot={false} isAnimationActive={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Residual A */}
-        <div style={{ flex: 1, minHeight: '150px' }}>
-          <h4 style={{ margin: '0 0 0.5rem 1rem', color: '#3b82f6', fontSize: '1rem' }}>Model A Errors (Residuals)</h4>
-          <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-            <BarChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
-              <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
-              <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
-              <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
-              <ReferenceLine y={0} stroke="var(--text-main)" />
-              <Bar dataKey="ResidualA" name="Model A Error">
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.ResidualA > 0 ? '#3b82f6' : '#93c5fd'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Residual B */}
-        <div style={{ flex: 1, minHeight: '150px' }}>
-          <h4 style={{ margin: '0 0 0.5rem 1rem', color: '#ef4444', fontSize: '1rem' }}>Model B Errors (Residuals)</h4>
-          <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-            <BarChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
-              <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
-              <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
-              <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
-              <ReferenceLine y={0} stroke="var(--text-main)" />
-              <Bar dataKey="ResidualB" name="Model B Error">
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.ResidualB > 0 ? '#ef4444' : '#fca5a5'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
+    <SyncedStackedChart
+      key={showTrain ? 'full' : 'test'}
+      defaultDomain={defaultDomain}
+      minTime={0}
+      maxTime={maxTime}
+      minRange={15}
+      panels={[
+        {
+          key: 'forecast',
+          title: 'Forecasts vs Actual',
+          flex: 2,
+          minHeight: '300px',
+          content: (zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <LineChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatXAxis} />
+                <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(l) => `Time: ${formatXAxis(l)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <Legend />
+                {trainSize > 0 && <ReferenceLine x={trainSize - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />}
+                <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="ModelA" name="Model A" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="ModelB" name="Model B" stroke="#ef4444" strokeWidth={2} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ),
+        },
+        {
+          key: 'resA',
+          title: 'Model A Errors (Residuals)',
+          minHeight: '150px',
+          content: (zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <BarChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
+                <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <ReferenceLine y={0} stroke="var(--text-main)" />
+                <Bar dataKey="ResidualA" name="Model A Error">
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-a-${index}`} fill={entry.ResidualA > 0 ? '#3b82f6' : '#93c5fd'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+        },
+        {
+          key: 'resB',
+          title: 'Model B Errors (Residuals)',
+          minHeight: '150px',
+          content: (zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <BarChart data={chartData} syncId="syncCharts" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
+                <YAxis domain={resDomain} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={() => ''} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <ReferenceLine y={0} stroke="var(--text-main)" />
+                <Bar dataKey="ResidualB" name="Model B Error">
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-b-${index}`} fill={entry.ResidualB > 0 ? '#ef4444' : '#fca5a5'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+        },
+      ]}
+    />
   );
 }
 
@@ -310,10 +207,10 @@ export default function Topic3({ activeTab = 1 }) {
     const commentary = (
       <div style={{ fontSize: '0.95rem' }}>
         <p>
-          <strong>MAE (Mean Absolute Error)</strong> uses <MathText><MathOperator>MAE</MathOperator> = (1/n) Σ |e<sub>t</sub>|</MathText>. It treats all absolute errors equally. Model A wins because its baseline is accurate 95% of the time.
+          <strong>MAE (Mean Absolute Error)</strong> uses <MathText tex="\operatorname{MAE} = \frac{1}{n} \sum_{t=1}^n |e_t|" />. It treats all absolute errors equally. Model A wins because its baseline is accurate 95% of the time.
         </p>
         <p>
-          <strong>RMSE (Root Mean Squared Error)</strong> uses <MathText><MathOperator>RMSE</MathOperator> = √[(1/n) Σ e<sub>t</sub><sup>2</sup>]</MathText>, so large errors receive disproportionate weight. Model A loses because it misses three large events; Model B predicts those events despite a less accurate daily baseline.
+          <strong>RMSE (Root Mean Squared Error)</strong> uses <MathText tex="\operatorname{RMSE} = \sqrt{\frac{1}{n} \sum_{t=1}^n e_t^2}" /> so large errors receive disproportionate weight. Model A loses because it misses three large events; Model B predicts those events despite a less accurate daily baseline.
         </p>
         <hr style={{ borderColor: 'var(--border)', margin: '1rem 0' }} />
         <p><strong>Real-World Use Cases:</strong></p>
@@ -419,7 +316,7 @@ export default function Topic3({ activeTab = 1 }) {
     const commentary = (
       <div style={{ fontSize: '0.9rem' }}>
         <p style={{ margin: '0 0 0.5rem 0' }}>
-          <strong>What is MAPE?</strong> Mean Absolute Percentage Error averages <MathText>|(y<sub>t</sub> − ŷ<sub>t</sub>)/y<sub>t</sub>| × 100%</MathText>.
+          <strong>What is MAPE?</strong> Mean Absolute Percentage Error averages <MathText tex="\left|\frac{y_t - \hat{y}_t}{y_t}\right| \times 100\%" />.
         </p>
         <p style={{ margin: '0 0 0.5rem 0' }}>
           <strong>Why use percentages?</strong> MAE and RMSE are tied to the original units (e.g., dollars, quantities). If you want to compare accuracy across series with vastly different scales (a $10/day store vs. a $1,000,000/day store), MAE is useless. MAPE solves this scale problem.
@@ -431,7 +328,7 @@ export default function Topic3({ activeTab = 1 }) {
           <strong>sMAPE (Symmetric MAPE):</strong> sMAPE scales absolute error by the average magnitude of actual and forecast values. Both MAPE and sMAPE become unstable when that denominator approaches zero.
         </p>
         <p style={{ margin: 0 }}>
-          <strong>The Fix: wMAPE (Weighted MAPE)</strong> uses <MathText>Σ |y<sub>t</sub> − ŷ<sub>t</sub>| / Σ |y<sub>t</sub>|</MathText>. It relies on total volume instead of dividing by each individual observation, avoiding pointwise division by zero.
+          <strong>The Fix: wMAPE (Weighted MAPE)</strong> uses <MathText tex="\operatorname{wMAPE} = \frac{\sum_{t=1}^n |y_t - \hat{y}_t|}{\sum_{t=1}^n |y_t|}" />. It relies on total volume instead of dividing by each individual observation, avoiding pointwise division by zero.
         </p>
       </div>
     );
@@ -447,13 +344,18 @@ export default function Topic3({ activeTab = 1 }) {
     const mainChart = (
       <div style={{ flex: 2, minHeight: '220px' }}>
         <h4 style={{ margin: '0 0 0.5rem 1rem', color: 'var(--text-main)', fontSize: '1rem' }}>Forecast vs Actual (Baseline Shift)</h4>
-        <ZoomableChartWrapper defaultDomain={[0, chartData.length > 0 ? chartData.length - 1 : 100]} maxTime={chartData.length > 0 ? chartData.length - 1 : 100}>
-          {(zoomDomain) => (
+        <ZoomableChartShell
+          defaultDomain={[0, chartData.length > 0 ? chartData.length - 1 : 100]}
+          maxTime={chartData.length > 0 ? chartData.length - 1 : 100}
+          data={chartData}
+          dataKeys={['Actual', 'InSample', 'Forecast']}
+        >
+          {(zoomDomain, computeYDomain, autoYDomain) => (
             <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                 <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                <YAxis domain={[-30, 80]} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                <YAxis domain={autoYDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                 <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                 <Legend />
                 <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
@@ -464,7 +366,7 @@ export default function Topic3({ activeTab = 1 }) {
               </LineChart>
             </ResponsiveContainer>
           )}
-        </ZoomableChartWrapper>
+        </ZoomableChartShell>
       </div>
     );
 
@@ -556,7 +458,7 @@ export default function Topic3({ activeTab = 1 }) {
           <strong>The Solution:</strong> We create multiple "folds" sequentially. We train on the past, test on the immediate future. Then we <em>walk forward</em>, add the recent data to our training set, and test on the next block of the future. The average error across all folds is our true, robust model performance.
         </p>
         <p style={{ margin: 0 }}>
-          <strong>Why is this necessary?</strong> Fold 1 has low error (<MathText><MathOperator>RMSE</MathOperator> ≈ 4.5</MathText>) because the test block follows a stable trend. Folds 2 and 3 encounter changed behavior and produce much larger errors (<MathText><MathOperator>RMSE</MathOperator> ≈ 16–29</MathText>). Walk-forward validation prevents model selection from depending on one lucky split.
+          <strong>Why is this necessary?</strong> Fold 1 has low error (<MathText tex="\operatorname{RMSE} \approx 4.5" />) because the test block follows a stable trend. Folds 2 and 3 encounter changed behavior and produce much larger errors (<MathText tex="\operatorname{RMSE} \approx 16\text{--}29" />). Walk-forward validation prevents model selection from depending on one lucky split.
         </p>
       </div>
     );
@@ -592,13 +494,13 @@ export default function Topic3({ activeTab = 1 }) {
     const chart = (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ width: '100%', height: '320px' }}>
-          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-            {(zoomDomain) => (
+          <ZoomableChartShell defaultDomain={[0, xMax]} maxTime={xMax} data={displayData} dataKeys={['Actual', 'InSample', 'Forecast']}>
+            {(zoomDomain, computeYDomain, autoYDomain) => (
               <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
                 <LineChart data={displayData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                  <YAxis domain={autoYDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
                   <Legend verticalAlign="top" />
                   
@@ -611,7 +513,7 @@ export default function Topic3({ activeTab = 1 }) {
                 </LineChart>
               </ResponsiveContainer>
             )}
-          </ZoomableChartWrapper>
+          </ZoomableChartShell>
         </div>
         {renderLegend()}
       </div>
@@ -692,12 +594,12 @@ export default function Topic3({ activeTab = 1 }) {
                 <tr key={idx} style={getRowStyle(f)}>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold {f}</td>
                   
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText>t = 0</MathText> to <MathText>t = {exp.test_start - 1}</MathText></td>
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText>t = {exp.test_start}</MathText> to <MathText>t = {exp.test_end - 1}</MathText></td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText tex="t = 0" /> to <MathText tex={`t = ${exp.test_start - 1}`} /></td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText tex={`t = ${exp.test_start}`} /> to <MathText tex={`t = ${exp.test_end - 1}`} /></td>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: exp.metrics.RMSE <= sld.metrics.RMSE ? '#10b981' : 'inherit', fontWeight: exp.metrics.RMSE <= sld.metrics.RMSE ? 'bold' : 'normal' }}>{Number(exp.metrics.RMSE).toFixed(2)}</td>
                   
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText>t = {sld.test_start - window_size}</MathText> to <MathText>t = {sld.test_start - 1}</MathText></td>
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText>t = {sld.test_start}</MathText> to <MathText>t = {sld.test_end - 1}</MathText></td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText tex={`t = ${sld.test_start - window_size}`} /> to <MathText tex={`t = ${sld.test_start - 1}`} /></td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText tex={`t = ${sld.test_start}`} /> to <MathText tex={`t = ${sld.test_end - 1}`} /></td>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: sld.metrics.RMSE < exp.metrics.RMSE ? '#10b981' : 'inherit', fontWeight: sld.metrics.RMSE < exp.metrics.RMSE ? 'bold' : 'normal' }}>{Number(sld.metrics.RMSE).toFixed(2)}</td>
                 </tr>
               );
@@ -714,17 +616,17 @@ export default function Topic3({ activeTab = 1 }) {
         </p>
         <ul style={{ paddingLeft: '1.2rem', margin: '0 0 0.5rem 0' }}>
           <li style={{ marginBottom: '0.25rem' }}><strong>Expanding Window:</strong> Trains on ALL available data from the beginning of time up to the cutoff. <em>Real-world use case:</em> Predicting stable macroeconomic trends (e.g. GDP growth) where long-term historical context makes the model smarter.</li>
-          <li><strong>Sliding Window:</strong> Forgets old data. Only trains on the most recent <MathText>N</MathText> periods. <em>Real-world use case:</em> High-frequency stock trading or social media trends, where past data quickly becomes obsolete due to shifting market regimes or viral topics.</li>
+          <li><strong>Sliding Window:</strong> Forgets old data. Only trains on the most recent <MathText tex="N" /> periods. <em>Real-world use case:</em> High-frequency stock trading or social media trends, where past data quickly becomes obsolete due to shifting market regimes or viral topics.</li>
         </ul>
         <p style={{ margin: 0 }}>
-          <strong>The Demo:</strong> At <MathText>t = 100</MathText>, the data undergoes a regime shift. In Fold 1, both strategies train on <MathText>t = 0, …, 39</MathText> and produce identical results. By Folds 3 and 4, the expanding window remains influenced by the old regime, while the sliding window discards it and adapts.
+          <strong>The Demo:</strong> At <MathText tex="t = 100" />, the data undergoes a regime shift. In Fold 1, both strategies train on <MathText tex="t = 0, \ldots, 39" /> and produce identical results. By Folds 3 and 4, the expanding window remains influenced by the old regime, while the sliding window discards it and adapts.
         </p>
       </div>
     );
 
     const datasetBox = (
       <p>
-        A synthetic series of 200 observations with a regime shift at <MathText>t = 100</MathText>. <br/><br/>
+        A synthetic series of 200 observations with a regime shift at <MathText tex="t = 100" />. <br/><br/>
         Click the fold buttons to visualize what the two strategies are "looking at".
       </p>
     );
@@ -753,51 +655,50 @@ export default function Topic3({ activeTab = 1 }) {
 
     const chart = (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ width: '100%', height: '500px', display: 'flex', flexDirection: 'column' }}>
-          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-            {(zoomDomain) => (
-              <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', gap: '2.5rem' }}>
-                <div style={{ flex: 1, position: 'relative' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 1rem', color: '#3b82f6', fontSize: '0.9rem' }}>Expanding Strategy</h4>
-                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                    <LineChart data={displayData} syncId="tab4Sync" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                      <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
-                      <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
-                      <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
-                      
-                      <ReferenceArea x1={0} x2={activeExp.test_start} fill="#3b82f6" fillOpacity={0.05} ifOverflow="hidden" />
-                      <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#10b981" fillOpacity={0.15} ifOverflow="hidden" />
-                      <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#ef4444' }} />
-                      
-                      <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="ExpInSample" name="Expanding Train" stroke="#3b82f6" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="ExpForecast" name="Expanding Forecast" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ flex: 1, position: 'relative' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 1rem', color: '#f97316', fontSize: '0.9rem' }}>Sliding Strategy</h4>
-                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                    <LineChart data={displayData} syncId="tab4Sync" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                      <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                      <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
-                      <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
-                      
-                      <ReferenceArea x1={activeSld.test_start - 40} x2={activeSld.test_start} fill="#f97316" fillOpacity={0.15} ifOverflow="hidden" />
-                      <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#10b981" fillOpacity={0.15} ifOverflow="hidden" />
-                      <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#ef4444' }} />
-                      
-                      <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="SldInSample" name="Sliding Train" stroke="#f97316" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="SldForecast" name="Sliding Forecast" stroke="#f97316" strokeWidth={3} dot={false} isAnimationActive={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </ZoomableChartWrapper>
+        <div style={{ width: '100%', height: '500px' }}>
+          <SyncedDualChart
+            defaultDomain={[0, xMax]}
+            maxTime={xMax}
+            gap="2.5rem"
+            top={{
+              title: 'Expanding Strategy',
+              content: (zoomDomain) => (
+                <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                  <LineChart data={displayData} syncId="tab4Sync" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                    <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
+                    <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                    <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
+                    <ReferenceArea x1={0} x2={activeExp.test_start} fill="#3b82f6" fillOpacity={0.05} ifOverflow="hidden" />
+                    <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#10b981" fillOpacity={0.15} ifOverflow="hidden" />
+                    <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#ef4444' }} />
+                    <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="ExpInSample" name="Expanding Train" stroke="#3b82f6" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="ExpForecast" name="Expanding Forecast" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ),
+            }}
+            bottom={{
+              title: 'Sliding Strategy',
+              content: (zoomDomain) => (
+                <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+                  <LineChart data={displayData} syncId="tab4Sync" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                    <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
+                    <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                    <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
+                    <ReferenceArea x1={activeSld.test_start - 40} x2={activeSld.test_start} fill="#f97316" fillOpacity={0.15} ifOverflow="hidden" />
+                    <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#10b981" fillOpacity={0.15} ifOverflow="hidden" />
+                    <ReferenceLine x={100} stroke="#ef4444" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#ef4444' }} />
+                    <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="SldInSample" name="Sliding Train" stroke="#f97316" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="SldForecast" name="Sliding Forecast" stroke="#f97316" strokeWidth={3} dot={false} isAnimationActive={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ),
+            }}
+          />
         </div>
         {renderLegend()}
       </div>

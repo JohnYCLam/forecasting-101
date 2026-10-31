@@ -73,17 +73,19 @@ const childrenToTex = (children) => React.Children.toArray(children).map((child)
   return childrenToTex(child.props.children);
 }).join('');
 
-const RenderedMath = ({ tex }) => {
+const RenderedMath = ({ tex, displayMode = false }) => {
   const html = katex.renderToString(tex, {
     throwOnError: false,
     strict: 'ignore',
+    displayMode,
     output: 'html'
   });
-  return <span className="inline-math" dangerouslySetInnerHTML={{ __html: html }} />;
+  const Tag = displayMode ? 'div' : 'span';
+  return <Tag className="inline-math" dangerouslySetInnerHTML={{ __html: html }} />;
 };
 
-export const MathText = ({ children, tex }) => (
-  <RenderedMath tex={tex ?? childrenToTex(children)} />
+export const MathText = ({ children, tex, displayMode }) => (
+  <RenderedMath tex={tex ?? childrenToTex(children)} displayMode={displayMode} />
 );
 
 export const MathOperator = ({ children }) => children;

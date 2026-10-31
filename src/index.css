@@ -64,6 +64,12 @@ body {
   grid-template-columns: 280px 1fr;
   width: 100%;
   min-height: 100vh;
+  transition: grid-template-columns 0.3s ease;
+  position: relative;
+}
+
+.main-layout.sidebar-collapsed {
+  grid-template-columns: 0 1fr;
 }
 
 /* Glassmorphism utility */
@@ -86,6 +92,55 @@ body {
   padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  transition: padding 0.3s ease, opacity 0.25s ease, border-color 0.3s ease;
+}
+
+.sidebar.collapsed {
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-color: transparent;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.sidebar-collapse-btn,
+.sidebar-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.sidebar-collapse-btn:hover,
+.sidebar-expand-btn:hover {
+  background: var(--nav-hover);
+  color: var(--text-main);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.sidebar-expand-btn {
+  position: fixed;
+  top: 1.25rem;
+  left: 1rem;
+  z-index: 50;
+  box-shadow: var(--shadow);
 }
 
 .brand {
@@ -98,6 +153,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+}
+
+.sidebar-header .brand {
+  margin-bottom: 0;
 }
 
 .nav-menu {
@@ -179,6 +239,10 @@ h1 {
 }
 .theme-toggle:hover {
   background: var(--primary-bg);
+}
+
+.inline-math .katex-display {
+  margin: 0.2em 0;
 }
 
 .dashboard {
@@ -348,6 +412,9 @@ input[type=range] {
     display: flex;
     flex-direction: column;
   }
+  .main-layout.sidebar-collapsed {
+    grid-template-columns: unset;
+  }
   .sidebar {
     position: fixed;
     top: 0;
@@ -361,9 +428,20 @@ input[type=range] {
     padding: 1.5rem 1rem;
     display: flex;
     flex-direction: column;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sidebar.collapsed {
+    padding: 1.5rem 1rem;
+    opacity: 1;
+    pointer-events: auto;
+    border-color: var(--border);
   }
   .sidebar.mobile-open {
     left: 0;
+  }
+  .sidebar-expand-btn {
+    display: none !important;
   }
   .mobile-header {
     display: flex;

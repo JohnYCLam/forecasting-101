@@ -1,0 +1,29 @@
+---
+description: Force zoomable time-series charts to use src/charts shared shells
+globs: ts-forecasting-demo/src/**/*.{jsx,js,tsx,ts}
+alwaysApply: false
+---
+
+# Shared chart components (required)
+
+Any **zoomable / pannable time-series chart** in this demo must use the shared layer in `src/charts/`.
+
+## Use
+
+```jsx
+import { ZoomableChartShell, SyncedDualChart, SyncedStackedChart } from './charts';
+```
+
+- **One chart** → `ZoomableChartShell`
+- **Two stacked synced charts** → `SyncedDualChart`
+- **Three+ stacked synced charts** → `SyncedStackedChart`
+
+## Do not
+
+- Reimplement `handleZoomIn` / `handleZoomOut` / `handleResetZoom` / `zoomDomain` state outside `src/charts/`
+- Import `ZoomIn` / `ZoomOut` from `lucide-react` for chart chrome (controls live in `ChartZoomControls`)
+- Mount two sibling `ZoomableChartShell`s that should pan/zoom together — use `SyncedDualChart` / `SyncedStackedChart`
+
+Non-zoom charts (e.g. static news-impact curves, contribution bar charts) may use Recharts directly.
+
+Enforced by `npm run test:charts` (also runs on `npm run build` and `npm run lint`).

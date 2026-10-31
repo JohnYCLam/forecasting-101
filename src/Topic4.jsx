@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea, Area, ComposedChart, Scatter, BarChart, Bar, Cell } from 'recharts';
 import { Info, BrainCircuit } from 'lucide-react';
-import ZoomableChartWrapper from './ZoomableChartWrapper';
+import { ZoomableChartShell, SyncedDualChart } from './charts';
 import { formatValue } from './utils';
-import { MathText, MathOperator, ModelOrder } from './MathText';
+import { MathText, ModelOrder } from './MathText';
 
 const comparisonTableStyle = {
   width: '100%',
@@ -230,7 +230,7 @@ export default function Topic4({ activeTab = 1 }) {
           <>
             <p><strong>What this tab is showing:</strong> ARCH forecasts risk size (volatility), then converts that risk into return uncertainty bands around the mean.</p>
             <p><strong>How to interpret quickly:</strong> wider upper/lower distance means higher expected turbulence; narrower distance means calmer regime. Bands are probabilistic, so occasional breaches are expected.</p>
-            <p><strong>Why test-period bands converge:</strong> with stationary ARCH assumptions (stable parameters, finite long-run variance, no future shocks known), the minimum-MSE multi-step forecast reverts toward long-run variance <MathText>σ̄²</MathText>, so out-of-sample band width gradually stabilizes.</p>
+            <p><strong>Why test-period bands converge:</strong> with stationary ARCH assumptions (stable parameters, finite long-run variance, no future shocks known), the minimum-MSE multi-step forecast reverts toward long-run variance <MathText tex="\bar{\sigma}^2" />, so out-of-sample band width gradually stabilizes.</p>
           </>
         )}
       </div>
@@ -238,11 +238,11 @@ export default function Topic4({ activeTab = 1 }) {
 
     const archGuideCard = tab1View === 'forecast' ? (
       <div style={{ fontSize: '0.92rem' }}>
-        <p><strong>Step 1 - ARCH output:</strong> the model predicts conditional volatility <MathText>σₜ</MathText> and mean <MathText>μₜ</MathText>.</p>
-        <p><strong>Step 2 - Build bounds:</strong> <MathText>Upperₜ = μₜ + σₜ</MathText> and <MathText>Lowerₜ = μₜ − σₜ</MathText>.</p>
-        <p><strong>Step 3 - Map charts:</strong> top-chart amber train bounds come from one-step <MathText>σ<sub>t</sub></MathText>; red dashed test bounds come from multi-step <MathText>σ<sub>t+h|t</sub></MathText> shown below.</p>
+        <p><strong>Step 1 - ARCH output:</strong> the model predicts conditional volatility <MathText tex="\sigma_t" /> and mean <MathText tex="\mu_t" />.</p>
+        <p><strong>Step 2 - Build bounds:</strong> <MathText tex="\text{Upper}_t = \mu_t + \sigma_t" /> and <MathText tex="\text{Lower}_t = \mu_t - \sigma_t" />.</p>
+        <p><strong>Step 3 - Map charts:</strong> top-chart amber train bounds come from one-step <MathText tex="\sigma_t" />; red dashed test bounds come from multi-step <MathText tex="\sigma_{t+h \mid t}" /> shown below.</p>
         <p><strong>Step 4 - Read width:</strong> wider gap means higher predicted risk; narrower gap means calmer expected moves.</p>
-        <p><strong>Step 5 - Compare with realized magnitude:</strong> <MathText>|rₜ − μₜ|</MathText> is plotted as a proxy for the realized shock size. It is only a proxy because the latent <MathText>σₜ</MathText> is not observed: one realized return is a noisy draw whose magnitude also depends on the random innovation. Under a stable innovation distribution, larger <MathText>σₜ</MathText> raises the expected absolute shock, but the two need not match at every date.</p>
+        <p><strong>Step 5 - Compare with realized magnitude:</strong> <MathText tex="|r_t - \mu_t|" /> is plotted as a proxy for the realized shock size. It is only a proxy because the latent <MathText tex="\sigma_t" /> is not observed: one realized return is a noisy draw whose magnitude also depends on the random innovation. Under a stable innovation distribution, larger <MathText tex="\sigma_t" /> raises the expected absolute shock, but the two need not match at every date.</p>
       </div>
     ) : null;
 
@@ -251,107 +251,119 @@ export default function Topic4({ activeTab = 1 }) {
     );
 
     const chart = tab1View === 'forecast' ? (
-      <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
-        <div style={{ width: '100%', height: '560px', padding: '0.25rem 0.5rem 0.75rem 0.25rem' }}>
-          <ZoomableChartWrapper defaultDomain={[0, forecastMax]} maxTime={forecastMax}>
-            {(zoomDomain) => (
-              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                <div style={{ flex: 0.62, minHeight: '320px' }}>
-                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                    <ComposedChart data={forecastData} margin={{ top: 12, right: 36, left: 18, bottom: 4 }} style={{ pointerEvents: 'auto' }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                      <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} hide />
-                      <YAxis yAxisId="left" domain={forecastDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
-                      <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
-                      <Legend />
-                      <ReferenceLine x={tabData.train_size} stroke="#111827" strokeDasharray="4 4" />
-                      <ReferenceLine y={tabData.mu} yAxisId="left" stroke="#111827" strokeDasharray="3 3" />
-                      <ReferenceLine y={tabData.mu + tabData.unconditional_vol} yAxisId="left" stroke="#6b7280" strokeDasharray="4 4" />
-                      <ReferenceLine y={tabData.mu - tabData.unconditional_vol} yAxisId="left" stroke="#6b7280" strokeDasharray="4 4" />
-                      <Line yAxisId="left" type="monotone" dataKey="TrainReturn" stroke="var(--text-muted)" strokeOpacity={0.55} strokeWidth={0.9} dot={false} name="Train returns" isAnimationActive={false} />
-                      <Line yAxisId="left" type="monotone" dataKey="TestReturn" stroke="#111827" strokeWidth={1.2} dot={false} name="Test returns" isAnimationActive={false} />
-                      <Line yAxisId="left" type="step" dataKey="PointMean" stroke="#111827" strokeWidth={2} dot={false} name="Point mean forecast" isAnimationActive={false} />
-                      <Line yAxisId="left" type="stepAfter" dataKey="OneStepUpper" stroke="#d97706" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" isAnimationActive={false} />
-                      <Line yAxisId="left" type="stepAfter" dataKey="OneStepLower" stroke="#d97706" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" legendType="none" isAnimationActive={false} />
-                      <Line yAxisId="left" type="stepAfter" dataKey="MultiUpper" stroke="#ef4444" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" isAnimationActive={false} />
-                      <Line yAxisId="left" type="stepAfter" dataKey="MultiLower" stroke="#ef4444" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" legendType="none" isAnimationActive={false} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{ flex: 0.38, minHeight: '180px' }}>
-                  <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                    <LineChart data={forecastData} margin={{ top: 4, right: 36, left: 18, bottom: 14 }} style={{ pointerEvents: 'auto' }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                      <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                      <YAxis domain={sigmaDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
-                      <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
-                      <Legend />
-                      <ReferenceLine x={tabData.train_size} stroke="#111827" strokeDasharray="4 4" />
-                      <Line type="monotone" dataKey="RealizedAbs" stroke="var(--text-muted)" strokeWidth={1} dot={false} name="Realized |rₜ − μₜ| proxy" isAnimationActive={false} />
-                      <Line type="monotone" dataKey="OneStepSigma" stroke="#f59e0b" strokeWidth={1.7} dot={false} name="One-step σₜ (train only)" isAnimationActive={false} />
-                      <Line type="monotone" dataKey="MultiStepSigma" stroke="#7c3aed" strokeWidth={2} strokeDasharray="5 3" dot={false} name="Multi-step σₜ₊ₕ|ₜ (converging)" isAnimationActive={false} />
-                      <ReferenceLine y={tabData.unconditional_vol} stroke="#6b7280" strokeDasharray="4 4" label={{ value: "Long-run σ̄", fill: "var(--text-muted)", position: "insideTopRight" }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </ZoomableChartWrapper>
-        </div>
-      </div>
-    ) : (
-      <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-        {(zoomDomain) => (
-          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '0.9rem', overflow: 'hidden' }}>
-            <div style={{ flex: 1, minHeight: '260px', padding: '0.2rem 0.45rem 0.55rem 0.2rem' }}>
-              <h4 style={{ margin: '0.2rem 0 0.45rem 0', textAlign: 'center' }}>Real White Noise</h4>
+      <div style={{ width: '100%', height: '560px', padding: '0.25rem 0.5rem 0.75rem 0.25rem' }}>
+        <SyncedDualChart
+          defaultDomain={[0, forecastMax]}
+          maxTime={forecastMax}
+          gap="0.7rem"
+          top={{
+            flex: 0.62,
+            minHeight: '320px',
+            content: (zoomDomain) => (
               <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                <ComposedChart data={chartData} syncId={`tab1-${tab1View}`} margin={{ top: 12, right: 36, left: 18, bottom: 4 }} style={{ pointerEvents: 'auto' }}>
+                <ComposedChart data={forecastData} margin={{ top: 12, right: 36, left: 18, bottom: 4 }} style={{ pointerEvents: 'auto' }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} hide />
-                  <YAxis domain={tab1View === 'returns' ? alignedReturnDomain : alignedVarDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
+                  <YAxis yAxisId="left" domain={forecastDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
-                  {tab1View === 'returns' && <Line type="monotone" dataKey="RealReturn" stroke="#3b82f6" strokeWidth={1.5} dot={false} name="Real White Noise Returns" isAnimationActive={false} />}
-                  {tab1View === 'variance' && <Area type="step" dataKey="RealVar" fill="#3b82f6" stroke="#3b82f6" fillOpacity={0.25} name="Real Rolling Variance (20d)" isAnimationActive={false} />}
+                  <ReferenceLine x={tabData.train_size} stroke="#111827" strokeDasharray="4 4" />
+                  <ReferenceLine y={tabData.mu} yAxisId="left" stroke="#111827" strokeDasharray="3 3" />
+                  <ReferenceLine y={tabData.mu + tabData.unconditional_vol} yAxisId="left" stroke="#6b7280" strokeDasharray="4 4" />
+                  <ReferenceLine y={tabData.mu - tabData.unconditional_vol} yAxisId="left" stroke="#6b7280" strokeDasharray="4 4" />
+                  <Line yAxisId="left" type="monotone" dataKey="TrainReturn" stroke="var(--text-muted)" strokeOpacity={0.55} strokeWidth={0.9} dot={false} name="Train returns" isAnimationActive={false} />
+                  <Line yAxisId="left" type="monotone" dataKey="TestReturn" stroke="#111827" strokeWidth={1.2} dot={false} name="Test returns" isAnimationActive={false} />
+                  <Line yAxisId="left" type="step" dataKey="PointMean" stroke="#111827" strokeWidth={2} dot={false} name="Point mean forecast" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="OneStepUpper" stroke="#d97706" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="OneStepLower" stroke="#d97706" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" legendType="none" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="MultiUpper" stroke="#ef4444" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="MultiLower" stroke="#ef4444" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" legendType="none" isAnimationActive={false} />
                 </ComposedChart>
               </ResponsiveContainer>
-            </div>
-            <div style={{ flex: 1, minHeight: '260px', padding: '0.2rem 0.45rem 0.55rem 0.2rem' }}>
-              <h4 style={{ margin: '0.2rem 0 0.45rem 0', textAlign: 'center' }}>Fake White Noise (ARCH process)</h4>
+            ),
+          }}
+          bottom={{
+            flex: 0.38,
+            minHeight: '180px',
+            content: (zoomDomain) => (
               <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
-                <ComposedChart data={chartData} syncId={`tab1-${tab1View}`} margin={{ top: 12, right: 36, left: 18, bottom: 14 }} style={{ pointerEvents: 'auto' }}>
+                <LineChart data={forecastData} margin={{ top: 4, right: 36, left: 18, bottom: 14 }} style={{ pointerEvents: 'auto' }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                  <YAxis domain={tab1View === 'returns' ? alignedReturnDomain : alignedVarDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
+                  <YAxis domain={sigmaDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
-                  {tab1View === 'variance' && fakeHighClusterWindow && (
-                    <ReferenceArea
-                      x1={fakeHighClusterWindow.start}
-                      x2={fakeHighClusterWindow.end}
-                      fill="#ef4444"
-                      fillOpacity={0.14}
-                      label={{ value: 'Persistent high-vol regime', position: 'insideTop', fill: '#b91c1c' }}
-                    />
-                  )}
-                  {tab1View === 'variance' && fakeLowClusterWindow && (
-                    <ReferenceArea
-                      x1={fakeLowClusterWindow.start}
-                      x2={fakeLowClusterWindow.end}
-                      fill="#3b82f6"
-                      fillOpacity={0.12}
-                      label={{ value: 'Persistent low-vol regime', position: 'insideBottom', fill: '#1d4ed8' }}
-                    />
-                  )}
-                  {tab1View === 'returns' && <Line type="monotone" dataKey="FakeReturn" stroke="#ef4444" strokeWidth={1.5} dot={false} name="Fake White Noise Returns" isAnimationActive={false} />}
-                  {tab1View === 'variance' && <Area type="step" dataKey="FakeVar" fill="#ef4444" stroke="#ef4444" fillOpacity={0.25} name="Fake Rolling Variance (20d)" isAnimationActive={false} />}
-                </ComposedChart>
+                  <ReferenceLine x={tabData.train_size} stroke="#111827" strokeDasharray="4 4" />
+                  <Line type="monotone" dataKey="RealizedAbs" stroke="var(--text-muted)" strokeWidth={1} dot={false} name="Realized |r_t - μ_t| proxy" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="OneStepSigma" stroke="#f59e0b" strokeWidth={1.7} dot={false} name="One-step σ_t (train only)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="MultiStepSigma" stroke="#7c3aed" strokeWidth={2} strokeDasharray="5 3" dot={false} name="Multi-step σ_{t+h|t} (converging)" isAnimationActive={false} />
+                  <ReferenceLine y={tabData.unconditional_vol} stroke="#6b7280" strokeDasharray="4 4" label={{ value: "Long-run σ", fill: "var(--text-muted)", position: "insideTopRight" }} />
+                </LineChart>
               </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-      </ZoomableChartWrapper>
+            ),
+          }}
+        />
+      </div>
+    ) : (
+      <SyncedDualChart
+        defaultDomain={[0, xMax]}
+        maxTime={xMax}
+        gap="0.9rem"
+        top={{
+          title: 'Real White Noise',
+          titleAlign: 'center',
+          minHeight: '260px',
+          content: (zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <ComposedChart data={chartData} syncId={`tab1-${tab1View}`} margin={{ top: 12, right: 36, left: 18, bottom: 4 }} style={{ pointerEvents: 'auto' }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} hide />
+                <YAxis domain={tab1View === 'returns' ? alignedReturnDomain : alignedVarDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <Legend />
+                {tab1View === 'returns' && <Line type="monotone" dataKey="RealReturn" stroke="#3b82f6" strokeWidth={1.5} dot={false} name="Real White Noise Returns" isAnimationActive={false} />}
+                {tab1View === 'variance' && <Area type="step" dataKey="RealVar" fill="#3b82f6" stroke="#3b82f6" fillOpacity={0.25} name="Real Rolling Variance (20d)" isAnimationActive={false} />}
+              </ComposedChart>
+            </ResponsiveContainer>
+          ),
+        }}
+        bottom={{
+          title: 'Fake White Noise (ARCH process)',
+          titleAlign: 'center',
+          minHeight: '260px',
+          content: (zoomDomain) => (
+            <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
+              <ComposedChart data={chartData} syncId={`tab1-${tab1View}`} margin={{ top: 12, right: 36, left: 18, bottom: 14 }} style={{ pointerEvents: 'auto' }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+                <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
+                <YAxis domain={tab1View === 'returns' ? alignedReturnDomain : alignedVarDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <Legend />
+                {tab1View === 'variance' && fakeHighClusterWindow && (
+                  <ReferenceArea
+                    x1={fakeHighClusterWindow.start}
+                    x2={fakeHighClusterWindow.end}
+                    fill="#ef4444"
+                    fillOpacity={0.14}
+                    label={{ value: 'Persistent high-vol regime', position: 'insideTop', fill: '#b91c1c' }}
+                  />
+                )}
+                {tab1View === 'variance' && fakeLowClusterWindow && (
+                  <ReferenceArea
+                    x1={fakeLowClusterWindow.start}
+                    x2={fakeLowClusterWindow.end}
+                    fill="#3b82f6"
+                    fillOpacity={0.12}
+                    label={{ value: 'Persistent low-vol regime', position: 'insideBottom', fill: '#1d4ed8' }}
+                  />
+                )}
+                {tab1View === 'returns' && <Line type="monotone" dataKey="FakeReturn" stroke="#ef4444" strokeWidth={1.5} dot={false} name="Fake White Noise Returns" isAnimationActive={false} />}
+                {tab1View === 'variance' && <Area type="step" dataKey="FakeVar" fill="#ef4444" stroke="#ef4444" fillOpacity={0.25} name="Fake Rolling Variance (20d)" isAnimationActive={false} />}
+              </ComposedChart>
+            </ResponsiveContainer>
+          ),
+        }}
+      />
     );
 
     return <Layout title="4.1 Introduction to ARCH" controls={controls} commentary={commentary} dataset={datasetBox} chart={chart} chartHeight={tab1View === 'forecast' ? '620px' : '650px'} extraCardTitle="ARCH Forecast Reading Guide" extraCard={archGuideCard} />;
@@ -429,7 +441,7 @@ export default function Topic4({ activeTab = 1 }) {
         <p><strong>Out-of-sample forecast:</strong> at the split, the fitted model forecasts variance for the next 100 dates without seeing future returns. The purple line is that multi-step forecast; the green dashed line is the simulated true variance revealed afterward. Because unknown future squared shocks are replaced by their conditional expectations, the forecast becomes smooth and converges toward long-run variance. It does not attempt to forecast return direction.</p>
         <p><strong>What to compare:</strong> keep one order fixed and change the other. Larger <MathText>p</MathText> lets several earlier shocks shape today’s variance; larger <MathText>q</MathText> gives the variance process longer internal memory. Because each selection generates its own series, compare pattern and persistence—not individual observations at the same date.</p>
         <p><strong>Current process:</strong> <ModelOrder name={selectedModel.model_type}>{tab2Q === 0 ? tab2P : `${tab2P}, ${tab2Q}`}</ModelOrder> has persistence <MathText>{selectedModel.persistence.toFixed(2)}</MathText>. Its unconditional variance is normalized to <MathText>1</MathText>, so the examples remain on a comparable vertical scale.</p>
-        <p><strong>Connection to ARMA:</strong> after rearranging the variance equation, GARCH implies ARMA-like persistence in <MathText>rₜ²</MathText>. This explains why autocorrelation in squared returns is informative about volatility memory, but it does not mean raw returns follow the same ARMA model.</p>
+        <p><strong>Connection to ARMA:</strong> after rearranging the variance equation, GARCH implies ARMA-like persistence in <MathText tex="r_t^2" />. This explains why autocorrelation in squared returns is informative about volatility memory, but it does not mean raw returns follow the same ARMA model.</p>
       </div>
     );
 
@@ -443,8 +455,13 @@ export default function Topic4({ activeTab = 1 }) {
     const chart = (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem' }}>
         <div style={{ width: '100%', height: '500px' }}>
-          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-            {(zoomDomain) => (
+          <ZoomableChartShell
+            defaultDomain={[0, xMax]}
+            maxTime={xMax}
+            data={chartData}
+            dataKeys={['SquaredReturns', 'GeneratedVariance', 'TrueTestVariance', 'ForecastVariance']}
+          >
+            {(zoomDomain, computeYDomain, autoYDomain) => (
               <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
                 <ComposedChart
                   data={chartData}
@@ -457,13 +474,13 @@ export default function Topic4({ activeTab = 1 }) {
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)"/>
                   <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                  <YAxis domain={autoYDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
                   <ReferenceLine x={trainSize} stroke="var(--text-main)" strokeDasharray="4 4" label={{ value: 'Forecast start', fill: 'var(--text-muted)', position: 'insideTopRight' }} />
                   <ReferenceLine x={inspectTime} stroke="#111827" strokeDasharray="3 3" />
-                  <Area type="step" dataKey="SquaredReturns" fill="var(--text-muted)" stroke="none" fillOpacity={0.2} name="Squared returns rₜ² (proxy)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="GeneratedVariance" stroke="#ef4444" strokeWidth={2} dot={false} name="Generated variance σₜ² (train)" isAnimationActive={false} />
+                  <Area type="step" dataKey="SquaredReturns" fill="var(--text-muted)" stroke="none" fillOpacity={0.2} name="Squared returns r_t^2 (proxy)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="GeneratedVariance" stroke="#ef4444" strokeWidth={2} dot={false} name="Generated variance σ_t^2 (train)" isAnimationActive={false} />
                   <Line type="monotone" dataKey="TrueTestVariance" stroke="#16a34a" strokeWidth={1.8} strokeDasharray="4 3" dot={false} name="True variance (test, simulation only)" isAnimationActive={false} />
                   <Line type="monotone" dataKey="ForecastVariance" stroke="#7c3aed" strokeWidth={2.5} dot={false} name="Multi-step variance forecast" isAnimationActive={false} />
                   <Scatter data={shockPoints} dataKey="value" fill="#f59e0b" name="Shock inputs at inspected date" isAnimationActive={false} />
@@ -471,7 +488,7 @@ export default function Topic4({ activeTab = 1 }) {
                 </ComposedChart>
               </ResponsiveContainer>
             )}
-          </ZoomableChartWrapper>
+          </ZoomableChartShell>
         </div>
         <div style={{ width: '100%', textAlign: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
           <strong>Variance anatomy at {formatDateFromIndex(inspectTime, false)}:</strong>{' '}
@@ -487,12 +504,12 @@ export default function Topic4({ activeTab = 1 }) {
                 formatter={(value, name, item) => [
                   formatValue(value),
                   item?.payload?.weight == null
-                    ? 'Intercept contribution'
+                     ? 'Intercept contribution'
                     : `Weighted contribution (coefficient ${item.payload.weight.toFixed(3)})`
                 ]}
                 contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }}
               />
-              <ReferenceLine y={contributionTotal} stroke="#111827" strokeDasharray="4 4" label={{ value: `Total σₜ² = ${contributionTotal.toFixed(3)}`, fill: 'var(--text-muted)', position: 'insideTopRight' }} />
+              <ReferenceLine y={contributionTotal} stroke="#111827" strokeDasharray="4 4" label={{ value: `Total σ_t² = ${contributionTotal.toFixed(3)}`, fill: 'var(--text-muted)', position: 'insideTopRight' }} />
               <Bar dataKey="value" name="Variance contribution" isAnimationActive={false}>
                 {contributionData.map((entry, idx) => <Cell key={`${entry.label}-${idx}`} fill={entry.color} />)}
               </Bar>
@@ -521,10 +538,10 @@ export default function Topic4({ activeTab = 1 }) {
       <div style={{ fontSize: '0.92rem' }}>
         <p><strong>Validation question:</strong> does a time-varying GARCH(1,1) estimate risk better than a constant-volatility model? Both models see the same returns, so the comparison isolates whether modeling volatility dynamics adds value.</p>
         <p><strong>Why simulation helps:</strong> real conditional variance is latent. In this simulation, the green true-volatility path is recorded by the generator, giving us ground truth that real markets cannot provide.</p>
-        <p><strong>How to read the chart:</strong> the blue line is GARCH’s filtered one-step-ahead <MathText>σₜ</MathText>, using information through <MathText>t − 1</MathText>. The red line is the competing constant-volatility estimate. The gray <MathText>|rₜ|</MathText> line is a noisy realized-volatility proxy, not ground truth.</p>
-        <p><strong>What QLIKE measures:</strong> for realized proxy <MathText>v<sub>t</sub></MathText> and forecast variance <MathText>h<sub>t</sub></MathText>, the score used here is <MathText>v<sub>t</sub>/h<sub>t</sub> − <MathOperator>log</MathOperator>(v<sub>t</sub>/h<sub>t</sub>) − 1</MathText>, averaged over time. Zero is ideal and lower is better. It strongly penalizes variance forecasts that are too small when a large shock occurs.</p>
+        <p><strong>How to read the chart:</strong> the blue line is GARCH’s filtered one-step-ahead <MathText tex="\sigma_t" />, using information through <MathText tex="t - 1" />. The red line is the competing constant-volatility estimate. The gray <MathText tex="|r_t|" /> line is a noisy realized-volatility proxy, not ground truth.</p>
+        <p><strong>What QLIKE measures:</strong> for realized proxy <MathText tex="v_t" /> and forecast variance <MathText tex="h_t" />, the score used here is <MathText tex="\frac{v_t}{h_t} - \ln\left(\frac{v_t}{h_t}\right) - 1" />, averaged over time. Zero is ideal and lower is better. It strongly penalizes variance forecasts that are too small when a large shock occurs.</p>
         <p><strong>What this demo shows:</strong> GARCH is closer to the simulated true variance and has lower QLIKE than the constant model. The result links the moving blue path in the graph to the lower numerical losses in the comparison table.</p>
-        <p><strong>In real data:</strong> remove the green line and the true-variance MSE. Compare models out of sample using QLIKE with <MathText>rₜ²</MathText> or another realized-volatility proxy, plus VaR breach tests and stability checks.</p>
+        <p><strong>In real data:</strong> remove the green line and the true-variance MSE. Compare models out of sample using QLIKE with <MathText tex="r_t^2" /> or another realized-volatility proxy, plus VaR breach tests and stability checks.</p>
       </div>
     );
 
@@ -542,7 +559,7 @@ export default function Topic4({ activeTab = 1 }) {
             <tr>
               <th style={tableHeaderCellStyle}>Model</th>
               <th style={tableHeaderCellStyle}>MSE vs true variance ↓</th>
-              <th style={tableHeaderCellStyle}>MSE vs <MathText>rₜ²</MathText> proxy ↓</th>
+              <th style={tableHeaderCellStyle}>MSE vs <MathText tex="r_t^2" /> proxy ↓</th>
               <th style={tableHeaderCellStyle}>QLIKE ↓</th>
             </tr>
           </thead>
@@ -562,24 +579,29 @@ export default function Topic4({ activeTab = 1 }) {
           </tbody>
         </table>
         <div style={{ width: '100%', height: '430px' }}>
-          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-            {(zoomDomain) => (
+          <ZoomableChartShell
+            defaultDomain={[0, xMax]}
+            maxTime={xMax}
+            data={chartData}
+            dataKeys={['ProxyAbs', 'TrueVol', 'GarchVol', 'ConstVol']}
+          >
+            {(zoomDomain, computeYDomain, autoYDomain) => (
               <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
                 <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)"/>
                   <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                  <YAxis domain={autoYDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
                   
-                  <Line type="step" dataKey="ProxyAbs" stroke="var(--text-muted)" strokeWidth={1} dot={false} opacity={0.5} name="Realized |rₜ| proxy" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="TrueVol" stroke="#10b981" strokeWidth={3} dot={false} name="True latent σₜ (simulation)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="GarchVol" stroke="#3b82f6" strokeWidth={2} strokeDasharray="3 3" dot={false} name="GARCH one-step σₜ" isAnimationActive={false} />
+                  <Line type="step" dataKey="ProxyAbs" stroke="var(--text-muted)" strokeWidth={1} dot={false} opacity={0.5} name="Realized |r_t| proxy" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="TrueVol" stroke="#10b981" strokeWidth={3} dot={false} name="True latent σ_t (simulation)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="GarchVol" stroke="#3b82f6" strokeWidth={2} strokeDasharray="3 3" dot={false} name="GARCH one-step σ_t" isAnimationActive={false} />
                   <Line type="monotone" dataKey="ConstVol" stroke="#ef4444" strokeWidth={1.5} dot={false} name="Constant σ baseline" isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             )}
-          </ZoomableChartWrapper>
+          </ZoomableChartShell>
         </div>
       </div>
     );
@@ -611,11 +633,11 @@ export default function Topic4({ activeTab = 1 }) {
       <div style={{ fontSize: '0.92rem' }}>
         <p><strong>Goal:</strong> Value at Risk (VaR) converts a volatility estimate into a downside return threshold. A 95% one-day VaR says that, under the model, only about 5% of next-day returns should fall below the threshold.</p>
         <p><strong>Historical VaR:</strong> at each date, take the empirical lower-tail percentile of the previous 100 returns. For 95% VaR, this is the rolling 5th percentile. It assumes the recent window is representative and does not explicitly model volatility.</p>
-        <p><strong>GARCH VaR:</strong> apply the conditional-volatility method from Tabs 4.2–4.3 and combine it with a distributional quantile: <MathText><MathOperator>VaR</MathOperator><sub>t</sub>(α) = μ<sub>t</sub> + z<sub>α</sub>σ<sub>t</sub></MathText>. Here <MathText>μ<sub>t</sub> = 0</MathText> and <MathText>z<sub>α</sub></MathText> is the lower-tail Normal quantile. Changing confidence changes the quantile; changing market risk changes <MathText>σ<sub>t</sub></MathText>.</p>
+        <p><strong>GARCH VaR:</strong> apply the conditional-volatility method from Tabs 4.2–4.3 and combine it with a distributional quantile: <MathText tex="\operatorname{VaR}_t(\alpha) = \mu_t + z_\alpha \sigma_t" />. Here <MathText tex="\mu_t = 0" /> and <MathText tex="z_\alpha" /> is the lower-tail Normal quantile. Changing confidence changes the quantile; changing market risk changes <MathText tex="\sigma_t" />.</p>
         <p><strong>Why a larger tail percentage gives more breaches:</strong> 90% VaR uses a 10% lower tail, so its threshold is closer to zero and is easier for returns to cross; roughly 10% of dates should breach. 99% VaR uses only a 1% tail, places the threshold farther into the loss tail, and should produce roughly 1% breaches. Thus larger <em>tail probability</em> means more expected breaches, while larger <em>confidence</em> means fewer.</p>
-        <p><strong>Why use a Normal quantile here:</strong> it keeps the teaching link transparent: estimate <MathText>σ<sub>t</sub></MathText>, then multiply by a familiar Normal quantile. It is appropriate only when standardized GARCH residuals are approximately symmetric and light-tailed. Financial returns are often heavier-tailed, so Normal VaR can underestimate extreme losses.</p>
-        <p><strong>Can Student-t be used?</strong> Yes. Fit GARCH with Student-t innovations, estimate the degrees of freedom <MathText>ν</MathText>, and replace <MathText>z<sub>α</sub></MathText> with the standardized t-quantile <MathText tex="t_{\nu,\alpha}" />. Prefer it when standardized residuals show excess kurtosis or heavy tails. Choose between Normal and t using residual histograms/QQ plots, likelihood or AIC/BIC, and—most importantly—out-of-sample VaR breach frequency and breach independence.</p>
-        <p><strong>How this chart is produced:</strong> fit GARCH to returns → obtain daily <MathText>σ<sub>t</sub></MathText> → convert each <MathText>σ<sub>t</sub></MathText> into a VaR threshold → mark a breach whenever <MathText>r<sub>t</sub> &lt; VaR<sub>t</sub></MathText>. This is the practical risk-control use of the volatility forecasts introduced earlier.</p>
+        <p><strong>Why use a Normal quantile here:</strong> it keeps the teaching link transparent: estimate <MathText tex="\sigma_t" />, then multiply by a familiar Normal quantile. It is appropriate only when standardized GARCH residuals are approximately symmetric and light-tailed. Financial returns are often heavier-tailed, so Normal VaR can underestimate extreme losses.</p>
+        <p><strong>Can Student-t be used?</strong> Yes. Fit GARCH with Student-t innovations, estimate the degrees of freedom <MathText tex="\nu" />, and replace <MathText tex="z_\alpha" /> with the standardized t-quantile <MathText tex="t_{\nu,\alpha}" />. Prefer it when standardized residuals show excess kurtosis or heavy tails. Choose between Normal and t using residual histograms/QQ plots, likelihood or AIC/BIC, and—most importantly—out-of-sample VaR breach frequency and breach independence.</p>
+        <p><strong>How this chart is produced:</strong> fit GARCH to returns → obtain daily <MathText tex="\sigma_t" /> → convert each <MathText tex="\sigma_t" /> into a VaR threshold → mark a breach whenever <MathText tex="r_t < \operatorname{VaR}_t" />. This is the practical risk-control use of the volatility forecasts introduced earlier.</p>
         <p><strong>Interpretation:</strong> a line that moves downward in turbulent periods is allowing for more downside risk. A breach is not automatically a failure; approximately the selected tail percentage is expected. Persistent excess breaches indicate underestimated risk and may trigger lower position limits, more capital, stronger hedges, or recalibration.</p>
       </div>
     );
@@ -651,7 +673,7 @@ export default function Topic4({ activeTab = 1 }) {
               <td style={tableCellStyle}>{varConfLevel}% (≈ {expectedBreaches.toFixed(0)} breaches)</td>
             </tr>
             <tr>
-              <td style={{ ...tableCellStyle, borderBottom: 'none' }}>GARCH VaR (dynamic <MathText>σₜ</MathText>)</td>
+              <td style={{ ...tableCellStyle, borderBottom: 'none' }}>GARCH VaR (dynamic <MathText tex="\sigma_t" />)</td>
               <td style={{ ...tableCellStyle, borderBottom: 'none' }}>{tabData.garch_breaches[varConfLevel]}</td>
               <td style={{ ...tableCellStyle, borderBottom: 'none' }}>{garchBreachRate.toFixed(1)}%</td>
               <td style={{ ...tableCellStyle, borderBottom: 'none' }}>{varConfLevel}% (≈ {expectedBreaches.toFixed(0)} breaches)</td>
@@ -659,13 +681,18 @@ export default function Topic4({ activeTab = 1 }) {
           </tbody>
         </table>
         <div style={{ width: '100%', height: '430px' }}>
-          <ZoomableChartWrapper defaultDomain={[tabData.window, xMax]} maxTime={xMax}>
-            {(zoomDomain) => (
+          <ZoomableChartShell
+            defaultDomain={[tabData.window, xMax]}
+            maxTime={xMax}
+            data={chartData}
+            dataKeys={['Returns', 'HistVaR', 'GarchVaR']}
+          >
+            {(zoomDomain, computeYDomain, autoYDomain) => (
               <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
                 <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="time" type="number" domain={zoomDomain} tickFormatter={dateTick} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
-                  <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
+                  <YAxis domain={autoYDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
                   
@@ -677,7 +704,7 @@ export default function Topic4({ activeTab = 1 }) {
                 </ComposedChart>
               </ResponsiveContainer>
             )}
-          </ZoomableChartWrapper>
+          </ZoomableChartShell>
         </div>
       </div>
     );
@@ -720,11 +747,11 @@ export default function Topic4({ activeTab = 1 }) {
 
     const commentary = (
       <div style={{ fontSize: '0.92rem' }}>
-        <p><strong>Why combine them:</strong> ARIMA models the conditional mean <MathText>μ<sub>t</sub> = <MathOperator>E</MathOperator>(y<sub>t</sub> | ℱ<sub>t−1</sub>)</MathText>; GARCH models the conditional residual variance <MathText>σ<sub>t</sub><sup>2</sup> = <MathOperator>Var</MathOperator>(ε<sub>t</sub> | ℱ<sub>t−1</sub>)</MathText>. ARIMA answers “where is the series expected to be?” while GARCH answers “how uncertain is that expectation now?”</p>
-        <p><strong>What <MathText tex="\mathcal{F}_{t-1}" /> means:</strong> it is the information set available immediately before time <MathText>t</MathText>—past observations, past forecast errors, and past conditional variances through <MathText>t − 1</MathText>. The notation makes the no-look-ahead rule explicit: forecasts for time <MathText>t</MathText> cannot use <MathText>y<sub>t</sub></MathText>.</p>
+        <p><strong>Why combine them:</strong> ARIMA models the conditional mean <MathText tex="\mu_t = \mathbb{E}(y_t \mid \mathcal{F}_{t-1})" />; GARCH models the conditional residual variance <MathText tex="\sigma_t^2 = \operatorname{Var}(\varepsilon_t \mid \mathcal{F}_{t-1})" />. ARIMA answers “where is the series expected to be?” while GARCH answers “how uncertain is that expectation now?”</p>
+        <p><strong>What <MathText tex="\mathcal{F}_{t-1}" /> means:</strong> it is the information set available immediately before time <MathText tex="t" />—past observations, past forecast errors, and past conditional variances through <MathText tex="t - 1" />. The notation makes the no-look-ahead rule explicit: forecasts for time <MathText tex="t" /> cannot use <MathText tex="y_t" />.</p>
         <p><strong>How this demo estimates the model:</strong> it uses a common two-stage procedure. First fit ARIMA(1,0,1) on training data. Then fit GARCH(1,1) to the ARIMA residuals. In the held-out period, update both models one observation at a time without refitting parameters. Joint maximum-likelihood estimation is possible, but it is not used here.</p>
         <p><strong>What is held constant:</strong> ARIMA-only and ARIMA-GARCH use exactly the same one-step mean forecast. Therefore their point RMSE is identical ({tabData.metrics.point_rmse.toFixed(3)}). The mean line is intentionally omitted from the comparison graph: the only difference being evaluated is whether interval width remains constant or changes with GARCH volatility.</p>
-        <p><strong>What “outside” means:</strong> an observation is outside when <MathText>yₜ &lt; μₜ − 1.96σₜ</MathText> or <MathText>yₜ &gt; μₜ + 1.96σₜ</MathText>. Under a well-calibrated conditional Normal 95% interval, about 5% should be outside—not zero.</p>
+        <p><strong>What “outside” means:</strong> an observation is outside when <MathText tex="y_t < \mu_t - 1.96\sigma_t" /> or <MathText tex="y_t > \mu_t + 1.96\sigma_t" />. Under a well-calibrated conditional Normal 95% interval, about 5% should be outside—not zero.</p>
         <p><strong>How to interpret the table:</strong> coverage should be close to 95%, not maximized. Fewer outside points can be achieved by making intervals uselessly wide, so outside count alone does not determine the winner. <strong>Average width</strong> is the mean value of <MathText tex="U_t-L_t" />. Smaller width means a more precise, sharper interval, but it is better only when coverage remains close to its target; shrinking a band simply to reduce width would create too many misses. <strong>Interval score</strong> evaluates both sharpness and those misses:
           <span style={{ display: 'block', maxWidth: '100%', overflowX: 'auto', padding: '0.35rem 0' }}>
             <MathText tex="\operatorname{IS}_{\alpha}=(U-L)+\frac{2}{\alpha}(L-y)\mathbf{1}(y<L)+\frac{2}{\alpha}(y-U)\mathbf{1}(y>U)" />
@@ -758,14 +785,14 @@ export default function Topic4({ activeTab = 1 }) {
           </thead>
           <tbody>
             <tr>
-              <td style={tableCellStyle}>ARIMA + constant <MathText>σ</MathText></td>
+              <td style={tableCellStyle}>ARIMA + constant <MathText tex="\sigma" /></td>
               <td style={{ ...tableCellStyle, ...(constantCoverageWins ? winnerCellStyle : {}) }}>{tabData.metrics.constant_band.inside_pct.toFixed(1)}%</td>
               <td style={tableCellStyle}>{constantOutside} / {tabData.test_size}</td>
               <td style={{ ...tableCellStyle, ...(constantWidthWins ? winnerCellStyle : {}) }}>{tabData.metrics.constant_band.average_width.toFixed(3)}</td>
               <td style={{ ...tableCellStyle, ...(constantScoreWins ? winnerCellStyle : {}) }}>{tabData.metrics.constant_band.interval_score.toFixed(3)}</td>
             </tr>
             <tr>
-              <td style={{ ...tableCellStyle, borderBottom: 'none' }}>ARIMA + GARCH <MathText>σₜ</MathText></td>
+              <td style={{ ...tableCellStyle, borderBottom: 'none' }}>ARIMA + GARCH <MathText tex="\sigma_t" /></td>
               <td style={{ ...tableCellStyle, borderBottom: 'none', ...(!constantCoverageWins ? winnerCellStyle : {}) }}>{tabData.metrics.garch_band.inside_pct.toFixed(1)}%</td>
               <td style={{ ...tableCellStyle, borderBottom: 'none' }}>{garchOutside} / {tabData.test_size}</td>
               <td style={{ ...tableCellStyle, borderBottom: 'none', ...(!constantWidthWins ? winnerCellStyle : {}) }}>{tabData.metrics.garch_band.average_width.toFixed(3)}</td>
@@ -774,7 +801,7 @@ export default function Topic4({ activeTab = 1 }) {
           </tbody>
         </table>}
         <div style={{ width: '100%', height: tab5Step === 2 ? '530px' : '430px' }}>
-          <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
+          <ZoomableChartShell defaultDomain={[0, xMax]} maxTime={xMax}>
             {(zoomDomain) => {
               const visibleData = chartData.filter((point) => point.time >= zoomDomain[0] && point.time <= zoomDomain[1]);
               const comparisonYDomain = tightDomain(visibleData.flatMap((point) => [
@@ -810,15 +837,15 @@ export default function Topic4({ activeTab = 1 }) {
                     <Line type="monotone" dataKey="Actual" stroke="var(--text-main)" strokeWidth={1.2} dot={false} name="Observed value" isAnimationActive={false} />
                     <Line type="step" dataKey="ConstantUpper" stroke="#3b82f6" strokeWidth={1.7} strokeDasharray="6 3" dot={false} name="ARIMA + constant σ boundary" isAnimationActive={false} />
                     <Line type="step" dataKey="ConstantLower" stroke="#3b82f6" strokeWidth={1.7} strokeDasharray="6 3" dot={false} name="ARIMA + constant σ boundary" legendType="none" isAnimationActive={false} />
-                    <Line type="step" dataKey="GarchUpper" stroke="#d6a11d" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σₜ boundary" isAnimationActive={false} />
-                    <Line type="step" dataKey="GarchLower" stroke="#d6a11d" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σₜ boundary" legendType="none" isAnimationActive={false} />
+                    <Line type="step" dataKey="GarchUpper" stroke="#d6a11d" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σ_t boundary" isAnimationActive={false} />
+                    <Line type="step" dataKey="GarchLower" stroke="#d6a11d" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σ_t boundary" legendType="none" isAnimationActive={false} />
                     <Scatter dataKey="ConstantBreach" fill="#0057ff" stroke="#ffffff" strokeWidth={1.2} shape="diamond" name="Outside constant interval" isAnimationActive={false} />
                     <Scatter dataKey="GarchBreach" fill="#ff5a00" stroke="#ffffff" strokeWidth={1.2} shape="circle" name="Outside GARCH interval" isAnimationActive={false} />
                   </ComposedChart>
                 )}
               </ResponsiveContainer>;
             }}
-          </ZoomableChartWrapper>
+          </ZoomableChartShell>
         </div>
       </div>
     );
@@ -856,9 +883,9 @@ export default function Topic4({ activeTab = 1 }) {
 
     const commentary = (
       <div style={{ fontSize: '0.92rem' }}>
-        <p><strong>Starting limitation—standard GARCH:</strong> its shock term is squared, so shocks of <MathText>+x</MathText> and <MathText>−x</MathText> have the same variance effect. That symmetry is often unrealistic for equities, where negative news raises volatility more than equally sized positive news.</p>
-        <p><strong>EGARCH:</strong> models <MathText><MathOperator>log</MathOperator>(σ<sub>t</sub><sup>2</sup>)</MathText> and includes a signed-shock term. The log form keeps variance positive without non-negativity constraints, while the sign term captures leverage effects. It is useful when downside news causes sharp, asymmetric risk responses.</p>
-        <p><strong>APARCH:</strong> models a learned power <MathText>σₜᵟ</MathText> and uses <MathText>(|εₜ₋₁| − γεₜ₋₁)ᵟ</MathText>. It can learn both asymmetry and whether absolute shocks, squared shocks, or an intermediate power best describe the asset. This flexibility is useful across assets with different tail and leverage behavior.</p>
+        <p><strong>Starting limitation—standard GARCH:</strong> its shock term is squared, so shocks of <MathText tex="+x" /> and <MathText tex="-x" /> have the same variance effect. That symmetry is often unrealistic for equities, where negative news raises volatility more than equally sized positive news.</p>
+        <p><strong>EGARCH:</strong> models <MathText tex="\ln(\sigma_t^2)" /> and includes a signed-shock term. The log form keeps variance positive without non-negativity constraints, while the sign term captures leverage effects. It is useful when downside news causes sharp, asymmetric risk responses.</p>
+        <p><strong>APARCH:</strong> models a learned power <MathText tex="\sigma_t^\delta" /> and uses <MathText tex="(|\varepsilon_{t-1}| - \gamma \varepsilon_{t-1})^\delta" />. It can learn both asymmetry and whether absolute shocks, squared shocks, or an intermediate power best describe the asset. This flexibility is useful across assets with different tail and leverage behavior.</p>
         <p><strong>How the two demo views connect:</strong> the time-series view filters each model through actual dated returns. The news-impact curve is a controlled “what-if” calculation from the same fitted parameters, not the dated series with its x-axis renamed.</p>
         {tab6View === 'ts'
           ? <p><strong>Read the time-series view:</strong> compare how quickly the three volatility estimates react after negative return shocks and how slowly they decay afterward. Similar-looking paths can still imply very different responses to shock sign.</p>
@@ -885,11 +912,15 @@ export default function Topic4({ activeTab = 1 }) {
     const chart = (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {tab6View === 'ts' ? (
-          <div style={{ width: '100%', height: '500px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ flex: 1, minHeight: '200px' }}>
-              <h4 style={{ margin: '0 0 0.35rem 0', textAlign: 'center' }}>Observed returns by date</h4>
-              <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-                {(zoomDomain) => (
+          <div style={{ width: '100%', height: '500px' }}>
+            <SyncedDualChart
+              defaultDomain={[0, xMax]}
+              maxTime={xMax}
+              top={{
+                title: 'Observed returns by date',
+                titleAlign: 'center',
+                minHeight: '200px',
+                content: (zoomDomain) => (
                   <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
                     <LineChart data={chartData} syncId="tab6" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)"/>
@@ -899,13 +930,13 @@ export default function Topic4({ activeTab = 1 }) {
                       <Line type="monotone" dataKey="Returns" stroke="var(--text-muted)" strokeWidth={1} dot={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                )}
-              </ZoomableChartWrapper>
-            </div>
-            <div style={{ flex: 1, minHeight: '200px' }}>
-              <h4 style={{ margin: '0 0 0.35rem 0', textAlign: 'center' }}>Filtered conditional volatility σₜ by date</h4>
-              <ZoomableChartWrapper defaultDomain={[0, xMax]} maxTime={xMax}>
-                {(zoomDomain) => (
+                ),
+              }}
+              bottom={{
+                title: 'Filtered conditional volatility σ_t by date',
+                titleAlign: 'center',
+                minHeight: '200px',
+                content: (zoomDomain) => (
                   <ResponsiveContainer width="100%" height="100%" style={{ pointerEvents: 'none' }}>
                     <LineChart data={chartData} syncId="tab6" margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)"/>
@@ -918,19 +949,19 @@ export default function Topic4({ activeTab = 1 }) {
                       <Line type="monotone" dataKey="APARCH" stroke="#f59e0b" strokeWidth={2} dot={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
-                )}
-              </ZoomableChartWrapper>
-            </div>
+                ),
+              }}
+            />
           </div>
         ) : (
           <div style={{ width: '100%', height: '400px' }}>
-            <h4 style={{ textAlign: 'center' }}>Fitted-model scenario: next variance σₜ² vs prior standardized shock zₜ₋₁</h4>
+            <h4 style={{ textAlign: 'center' }}>Fitted-model scenario: next variance <MathText tex="\sigma_t^2" /> vs prior standardized shock <MathText tex="z_{t-1}" /></h4>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={niData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)"/>
-                <XAxis dataKey="z" type="number" domain={[-3, 3]} tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Prior standardized shock zₜ₋₁', position: 'bottom', fill: 'var(--text-muted)' }} />
-                <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Next-step variance σₜ²', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)' }} />
-                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(l) => `Prior shock zₜ₋₁: ${Number(l).toFixed(2)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
+                <XAxis dataKey="z" type="number" domain={[-3, 3]} tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Prior standardized shock z_{t-1}', position: 'bottom', fill: 'var(--text-muted)' }} />
+                <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Next-step variance σ_t²', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)' }} />
+                <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(l) => `Prior shock z_{t-1}: ${Number(l).toFixed(2)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                 <Legend verticalAlign="top" />
                 <Line type="monotone" dataKey="GARCH" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
                 <Line type="monotone" dataKey="EGARCH" stroke="#ef4444" strokeWidth={2} dot={false} isAnimationActive={false} />

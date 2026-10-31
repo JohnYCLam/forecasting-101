@@ -1,0 +1,38 @@
+{
+  "_comment": "Edit with the user's approval only. 'terms' = advanced words that need a plain gloss in the SAME paragraph at their first use in a file (gloss = parentheses right after the term, or words like 'means', 'i.e.', 'that is', 'in other words', 'called', 'a dash/colon definition'). 'banned' = names the user rejected; always use the replacement.",
+  "terms": {
+    "non-centrality": "how far the test statistic is pushed up by a real effect",
+    "noncentrality": "how far the test statistic is pushed up by a real effect",
+    "type i error": "a false alarm: rejecting when there is no real effect",
+    "type ii error": "a miss: failing to reject when there is a real effect",
+    "false negative": "a miss: failing to reject when there is a real effect",
+    "statistical power": "how often the test catches a real effect",
+    "observational equivalence": "different parameter sets that produce the same data behaviour",
+    "identification": "whether the parameters can be pinned down uniquely from data",
+    "unidentified": "whose parameters cannot be pinned down uniquely from data",
+    "invertib": "whether the moving-average part can be rewritten as an autoregression",
+    "kullback": "a measure of how far a model is from the true data-generating process",
+    "nested": "one model is the other with some coefficients set to zero",
+    "null hypothesis": "the 'no effect' assumption the test tries to reject",
+    "critical value": "the cut-off the test statistic must beat to reject",
+    "residual sum of squares": "the total squared forecast error left over",
+    "degrees of freedom": "the number of independent data points left after estimating coefficients",
+    "cointegrat": "series that wander apart but are pulled back to a long-run relationship",
+    "exogenous": "driven from outside the model",
+    "endogenous": "determined inside the model",
+    "innovation": "the new, unpredictable shock at each step",
+    "autocovariance": "how a series moves together with its own past",
+    "asymptotic": "what happens with a very large sample",
+    "orthogonal": "uncorrelated",
+    "eigenvalue": "a number that tells whether shocks die out or grow",
+    "unit root": "a stochastic trend that never reverts"
+  },
+  "banned": {
+    "detection rate": "Granger rejection rate (or: % of datasets where Granger rejects)",
+    "detection power": "how often the test catches a real effect",
+    "granger detection": "Granger rejection",
+    "median detection threshold": "the b where a typical dataset first clears the Granger bar",
+    "holdout: unrestricted wins": "Forecast improves on new data",
+    "unrestricted wins": "forecast improves on new data"
+  }
+}
