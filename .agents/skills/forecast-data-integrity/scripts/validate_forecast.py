@@ -1,4 +1,4 @@
-"""Static honesty check for generate_topic*_data.py and public/topic*_data.json.
+"""Static honesty check for scripts/generators/generate_topic*_data.py and public/topic*_data.json.
 
 Usage (from ts-forecasting-demo/):
     python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py [files...] [--max-kb 1024] [--require-keys tab1.actual,tab1.forecast]
@@ -163,7 +163,7 @@ def main(argv):
     ap.add_argument("--max-kb", type=int, default=0, help="fail if a JSON file is larger (use 1024 for new topics)")
     ap.add_argument("--require-keys", default="", help="comma list of dotted keys that must exist and be non-empty, e.g. tab1.actual,tab1.forecast (applies to the JSON files checked)")
     args = ap.parse_args(argv)
-    files = [Path(a) for a in args.files] or sorted(ROOT.glob("generate_topic*_data.py")) + sorted((ROOT / "public").glob("topic*_data.json"))
+    files = [Path(a) for a in args.files] or sorted((ROOT / "scripts" / "generators").glob("generate_topic*_data.py")) + sorted((ROOT / "public").glob("topic*_data.json"))
     keys = [k.strip() for k in args.require_keys.split(",") if k.strip()]
     for f in files:
         if f.suffix == ".py":

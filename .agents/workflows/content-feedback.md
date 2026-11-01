@@ -5,7 +5,7 @@ description: Process the user's questions, doubts, recommendations, updates or c
 # /content-feedback <paste notes, or reference a topic/subtab>
 
 1. Read `.agents/rules/00-project-map.md`, `.agents/rules/10-guardrails.md`, `.agents/LESSONS.md`.
-2. Identify the topic/subtab concerned. Read its plan (`topicN_plan.md`), `src/TopicN.jsx` section, and `generate_topicN_data.py` function.
+2. Identify the topic/subtab concerned. Read its plan (`docs/archive/topicN/` or `docs/topicN/`), `src/TopicN.jsx` section, and `scripts/generators/generate_topicN_data.py` function.
 3. Read `evidence-first-demo-design` and `content-feedback-handler`. Load specialist skills only for the branch that needs them:
    wording/story -> `commentary-storyboard` and `commentary-style-guide`; data/model claim -> `demo-correctness-review`; final page audit -> `demo-explainability`.
 4. Classify and number the items. Show the list.

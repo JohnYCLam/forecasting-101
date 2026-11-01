@@ -17,7 +17,7 @@ For Topics 6-11 also read `model-family-playbooks`.
 
 ## Steps
 1. Read `.agents/LESSONS.md`, the plan, and `src/Topic4.jsx` (first ~100 lines and one full subtab) for style. Use Grep and line ranges.
-2. Data script: new topic -> create `generate_topicN_data.py`; new subtab -> add one `gen_*` function to the existing script.
+2. Data script: new topic -> create `scripts/generators/generate_topicN_data.py`; new subtab -> add one `gen_*` function to the existing script.
    `main()` writes `public/topicN_data.json` and prints `[OK] Saved ...`. Follow `forecast-data-integrity` and `notebook-to-demo`.
 3. Run it, then `demo-correctness-review` Phase B. If the effect is not visible, redesign (data or claim), never patch. Stop and ask if unresolved.
 4. Component: new topic -> create `src/TopicN.jsx`; new subtab -> add one `if (activeTab === k)` block. Start from

@@ -16,7 +16,7 @@ Complements `forecast-data-integrity` (honest computation). This skill checks th
 5. Falsifier: what result would mean the demo does NOT work.
 6. Synthetic-data lock (if applicable): write the data-generating process, seed, shock timing/magnitude, split, and expected signs before the first run. These are design inputs, not knobs to tune after seeing holdout performance.
 
-## Phase B: after `python generate_topicN_data.py`
+## Phase B: after running `npm run data:topicN` (or `python scripts/generators/run.py N`)
 1. Run `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py` (must PASS).
 2. Split discipline:
    - [ ] Parameters, orders (AIC/BIC grids), scaling and hyperparameters selected on TRAIN only.

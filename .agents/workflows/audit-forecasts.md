@@ -1,5 +1,5 @@
 ---
-description: Audit every generate_topic*_data.py and topic JSON for hardcoded or faked forecasts.
+description: Audit every scripts/generators/generate_topic*_data.py and topic JSON for hardcoded or faked forecasts.
 ---
 
 # /audit-forecasts

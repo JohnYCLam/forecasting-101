@@ -2,7 +2,7 @@
 
 ## NEVER
 
-1. NEVER fake a forecast. A forecast shown in the UI must come from a model really fitted in a `generate_topicN_data.py` script.
+1. NEVER fake a forecast. A forecast shown in the UI must come from a model really fitted in a `scripts/generators/generate_topicN_data.py` script.
    Do not derive a "forecast" from the actual series plus an offset, noise, scaling or closed-form formula. If the real model
    disagrees with the actual, SHOW the gap and explain it.
 2. NEVER hardcode numeric results (RMSE, AIC, coefficients, forecasts) in JSX or commentary. They come from the JSON.
@@ -16,7 +16,7 @@
 8. NEVER silence errors, lint rules or the chart gate to make a check pass. Fix the cause.
 9. NEVER invent math. Take formulas and numbers from `../references/*.ipynb` or the plan. If not found, say so and ask.
 10. NEVER run `git commit`, `git push`, `git reset`, `git checkout -- .` or delete files unless the user asks.
-11. NEVER read a whole big file (`Topic5.jsx` ~3400 lines, `generate_topic5_data.py` ~1900). Use Grep and line ranges.
+11. NEVER read a whole big file (`Topic5.jsx` ~3400 lines, `scripts/generators/generate_topic5_data.py` ~1900). Use Grep and line ranges.
 
 ## Content rules (details live in the named skills; do not duplicate them here)
 

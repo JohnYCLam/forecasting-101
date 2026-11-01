@@ -6,7 +6,7 @@ description: Read-only quality review of a topic/subtab against narrative contra
 
 Read-only. Do NOT edit files. Run from `ts-forecasting-demo/`.
 
-1. Read `topicN_plan.md`, `src/TopicN.jsx` (the requested subtab; Grep and line ranges for big files), the matching `generate_topicN_data.py`, and `.agents/TERMS.md`.
+1. Read its plan (`docs/archive/topicN/` or `docs/topicN/`), `src/TopicN.jsx` (the requested subtab; Grep and line ranges for big files), the matching `scripts/generators/generate_topicN_data.py`, and `.agents/TERMS.md`.
 2. Read `evidence-first-demo-design` and `demo-explainability`. Load only the specialist skill needed to investigate a failed criterion
    (story -> `commentary-storyboard`; wording -> `plain-language-guard`; statistics -> `demo-correctness-review`; forecast provenance -> `forecast-data-integrity`).
 3. Run only the review-specific mechanical checks below. Lint, unit tests, build, and forecast validation belong to `/ship-check` and must not be duplicated here:

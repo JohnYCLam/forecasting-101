@@ -14,7 +14,7 @@ Once at the final gate for a completed change set, and whenever the user asks "i
 2. Run `npm run lint`. Paste the last 15 lines of output.
 3. Run `npm test`. Paste the last 15 lines.
 4. If any `.jsx` file changed: run `npm run build`. Paste the last 15 lines.
-5. If any `generate_topic*_data.py` or `public/topic*_data.json` changed:
+5. If any `scripts/generators/generate_topic*_data.py` or `public/topic*_data.json` changed:
    run `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py`. Paste the output.
    If a topic JSON is new or changed, add `--max-kb 1024` and `--require-keys <keys from the plan>` (see `forecast-data-integrity`).
 6. If reader-visible text in `src/*.jsx` changed: run `node .agents/skills/demo-explainability/scripts/check-commentary-numbers.mjs`. Paste the output. It must print `RESULT: PASS`.

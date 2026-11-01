@@ -14,7 +14,7 @@ Every tab follows this sequence:
 Progressive disclosure: commentary reacts to the active control (view, slider, step).
 
 ## Data plan
-- Script: `generate_topicN_data.py`; output `public/topicN_data.json`
+- Script: `scripts/generators/generate_topicN_data.py`; output `public/topicN_data.json`
 - Functions: `gen_tab1`, `gen_tab2`, ...
 - Models fitted (library calls): <e.g. statsmodels ARIMA, VAR>
 - Seed: 42

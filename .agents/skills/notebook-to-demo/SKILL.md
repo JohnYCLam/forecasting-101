@@ -1,6 +1,6 @@
 ---
 name: notebook-to-demo
-description: Port logic, parameters and expected numbers from a reference notebook (../references/*.ipynb) into a generate_topicN_data.py function and cross-check the result. Use when a plan says "use the example from notebook X".
+description: Port logic, parameters and expected numbers from a reference notebook (../references/*.ipynb) into a scripts/generators/generate_topicN_data.py function and cross-check the result. Use when a plan says "use the example from notebook X".
 disable-model-invocation: true
 ---
 

@@ -72,7 +72,7 @@ Lock the synthetic seed, equations, interaction thresholds, trend break, and spl
 **Gate 1 condition:** every subsection has one testable claim, one matching view, and a falsifier. Do not draft polished commentary yet.
 
 ### Phase 2 — Generator and evidence only
-Implement [`ts-forecasting-demo/generate_topic6_data.py`](ts-forecasting-demo/generate_topic6_data.py) and generate [`ts-forecasting-demo/public/topic6_data.json`](ts-forecasting-demo/public/topic6_data.json). Do not edit React files in this phase.
+Implement [`ts-forecasting-demo/scripts/generators/generate_topic6_data.py`](ts-forecasting-demo/scripts/generators/generate_topic6_data.py) and generate [`ts-forecasting-demo/public/topic6_data.json`](ts-forecasting-demo/public/topic6_data.json). Do not edit React files in this phase.
 
 Required generator structure:
 - shared leakage-safe feature builder;
@@ -132,7 +132,7 @@ Implementation constraints:
 
 ### Phase 5 — Verification and handoff
 Run, in this order:
-1. `python generate_topic6_data.py`
+1. `python scripts/generators/run.py 6` (or `npm run data:topic6`)
 2. the project forecast-integrity validator against `public/topic6_data.json`
 3. a second generation and hash comparison
 4. `node .agents/skills/demo-explainability/scripts/check-commentary-numbers.mjs`
@@ -210,7 +210,7 @@ Maintain continuity with a repeated question at each transition:
 6. Can uncertainty be calibrated for decisions?
 
 ## Data and integrity plan
-- Add [`ts-forecasting-demo/generate_topic6_data.py`](ts-forecasting-demo/generate_topic6_data.py), [`ts-forecasting-demo/public/topic6_data.json`](ts-forecasting-demo/public/topic6_data.json), and [`ts-forecasting-demo/src/Topic6.jsx`](ts-forecasting-demo/src/Topic6.jsx) only after the storyboard is approved.
+- Add [`ts-forecasting-demo/scripts/generators/generate_topic6_data.py`](ts-forecasting-demo/scripts/generators/generate_topic6_data.py), [`ts-forecasting-demo/public/topic6_data.json`](ts-forecasting-demo/public/topic6_data.json), and [`ts-forecasting-demo/src/Topic6.jsx`](ts-forecasting-demo/src/Topic6.jsx) only after the storyboard is approved.
 - Use fixed seeds and metadata containing model/library versions, train/validation/test ranges, feature availability, horizon strategy, and hyperparameters.
 - Fit preprocessing and tuning on training/validation only; compute rolling features after `shift(1)`; distinguish known-future from merely observed covariates.
 - Fair baselines receive the same information and tuning budget. Report MAE/RMSE plus fold distribution, win rate, and gain size; MAPE only where the target is safely away from zero.

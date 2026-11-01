@@ -5,7 +5,7 @@
 **Execution Phase:** Phase 2 Complete (Generator and Evidence Only; React files untouched)  
 **Generated Artifacts:**
 - `public/topic6_data.json` (Size: 223.5 KB, SHA256: `1b303838735d71c4eadeff5084bf3381a9e971225b2e13c908ca9dd73636bceb`)
-- `generate_topic6_data.py` (Passed static honesty check via `validate_forecast.py`)
+- `scripts/generators/generate_topic6_data.py` (Passed static honesty check via `validate_forecast.py`)
 
 ---
 
@@ -26,7 +26,7 @@
 ## 2. Integrity & Determinism Verification
 
 1. **Static Forecast Integrity Check:**
-   - Ran `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py generate_topic6_data.py public/topic6_data.json`.
+   - Ran `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py scripts/generators/generate_topic6_data.py public/topic6_data.json`.
    - **Result:** `PASS` (0 warnings, 0 errors, no literal arrays, no actual+constant faking patterns, valid model fitting calls).
 2. **Determinism Verification (Two Consecutive Runs):**
    - Run 1 SHA256: `1b303838735d71c4eadeff5084bf3381a9e971225b2e13c908ca9dd73636bceb`

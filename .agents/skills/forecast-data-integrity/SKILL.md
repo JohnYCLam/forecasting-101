@@ -1,6 +1,6 @@
 ---
 name: forecast-data-integrity
-description: Generate or modify demo data honestly in generate_topic*_data.py. Use whenever a forecast, fitted value, coefficient, or metric is produced for the dashboard (ARIMA, VAR, VARIMA, GARCH, smoothing, Granger). Prevents hardcoded or faked forecasts.
+description: Generate or modify demo data honestly in scripts/generators/generate_topic*_data.py. Use whenever a forecast, fitted value, coefficient, or metric is produced for the dashboard (ARIMA, VAR, VARIMA, GARCH, smoothing, Granger). Prevents hardcoded or faked forecasts.
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,7 @@ Background: `docs/audit/INCIDENT_REPORT_FORECAST_AUDIT.md` documents a forecast 
 This skill exists so that never happens again.
 
 ## When to use
-Any edit to `generate_topic*_data.py`, or any task that adds a forecast/metric to the UI.
+Any edit to `scripts/generators/generate_topic*_data.py`, or any task that adds a forecast/metric to the UI.
 
 ## The honesty contract
 1. Split data into train and test BEFORE fitting. Fit on train only.
@@ -24,7 +24,7 @@ Any edit to `generate_topic*_data.py`, or any task that adds a forecast/metric t
 1. Read the matching notebook in `../references/` and the topic plan file for the intended model and settings.
 2. Open `templates/honest_forecast.py`. Copy the pattern into the new `gen_*` function.
 3. Add the function's output to the topic dict in `main()`.
-4. Run `python generate_topicN_data.py`. It must finish with `[OK] Saved ...`.
+4. Run `npm run data:topicN` or `python scripts/generators/run.py N`. It must finish with `[OK] Saved ...`.
 5. Run `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py`. It must print `RESULT: PASS`.
    For a NEW or changed topic file run it with budget and required keys from the plan, for example:
    `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py public/topicN_data.json --max-kb 1024 --require-keys tab1.actual,tab1.forecast`

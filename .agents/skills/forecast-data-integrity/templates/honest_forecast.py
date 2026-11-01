@@ -1,4 +1,4 @@
-"""Template: an honest train/test forecast block for generate_topicN_data.py.
+"""Template: an honest train/test forecast block for scripts/generators/generate_topicN_data.py.
 
 Copy the pattern, not the numbers. Replace the model with the one required by the plan.
 """
