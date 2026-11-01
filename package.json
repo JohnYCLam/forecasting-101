@@ -10,7 +10,15 @@
     "preview": "vite preview",
     "test": "npm run test:unit && npm run test:charts",
     "test:unit": "node --test src/charts/zoomMath.test.js",
-    "test:charts": "node scripts/check-chart-components.mjs"
+    "test:charts": "node scripts/check-chart-components.mjs",
+    "data:topic1": "python scripts/generators/run.py 1",
+    "data:topic2": "python scripts/generators/run.py 2",
+    "data:topic3": "python scripts/generators/run.py 3",
+    "data:topic4": "python scripts/generators/run.py 4",
+    "data:topic5": "python scripts/generators/run.py 5",
+    "data:topic6": "python scripts/generators/run.py 6",
+    "data:all": "python scripts/generators/run.py all",
+    "data:validate": "python scripts/generators/run.py all --validate"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -11,7 +12,8 @@ plt.rcParams['font.sans-serif'] = 'DejaVu Sans'
 plt.rcParams['axes.edgecolor'] = '#cbd5e1'
 plt.rcParams['axes.linewidth'] = 1.0
 
-output_dir = "public/incident_plots"
+demo_root = Path(__file__).resolve().parents[2]
+output_dir = str(demo_root / "public" / "incident_plots")
 os.makedirs(output_dir, exist_ok=True)
 
 # ------------------------------------------------------------------------------

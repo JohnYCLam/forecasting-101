@@ -1571,7 +1571,9 @@ def gen_tab3():
 
 def gen_tab4():
     """Tab 4: Walk-Forward Validation Across 8, 12, 16 Quarters."""
-    ref_dir = Path("references/varima-vs-arima-analysis/outputs")
+    ref_dir = Path(__file__).resolve().parents[3] / "references" / "varima-vs-arima-analysis" / "outputs"
+    if not ref_dir.exists():
+        ref_dir = Path("references/varima-vs-arima-analysis/outputs")
     if not ref_dir.exists():
         ref_dir = Path("../references/varima-vs-arima-analysis/outputs")
 
@@ -2495,7 +2497,8 @@ def main():
         "tab8": t8,
     }
 
-    out_file = Path("public/topic5_data.json")
+    demo_root = Path(__file__).resolve().parents[2]
+    out_file = demo_root / "public" / "topic5_data.json"
     out_file.parent.mkdir(parents=True, exist_ok=True)
     with open(out_file, "w") as f:
         json.dump(topic5_data, f)

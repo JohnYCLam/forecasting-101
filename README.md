@@ -103,10 +103,13 @@ Supervised machine learning applied to time-series forecasting using German elec
 
 4. To regenerate topic datasets from source models:
    ```bash
-   python generate_topic1_data.py
-   python generate_topic2_data.py
-   python generate_topic3_data.py
-   python generate_topic4_data.py
-   python generate_topic5_data.py
-   python generate_topic6_data.py
+   # Using npm:
+   npm run data:topic1
+   npm run data:topic6
+   npm run data:all
+
+   # Or using the Python runner CLI:
+   python scripts/generators/run.py 6
+   python scripts/generators/run.py 6 --validate
+   python scripts/generators/run.py all
    ```

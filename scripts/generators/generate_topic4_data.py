@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from arch import arch_model
@@ -463,7 +464,11 @@ if __name__ == "__main__":
         "tab6": gen_tab6(),
     }
 
-    with open("public/topic4_data.json", "w") as f:
+    demo_root = Path(__file__).resolve().parents[2]
+    out_dir = demo_root / "public"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "topic4_data.json"
+    with open(out_path, "w") as f:
         json.dump(data, f)
 
-    print("Generated public/topic4_data.json successfully.")
+    print(f"Generated {out_path} successfully.")

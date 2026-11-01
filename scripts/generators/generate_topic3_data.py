@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import warnings
@@ -285,7 +286,10 @@ if __name__ == "__main__":
         "tab4": generate_tab4(),
     }
     
-    out_path = os.path.join("public", "topic3_data.json")
+    demo_root = Path(__file__).resolve().parents[2]
+    out_dir = demo_root / "public"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "topic3_data.json"
     with open(out_path, "w") as f:
         json.dump(final_data, f)
     

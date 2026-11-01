@@ -25,8 +25,8 @@ from statsmodels.tsa.api import Holt
 
 warnings.filterwarnings("ignore")
 
-DATA_PATH = Path(__file__).resolve().parent.parent / "references" / "boost-vs-forest-ts" / "data" / "de_electricity_load_daily.csv"
-OUTPUT_FILE = Path(__file__).resolve().parent / "public" / "topic6_data.json"
+DATA_PATH = Path(__file__).resolve().parents[3] / "references" / "boost-vs-forest-ts" / "data" / "de_electricity_load_daily.csv"
+OUTPUT_FILE = Path(__file__).resolve().parents[2] / "public" / "topic6_data.json"
 
 
 def clean_val(v, decimals: int = 2):

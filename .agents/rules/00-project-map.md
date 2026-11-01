@@ -13,7 +13,7 @@ Working directory for ALL commands: `ts-forecasting-demo/` (this folder). Shell 
 | `src/charts/` | Shared zoom/pan chart layer. The ONLY place zoom logic may live |
 | `src/MathText.jsx` | `MathText`, `ModelOrder` (KaTeX) |
 | `src/utils.js` | `formatValue` and helpers |
-| `generate_topicN_data.py` | Python that fits real models and writes `public/topicN_data.json` |
+| `scripts/generators/` | Python data generators fitting real models and writing `public/topicN_data.json` |
 | `public/topicN_data.json` | Static precomputed data. The React app only reads it with `fetch` |
 | `docs/` | Project documentation, audit reports, and archived topic plans |
 | `docs/archive/topicN/` | Archived past topic plans and reviews (Topics 1–5, gitignored) |
@@ -24,7 +24,7 @@ Working directory for ALL commands: `ts-forecasting-demo/` (this folder). Shell 
 ## Commands (from `ts-forecasting-demo/`)
 
 - `npm run lint` (oxlint + chart gate; existing warnings are OK), `npm test`, `npm run build`, `npm run dev`
-- `python generate_topicN_data.py` regenerates topic N JSON
+- `npm run data:topicN` or `python scripts/generators/run.py N` regenerates topic N JSON (`--validate` checks integrity)
 - `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py [json] [--max-kb 1024] [--require-keys a.b,c]` honesty, NaN, size, keys
 - `node .agents/skills/demo-explainability/scripts/check-commentary-numbers.mjs` no typed numbers/fallbacks in `src/*.jsx` (known debt in Topic5 is baselined)
 - `node .agents/skills/plain-language-guard/scripts/check-commentary-shape.mjs` commentary length, question headings, duplicates, unglossed jargon, rejected names (known debt baselined)

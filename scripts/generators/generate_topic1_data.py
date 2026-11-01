@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import json
 import os
+from pathlib import Path
 import warnings
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing, Holt, ExponentialSmoothing
 
@@ -118,9 +119,12 @@ if __name__ == "__main__":
         "hw": generate_hw_data()
     }
     
-    os.makedirs('public', exist_ok=True)
-    with open('public/topic1_data.json', 'w') as f:
+    demo_root = Path(__file__).resolve().parents[2]
+    out_dir = demo_root / "public"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "topic1_data.json"
+    with open(out_path, 'w') as f:
         # rounding floats to 2 decimal places in JSON to drastically save file size
         json.dump(final_data, f, separators=(',', ':'))
     
-    print("Successfully generated public/topic1_data.json with expanded ranges")
+    print(f"Successfully generated {out_path} with expanded ranges")
