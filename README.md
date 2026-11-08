@@ -14,13 +14,14 @@ Use Node.js 22.12 or later. No new application dependencies were introduced.
 
 ```sh
 npm ci
-npm test
-npm run lint
-npm run build
 npm run dev
 ```
 
-The root install runs each app’s locked installation. The root build assembles their outputs and the homepage into `dist/`. The preview command serves that assembled site at http://127.0.0.1:5198.
+The root install runs each app’s locked installation. `npm run dev` first builds both apps and the homepage from the current checkout into `dist/`, then serves the assembled site at http://127.0.0.1:5198. This prevents a build left over from another branch appearing in the preview.
+
+After switching branches, stop the preview with Ctrl+C and run `npm run dev` again. The combined preview does not watch file changes; after editing, restart it or run `npm run build` and refresh. Each app also retains its own Vite development command for live editing.
+
+Run `npm test`, `npm run lint`, and `npm run build` separately for verification or a production build.
 
 Both apps retain their own development commands inside `apps/<topic>/`. Forecasting assets and JSON requests use its deployment prefix. Calculus retains relative assets and its standalone offline preview.
 
