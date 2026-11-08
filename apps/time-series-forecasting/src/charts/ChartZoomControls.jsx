@@ -1,13 +1,5 @@
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
-const btnStyle = {
-  background: 'transparent',
-  border: 'none',
-  color: 'var(--text-main)',
-  cursor: 'pointer',
-  padding: '4px',
-};
-
 /**
  * Shared reset / zoom-out / zoom-in controls.
  * stopPropagation prevents chart pan from starting on button press.
@@ -21,15 +13,7 @@ export default function ChartZoomControls({ onReset, onZoomOut, onZoomIn }) {
   return (
     <div
       data-chart-zoom-controls
-      style={{
-        position: 'absolute',
-        top: 5,
-        right: 10,
-        zIndex: 10,
-        display: 'flex',
-        gap: '0.25rem',
-        opacity: 0.75,
-      }}
+      className="chart-zoom-controls"
       onMouseDown={stop}
       onTouchStart={stop}
     >
@@ -40,7 +24,7 @@ export default function ChartZoomControls({ onReset, onZoomOut, onZoomIn }) {
           onReset();
         }}
         title="Reset Zoom"
-        style={btnStyle}
+        aria-label="Reset Zoom"
       >
         <RotateCcw size={18} />
       </button>
@@ -51,7 +35,7 @@ export default function ChartZoomControls({ onReset, onZoomOut, onZoomIn }) {
           onZoomOut();
         }}
         title="Zoom Out"
-        style={btnStyle}
+        aria-label="Zoom Out"
       >
         <ZoomOut size={18} />
       </button>
@@ -62,7 +46,7 @@ export default function ChartZoomControls({ onReset, onZoomOut, onZoomIn }) {
           onZoomIn();
         }}
         title="Zoom In"
-        style={btnStyle}
+        aria-label="Zoom In"
       >
         <ZoomIn size={18} />
       </button>

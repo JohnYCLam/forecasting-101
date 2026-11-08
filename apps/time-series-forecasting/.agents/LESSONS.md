@@ -25,3 +25,5 @@ Format: `- [date] symptom -> rule to follow`
 - [2026-11-07] A seasonal-naive comparison alone can make ML gains look stronger than they are. -> Predeclare broad evaluation periods, retain a stronger seasonal-average baseline, and report gain size alongside daily wins. Show the mechanism before polishing the page. Controlled and real examples should support the broad lesson while retaining and explaining disagreements; never adjust seeds or windows after inspecting evaluation results.
 
 - [2026-11-08] A theme migration exposed a 100%-width chart plus content-box padding overflowing on phones. -> Apply border-box sizing to the shared forecasting shell, wrap chart headers, and verify page width and mobile topic navigation.
+
+- [2026-11-08] A shell replacement removed the nearby maxTime chart constant, which the bundler did not flag. -> Keep chart-domain declarations separate from shell state changes, inspect the complete diff, and verify a rendered chart after shell edits.

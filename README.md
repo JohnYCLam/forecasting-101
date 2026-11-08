@@ -33,6 +33,10 @@ Both apps retain their own development commands inside `apps/<topic>/`. Forecast
 
 Development content is physically absent from the published branch, including its public datasets and section-specific references. Both development branches use the shared homepage and theme.
 
+Main shows only roadmap labels for unpublished topics in each sidebar’s “Coming next” group. Existing drafts are marked “In progress”; later forecasting roadmap topics are marked “Planned”. These placeholders do not open lesson pages.
+
+The homepage and both courses share `site/theme.css`, the line icons and saved light/dark preference in `site/theme.js`, and roadmap labels in `site/navigation.js`. The first visit follows the system theme; an explicit choice persists across pages and synchronizes across open tabs.
+
 ## Sources and local research
 
 The calculus lesson is based on [Ji-Ha Kim’s Introduction to Stochastic Calculus](https://jiha-kim.github.io/posts/introduction-to-stochastic-calculus/), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See `apps/stochastic-calculus/ATTRIBUTION.md` for the adaptation notice.
