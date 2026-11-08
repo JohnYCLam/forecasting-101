@@ -105,7 +105,7 @@ export default function App() {
 
       {/* Mobile Menu Button */}
       <div className="mobile-header">
-        <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        <button className="mobile-menu-btn" aria-label={isMobileMenuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
         <div className="brand" style={{ margin: 0, paddingLeft: '10px' }}>
