@@ -1571,7 +1571,7 @@ def gen_tab3():
 
 def gen_tab4():
     """Tab 4: Walk-Forward Validation Across 8, 12, 16 Quarters."""
-    ref_dir = Path(__file__).resolve().parents[3] / "references" / "varima-vs-arima-analysis" / "outputs"
+    ref_dir = Path(__file__).resolve().parents[4] / "research-local" / "forecasting" / "references" / "varima-vs-arima-analysis" / "outputs"
     if not ref_dir.exists():
         ref_dir = Path("references/varima-vs-arima-analysis/outputs")
     if not ref_dir.exists():
