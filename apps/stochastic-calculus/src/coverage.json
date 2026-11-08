@@ -1,0 +1,380 @@
+[
+  {
+    "sourceSection": "0",
+    "sourceTitle": "0. Introduction",
+    "chapter": "intro",
+    "section": "steady-motion",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "0",
+    "sourceTitle": "Applications Across Science, Finance, and Machine Learning",
+    "chapter": "intro",
+    "section": "applications",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "0",
+    "sourceTitle": "Deep Dive: Score-Based Generative Diffusion Models in Machine Learning",
+    "chapter": "diffusion",
+    "section": "forward-sde",
+    "status": "Moved after SDE prerequisites; full ML chapter"
+  },
+  {
+    "sourceSection": "1",
+    "sourceTitle": "1. Motivation: From Discrete Coin Flips to Stochastic Differential Equations",
+    "chapter": "walk",
+    "section": "coin-model",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "1",
+    "sourceTitle": "Counting Paths on a Grid with Pascal's Triangle",
+    "chapter": "walk",
+    "section": "pascal",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "1",
+    "sourceTitle": "Connecting Path Counts to the Binomial Distribution",
+    "chapter": "walk",
+    "section": "binomial",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "1",
+    "sourceTitle": "Bridging Win Counts (\\(k\\)) to Spatial Position and Decomposing Drift + Diffusion",
+    "chapter": "walk",
+    "section": "discrete-drift",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "1",
+    "sourceTitle": "Why Pascal's Triangle Breaks Down (And Why We Need Stochastic Calculus & SDEs)",
+    "chapter": "walk",
+    "section": "local-rules",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "1",
+    "sourceTitle": "Our Four-Step Roadmap",
+    "chapter": "walk",
+    "section": "local-rules",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "2",
+    "sourceTitle": "2. From Discrete Steps to Continuous Limits",
+    "chapter": "scaling",
+    "section": "clt",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "2",
+    "sourceTitle": "Visualizing the Binomial Limit",
+    "chapter": "scaling",
+    "section": "clt",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "2",
+    "sourceTitle": "The Diffusive Scaling Bridge: Why Space Scales as the Square Root of Time (\\(\\Delta x = \\sqrt{\\Delta t}\\))",
+    "chapter": "scaling",
+    "section": "diffusive-scaling",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "2",
+    "sourceTitle": "Is \\(\\Delta x \\propto \\sqrt{\\Delta t}\\) Just a Mathematical Trick, or Does Physics Demand It?",
+    "chapter": "scaling",
+    "section": "physical-scaling",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "3",
+    "sourceTitle": "3. Defining Brownian Motion (Wiener Process)",
+    "chapter": "brownian",
+    "section": "definition",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "3",
+    "sourceTitle": "Five Physical Desiderata",
+    "chapter": "brownian",
+    "section": "definition",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "3",
+    "sourceTitle": "Formal Definition of a Standard Brownian Motion (Wiener Process)",
+    "chapter": "brownian",
+    "section": "definition",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "3",
+    "sourceTitle": "Immediate Consequences: Mean, Variance, and Covariance",
+    "chapter": "brownian",
+    "section": "moments",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "3",
+    "sourceTitle": "Path Regularity: Continuous Everywhere, Differentiable Nowhere",
+    "chapter": "brownian",
+    "section": "roughness",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "4. Itô Calculus",
+    "chapter": "ito",
+    "section": "finite-increments",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "Clarifying Notation: Finite Increments (\\(\\Delta t, \\Delta W\\)) vs. Formal Differentials (\\(dt, dW\\))",
+    "chapter": "ito",
+    "section": "finite-increments",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "Deriving the Itô Multiplication Table and \\((dW)^2 = dt\\) from Finite Sums",
+    "chapter": "ito",
+    "section": "multiplication-table",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "The Itô Integral: Integrating Against Randomness",
+    "chapter": "ito",
+    "section": "integral",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "Is the Itô Integral Compatible with the Classical Integral?",
+    "chapter": "ito",
+    "section": "classical-integration",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "Itô's Lemma: How Classical Taylor Expansion Works Without Differentiating \\(W(t)\\)",
+    "chapter": "ito",
+    "section": "ito-lemma",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "4",
+    "sourceTitle": "Worked Example: \\(f(t, W) = W^2\\) and the Three Intuitions for the \\(-\\frac{1}{2}t\\) Term",
+    "chapter": "ito",
+    "section": "worked-square",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "5. Stochastic Differential Equations (SDEs)",
+    "chapter": "sde",
+    "section": "sde-definition",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Bridge: From Differentiating Known Processes to Solving for Unknown Processes",
+    "chapter": "sde",
+    "section": "sde-definition",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Defining an SDE",
+    "chapter": "sde",
+    "section": "sde-definition",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Itô's Lemma Revisited (For General Itô Processes)",
+    "chapter": "sde",
+    "section": "general-ito",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Constant Drift and Diffusion (Brownian Motion with Drift)",
+    "chapter": "sde",
+    "section": "additive",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Geometric Brownian Motion (Multiplicative Noise & Volatility Drag)",
+    "chapter": "sde",
+    "section": "gbm",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Physical & Financial Intuition for the \\(-\\frac{1}{2}\\sigma^2\\) Volatility Drag",
+    "chapter": "sde",
+    "section": "volatility-drag",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "5",
+    "sourceTitle": "Beyond Closed-Form Solutions: Euler–Maruyama, Fokker–Planck, and the Probability Flow ODE",
+    "chapter": "sde",
+    "section": "numerics",
+    "status": "Euler approximation in Section 5; Fokker–Planck and probability flow developed in Section 8B"
+  },
+  {
+    "sourceSection": "6",
+    "sourceTitle": "6. Stratonovich Calculus and the \\(\\lambda\\)-Family of Stochastic Integrals",
+    "chapter": "stratonovich",
+    "section": "endpoint-choice",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "6",
+    "sourceTitle": "Bridge: Why Would Physics Want a Different Stochastic Integral?",
+    "chapter": "stratonovich",
+    "section": "endpoint-choice",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "6",
+    "sourceTitle": "The \\(\\lambda\\)-Parameterized Family of Stochastic Integrals",
+    "chapter": "stratonovich",
+    "section": "endpoint-choice",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "6",
+    "sourceTitle": "Universal Transformation Formulas Across the \\(\\lambda\\)-Family",
+    "chapter": "stratonovich",
+    "section": "integral-conversion",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "6",
+    "sourceTitle": "Applications of Stratonovich Calculus",
+    "chapter": "stratonovich",
+    "section": "physical-applications",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "6",
+    "sourceTitle": "Summary Comparison Across the \\(\\lambda\\)-Family",
+    "chapter": "stratonovich",
+    "section": "comparison",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "7",
+    "sourceTitle": "7. Beyond Brownian Motion: Is Stochastic Calculus Only About \\(dW(t)\\)?",
+    "chapter": "beyond",
+    "section": "continuous-noise",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "7",
+    "sourceTitle": "Why \\(dW(t)\\) Dominates: Uniqueness of Continuous Memoryless Noise",
+    "chapter": "beyond",
+    "section": "continuous-noise",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "7",
+    "sourceTitle": "Three Extensions When Continuity or Memorylessness Is Relaxed",
+    "chapter": "beyond",
+    "section": "jumps",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "Appendix",
+    "chapter": "reference",
+    "section": "code",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "A.0. Further Reading",
+    "chapter": "reference",
+    "section": "sources",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "A.1. Notation",
+    "chapter": "reference",
+    "section": "notation",
+    "status": "Retained, checked, and rewritten"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "B.1. Python Code for Binomial Plots",
+    "chapter": "reference",
+    "section": "b-1",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "B.2. Python Code for Brownian Motion Plot",
+    "chapter": "reference",
+    "section": "b-2",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "B.3. Python Code for Basic SDE Simulation",
+    "chapter": "reference",
+    "section": "b-3",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "B.4. Python Code for Geometric Brownian Motion Simulation (Corrected Trajectory)",
+    "chapter": "reference",
+    "section": "b-4",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "B.5. LaTeX Code for TikZ Diagram of Paths in Pascal's Triangle",
+    "chapter": "reference",
+    "section": "b-5",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "C.1. 3D Plot of Discrete Random Walks",
+    "chapter": "reference",
+    "section": "c-1",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "C.2. 3D Animation of Brownian Motion",
+    "chapter": "reference",
+    "section": "c-2",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "C.3. 3D Animation of Geometric Brownian Motion",
+    "chapter": "reference",
+    "section": "c-3",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  },
+  {
+    "sourceSection": "appendix",
+    "sourceTitle": "C.4. Python Code for Normal Distribution Approximation by Random Walks",
+    "chapter": "reference",
+    "section": "c-4",
+    "status": "Restored as viewable and downloadable code; corrections documented"
+  }
+]

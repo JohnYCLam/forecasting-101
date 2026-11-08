@@ -1,0 +1,63 @@
+% Adapted from "Introduction to Stochastic Calculus" by Ji-Ha Kim.
+% https://jiha-kim.github.io/posts/introduction-to-stochastic-calculus/
+% Original material licensed by the author under CC BY 4.0:
+% https://creativecommons.org/licenses/by/4.0/
+% Changes in this adaptation: TikZ source for the three routes RRL, RLR, and LRR.
+% See the project ATTRIBUTION.md for the overall adaptation notice.
+
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[scale=0.8]
+  % Add a white background rectangle
+  \fill[white] (-12, 1) rectangle (10, -5);
+
+  % Row labels (only once, to the left of the first diagram)
+  \node[align=right] at (-11, 0) {Row 0};
+  \node[align=right] at (-11, -1) {Row 1};
+  \node[align=right] at (-11, -2) {Row 2};
+  \node[align=right] at (-11, -3) {Row 3};
+
+  % Diagram 1: Path RRL
+  \node at (-6, 0) {1}; % Row 0
+  \node at (-7, -1) {1}; % Row 1
+  \node at (-5, -1) {1};
+  \node at (-8, -2) {1}; % Row 2
+  \node at (-6, -2) {2};
+  \node at (-4, -2) {1};
+  \node at (-9, -3) {1}; % Row 3
+  \node at (-7, -3) {3};
+  \node at (-5, -3) {3};
+  \node at (-3, -3) {1};
+  \draw[->, red, thick] (-6, 0) -- (-5, -1) -- (-4, -2) -- (-5, -3); % RRL
+  \node at (-6, -4) {Right-Right-Left};
+
+  % Diagram 2: Path RLR
+  \node at (0, 0) {1}; % Row 0
+  \node at (-1, -1) {1}; % Row 1
+  \node at (1, -1) {1};
+  \node at (-2, -2) {1}; % Row 2
+  \node at (0, -2) {2};
+  \node at (2, -2) {1};
+  \node at (-3, -3) {1}; % Row 3
+  \node at (-1, -3) {3};
+  \node at (1, -3) {3};
+  \node at (3, -3) {1};
+  \draw[->, blue, thick] (0, 0) -- (1, -1) -- (0, -2) -- (1, -3); % RLR
+  \node at (0, -4) {Right-Left-Right};
+
+  % Diagram 3: Path LRR
+  \node at (6, 0) {1}; % Row 0
+  \node at (5, -1) {1}; % Row 1
+  \node at (7, -1) {1};
+  \node at (4, -2) {1}; % Row 2
+  \node at (6, -2) {2};
+  \node at (8, -2) {1};
+  \node at (3, -3) {1}; % Row 3
+  \node at (5, -3) {3};
+  \node at (7, -3) {3};
+  \node at (9, -3) {1};
+  \draw[->, green, thick] (6, 0) -- (5, -1) -- (6, -2) -- (7, -3); % LRR
+  \node at (6, -4) {Left-Right-Right};
+\end{tikzpicture}
+\end{document}

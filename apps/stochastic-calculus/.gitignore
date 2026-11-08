@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+# Local research and Appendix B review/revision notes; never part of the site.
+/research-local/

@@ -1,0 +1,24 @@
+:root{--paper:#f6f4ee;--ink:#172c2b;--muted:#596c68;--line:#d9e0d8;--teal:#147d70;--mint:#e6f0e6;--coral:#d76448;--blue:#5169a5;--gold:#ad7b21;--white:#fffef9;--serif:Georgia,'Times New Roman',serif}
+.all-topics{display:block;margin:20px 0 4px;color:var(--teal);font:600 12px/1.6 system-ui;text-decoration:none}
+.all-topics:hover{text-decoration:underline}
+body.forecasting{font:15px/1.7 system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--paper);color:var(--ink);--bg-color:var(--paper);--bg-gradient-start:var(--paper);--bg-gradient-end:var(--paper);--text-main:var(--ink);--text-muted:var(--muted);--surface:var(--white);--border:var(--line);--primary:var(--teal);--primary-bg:var(--mint);--brand-gradient:none;--commentary-bg:#eef3e9;--shadow:0 5px 24px #203e2a05;--nav-hover:var(--mint);--chart-grid:var(--line);--chart-tooltip-bg:var(--white);--chart-tooltip-text:var(--ink)}
+body.forecasting.dark{--paper:#142321;--ink:#e5ece4;--muted:#adbbb2;--line:#354b43;--teal:#8dcbb6;--mint:#263f35;--coral:#edac8c;--white:#1b2f29;--commentary-bg:#243a30}
+.forecasting h1,.forecasting h2,.forecasting h3,.forecasting .brand{font-family:var(--serif);font-weight:500;letter-spacing:-.5px;color:var(--ink)}
+.forecasting h1{font-size:clamp(32px,3.8vw,52px);line-height:1.15;letter-spacing:-1.5px}
+.forecasting h2{font-size:25px}.forecasting h3{font-size:21px}
+.forecasting .brand{font-size:23px;-webkit-text-fill-color:var(--ink);background:none;line-height:1.2}
+.forecasting .glass{background:var(--white);backdrop-filter:none;-webkit-backdrop-filter:none;border-color:var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.forecasting .sidebar{background:#efefe7;border-radius:0;padding:32px 24px;position:sticky;top:0;height:100vh}
+.forecasting.dark .sidebar{background:#1b2f29}
+.forecasting .sidebar .all-topics{margin:0 0 22px}
+.forecasting .nav-item{font-size:13px;border-radius:5px;font-weight:400}
+.forecasting .nav-item.active{background:var(--mint);color:var(--teal);border-color:transparent}
+.forecasting .subtitle{font-size:16px;line-height:1.65;color:var(--muted)}
+.forecasting .commentary-box{background:var(--commentary-bg);border-radius:6px}
+.forecasting input[type=range]{accent-color:var(--teal)}
+.forecasting button,.forecasting select{font-family:system-ui;border-color:var(--line);border-radius:7px}
+.forecasting button:focus-visible,.forecasting a:focus-visible,.forecasting input:focus-visible{outline:3px solid var(--coral);outline-offset:3px}
+.forecasting .chart-container{background:var(--white);border:1px solid var(--line);border-radius:10px}
+.forecasting .recharts-cartesian-grid line{stroke:var(--line)}
+.forecasting .tab.active{background:var(--mint);color:var(--teal);border-color:var(--teal)}
+@media(max-width:768px){.forecasting .sidebar{position:fixed;padding:24px 20px}.forecasting h1{font-size:32px}.forecasting .glass{border-radius:8px}}

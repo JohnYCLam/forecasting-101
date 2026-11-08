@@ -1,0 +1,38 @@
+{
+  "name": "temp-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run test:charts && vite build",
+    "lint": "oxlint && npm run test:charts",
+    "preview": "vite preview",
+    "test": "npm run test:unit && npm run test:charts",
+    "test:unit": "node --test src/charts/zoomMath.test.js",
+    "test:charts": "node scripts/check-chart-components.mjs",
+    "data:topic1": "python scripts/generators/run.py 1",
+    "data:topic2": "python scripts/generators/run.py 2",
+    "data:topic3": "python scripts/generators/run.py 3",
+    "data:topic4": "python scripts/generators/run.py 4",
+    "data:topic5": "python scripts/generators/run.py 5",
+    "data:topic6": "python scripts/generators/run.py 6",
+    "data:all": "python scripts/generators/run.py all",
+    "data:validate": "python scripts/generators/run.py all --validate"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "katex": "^0.19.0",
+    "lucide-react": "^1.50.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "vite": "^8.3.0"
+  }
+}
