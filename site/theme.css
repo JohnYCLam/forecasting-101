@@ -154,3 +154,5 @@ input[type='range'] { accent-color: var(--teal); }
 .course .story p, .course .story li { font-size:15px; line-height:1.7; }
 .forecasting .commentary-box p { font-size:15px !important; line-height:1.7 !important; }
 .course .lab h3, .forecasting .chart-header h2 { font-size:27px !important; }
+
+.author-credit { display: block; margin-bottom: 4px; color: var(--ink); font: 600 12px/1.7 var(--sans); }

@@ -394,7 +394,7 @@ export default function App() {
           ) : null}
         </div>
       </main>
-      <footer className="course-footer"><span>Time-series forecasting · Learning Hub</span><a href="/">All topics →</a></footer>
+      <footer className="course-footer"><span><span className="author-credit">by Yi Chun LAM</span>Time-series forecasting · Learning Hub</span><a href="/">All topics →</a></footer>
       </div>
       <Analytics />
     </div>
