@@ -159,8 +159,8 @@ export default function Topic2({ activeTab = 1 }) {
       coefficient
     }));
     const contributionData = [
-      ...arPoints.map((point, idx) => ({ label: `AR value t−${idx + 1}`, value: point.contribution, coefficient: point.coefficient, color: '#147d70' })),
-      ...shockPoints.map((point, idx) => ({ label: `Shock t−${idx + 1}`, value: point.contribution, coefficient: point.coefficient, color: '#ad7b21' }))
+      ...arPoints.map((point, idx) => ({ label: `AR value t−${idx + 1}`, value: point.contribution, coefficient: point.coefficient, color: 'var(--teal)' })),
+      ...shockPoints.map((point, idx) => ({ label: `Shock t−${idx + 1}`, value: point.contribution, coefficient: point.coefficient, color: 'var(--gold)' }))
     ];
     const predictedMean = contributionData.reduce((sum, item) => sum + item.value, tabData.intercept);
     const xMax = chartData.length - 1;
@@ -225,10 +225,10 @@ export default function Topic2({ activeTab = 1 }) {
                   <ReferenceLine x={tabData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast start', fill: 'var(--text-muted)' }} />
                   <ReferenceLine x={inspectTime} stroke="var(--text-main)" strokeDasharray="3 3" />
                   <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={1.6} dot={false} name="Observed series yₜ" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="GeneratedMean" stroke="#d76448" strokeWidth={2} dot={false} name="Generated conditional mean ŷₜ" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="Forecast" stroke="#7c3aed" strokeWidth={3} strokeDasharray="5 5" dot={false} name={`ARMA(${p},${q}) out-of-sample forecast`} isAnimationActive={false} />
-                  <Scatter data={arPoints} dataKey="value" fill="#147d70" name="AR lag inputs" isAnimationActive={false} />
-                  <Scatter data={shockPoints} dataKey="value" fill="#ad7b21" name="Past-shock inputs" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="GeneratedMean" stroke="var(--coral)" strokeWidth={2} dot={false} name="Generated conditional mean ŷₜ" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="Forecast" stroke="var(--chart-violet)" strokeWidth={3} strokeDasharray="5 5" dot={false} name={`ARMA(${p},${q}) out-of-sample forecast`} isAnimationActive={false} />
+                  <Scatter data={arPoints} dataKey="value" fill="var(--teal)" name="AR lag inputs" isAnimationActive={false} />
+                  <Scatter data={shockPoints} dataKey="value" fill="var(--gold)" name="Past-shock inputs" isAnimationActive={false} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -303,10 +303,10 @@ export default function Topic2({ activeTab = 1 }) {
         timeLabels={tabData.time_label}
         lines={[
           <Line key="1" type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />,
-          <Line key="4" type="monotone" dataKey="HW_InSample" stroke="#147d70" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
-          <Line key="2" type="monotone" dataKey="ARIMA_InSample" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`ARMA In-Sample`} />,
-          <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="#147d70" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
-          <Line key="3" type="monotone" dataKey="ARIMA_Forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`ARMA ${formatAsArma(tabData.arima_order)} Forecast`} />
+          <Line key="4" type="monotone" dataKey="HW_InSample" stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
+          <Line key="2" type="monotone" dataKey="ARIMA_InSample" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`ARMA In-Sample`} />,
+          <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="var(--teal)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
+          <Line key="3" type="monotone" dataKey="ARIMA_Forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`ARMA ${formatAsArma(tabData.arima_order)} Forecast`} />
         ]} 
       />
     );
@@ -371,11 +371,11 @@ export default function Topic2({ activeTab = 1 }) {
               <ReferenceLine 
                 key={`c${i}`} 
                 x={i} 
-                stroke="#147d70" 
+                stroke="var(--teal)"
                 strokeWidth={2} 
                 strokeDasharray="3 3" 
                 strokeOpacity={0.5} 
-                label={{ value: `${length} yrs`, position: 'insideTopRight', fill: '#147d70', fontSize: 10, offset: 5 }} 
+                label={{ value: `${length} yrs`, position: 'insideTopRight', fill: 'var(--teal)', fontSize: 10, offset: 5 }}
               />
             );
             lastPeakIdx = i;
@@ -401,10 +401,10 @@ export default function Topic2({ activeTab = 1 }) {
           hideXAxis={tab3Dataset === 'TBill'}
           lines={[
             <Line key="1" type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />,
-            <Line key="4" type="monotone" dataKey="HW_InSample" stroke="#147d70" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
-            <Line key="2" type="monotone" dataKey="ARIMA_InSample" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`ARMA In-Sample`} />,
-            <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="#147d70" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
-            <Line key="3" type="monotone" dataKey="ARIMA_Forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`ARMA ${formatAsArma(tabData.arima_order)} Forecast`} />,
+            <Line key="4" type="monotone" dataKey="HW_InSample" stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
+            <Line key="2" type="monotone" dataKey="ARIMA_InSample" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`ARMA In-Sample`} />,
+            <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="var(--teal)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
+            <Line key="3" type="monotone" dataKey="ARIMA_Forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`ARMA ${formatAsArma(tabData.arima_order)} Forecast`} />,
             ...cycleLines
           ]} 
         />
@@ -519,8 +519,8 @@ export default function Topic2({ activeTab = 1 }) {
           hideXAxis={true}
           lines={[
             <Line key="1" type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />,
-            <Line key="2" type="monotone" dataKey="InSample" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="In-Sample Fit" />,
-            <Line key="3" type="monotone" dataKey="Forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Forecast" />
+            <Line key="2" type="monotone" dataKey="InSample" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="In-Sample Fit" />,
+            <Line key="3" type="monotone" dataKey="Forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Forecast" />
           ]} 
         />
       );
@@ -635,8 +635,8 @@ export default function Topic2({ activeTab = 1 }) {
             </div>
           </div>
           
-          <div className="glass" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #5169a5' }}>
-            <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.5rem', color: '#5169a5' }}>
+          <div className="glass" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid var(--blue)' }}>
+            <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--blue)' }}>
               2. BIC (Bayesian Information Criterion)
             </div>
             <div style={{ fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
@@ -646,8 +646,8 @@ export default function Topic2({ activeTab = 1 }) {
             </div>
           </div>
 
-          <div className="glass" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #d76448' }}>
-            <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.5rem', color: '#d76448' }}>
+          <div className="glass" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid var(--coral)' }}>
+            <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--coral)' }}>
               3. Statistical Hypothesis Test (F-Test at 5%)
             </div>
             <div style={{ fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
@@ -705,10 +705,10 @@ export default function Topic2({ activeTab = 1 }) {
         timeLabels={tabData.time_label}
         lines={[
           <Line key="1" type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />,
-          <Line key="4" type="monotone" dataKey="HW_InSample" stroke="#147d70" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
-          <Line key="2" type="monotone" dataKey="SARIMA_InSample" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`SARIMA In-Sample`} />,
-          <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="#147d70" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
-          <Line key="3" type="monotone" dataKey="SARIMA_Forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`SARIMA ${formatOrderLabel(tabData.sarima_order)} Forecast`} />
+          <Line key="4" type="monotone" dataKey="HW_InSample" stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
+          <Line key="2" type="monotone" dataKey="SARIMA_InSample" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`SARIMA In-Sample`} />,
+          <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="var(--teal)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
+          <Line key="3" type="monotone" dataKey="SARIMA_Forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`SARIMA ${formatOrderLabel(tabData.sarima_order)} Forecast`} />
         ]} 
       />
     );
@@ -761,11 +761,11 @@ export default function Topic2({ activeTab = 1 }) {
         timeLabels={tabData.time_label}
         lines={[
           <Line key="1" type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />,
-          <Line key="4" type="monotone" dataKey="HW_InSample" stroke="#147d70" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
-          <Line key="2" type="monotone" dataKey="Model_InSample" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`${useExog ? 'SARIMAX' : 'SARIMA'} In-Sample`} />,
-          <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="#147d70" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
-          <Line key="3" type="monotone" dataKey="Model_Forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`${useExog ? 'SARIMAX' : 'SARIMA'} Forecast`} />,
-          <Line key="6" type="step" dataKey="Promo" stroke="#fbbf24" strokeWidth={0} dot={{ r: 6, fill: '#fbbf24', stroke: '#fff' }} isAnimationActive={false} name="Promo Active (Yellow Bulbs)" />
+          <Line key="4" type="monotone" dataKey="HW_InSample" stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name="Holt-Winters In-Sample" />,
+          <Line key="2" type="monotone" dataKey="Model_InSample" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} name={`${useExog ? 'SARIMAX' : 'SARIMA'} In-Sample`} />,
+          <Line key="5" type="monotone" dataKey="HW_Forecast" stroke="var(--teal)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Holt-Winters Forecast" />,
+          <Line key="3" type="monotone" dataKey="Model_Forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name={`${useExog ? 'SARIMAX' : 'SARIMA'} Forecast`} />,
+          <Line key="6" type="step" dataKey="Promo" stroke="#fbbf24" strokeWidth={0} dot={{ r: 6, fill: '#fbbf24', stroke: 'var(--on-accent)' }} isAnimationActive={false} name="Promo Active (Yellow Bulbs)" />
         ]} 
       />
     );

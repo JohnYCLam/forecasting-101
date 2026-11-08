@@ -1,2 +1,3 @@
 import { defineConfig } from 'vite';
-export default defineConfig({ base: './' });
+import { sharedTheme } from '../../scripts/vite-theme.mjs';
+export default defineConfig({ base: './', plugins: [sharedTheme()] });

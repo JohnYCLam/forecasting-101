@@ -17,7 +17,7 @@ const comparisonTableStyle = {
 };
 const tableHeaderCellStyle = { padding: '0.65rem', borderBottom: '1px solid var(--border)' };
 const tableCellStyle = { padding: '0.65rem', borderBottom: '1px solid var(--border)' };
-const winnerCellStyle = { color: '#16a34a', fontWeight: 700, background: 'rgba(34, 197, 94, 0.1)' };
+const winnerCellStyle = { color: 'var(--chart-green)', fontWeight: 700, background: 'rgba(34, 197, 94, 0.1)' };
 
 const Layout = ({ title = "Explanation", commentary, dataset, controls, chart, chartHeight = "860px", extraCardTitle = null, extraCard = null }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -267,17 +267,17 @@ export default function Topic4({ activeTab = 1 }) {
                   <YAxis yAxisId="left" domain={forecastDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
-                  <ReferenceLine x={tabData.train_size} stroke="#111827" strokeDasharray="4 4" />
-                  <ReferenceLine y={tabData.mu} yAxisId="left" stroke="#111827" strokeDasharray="3 3" />
-                  <ReferenceLine y={tabData.mu + tabData.unconditional_vol} yAxisId="left" stroke="#6b7280" strokeDasharray="4 4" />
-                  <ReferenceLine y={tabData.mu - tabData.unconditional_vol} yAxisId="left" stroke="#6b7280" strokeDasharray="4 4" />
+                  <ReferenceLine x={tabData.train_size} stroke="var(--ink)" strokeDasharray="4 4" />
+                  <ReferenceLine y={tabData.mu} yAxisId="left" stroke="var(--ink)" strokeDasharray="3 3" />
+                  <ReferenceLine y={tabData.mu + tabData.unconditional_vol} yAxisId="left" stroke="var(--muted)" strokeDasharray="4 4" />
+                  <ReferenceLine y={tabData.mu - tabData.unconditional_vol} yAxisId="left" stroke="var(--muted)" strokeDasharray="4 4" />
                   <Line yAxisId="left" type="monotone" dataKey="TrainReturn" stroke="var(--text-muted)" strokeOpacity={0.55} strokeWidth={0.9} dot={false} name="Train returns" isAnimationActive={false} />
-                  <Line yAxisId="left" type="monotone" dataKey="TestReturn" stroke="#111827" strokeWidth={1.2} dot={false} name="Test returns" isAnimationActive={false} />
-                  <Line yAxisId="left" type="step" dataKey="PointMean" stroke="#111827" strokeWidth={2} dot={false} name="Point mean forecast" isAnimationActive={false} />
-                  <Line yAxisId="left" type="stepAfter" dataKey="OneStepUpper" stroke="#d97706" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" isAnimationActive={false} />
-                  <Line yAxisId="left" type="stepAfter" dataKey="OneStepLower" stroke="#d97706" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" legendType="none" isAnimationActive={false} />
-                  <Line yAxisId="left" type="stepAfter" dataKey="MultiUpper" stroke="#d76448" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" isAnimationActive={false} />
-                  <Line yAxisId="left" type="stepAfter" dataKey="MultiLower" stroke="#d76448" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" legendType="none" isAnimationActive={false} />
+                  <Line yAxisId="left" type="monotone" dataKey="TestReturn" stroke="var(--ink)" strokeWidth={1.2} dot={false} name="Test returns" isAnimationActive={false} />
+                  <Line yAxisId="left" type="step" dataKey="PointMean" stroke="var(--ink)" strokeWidth={2} dot={false} name="Point mean forecast" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="OneStepUpper" stroke="var(--chart-orange)" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="OneStepLower" stroke="var(--chart-orange)" strokeOpacity={0.65} strokeWidth={1.3} dot={false} name="One-step ARCH boundary (train only)" legendType="none" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="MultiUpper" stroke="var(--coral)" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" isAnimationActive={false} />
+                  <Line yAxisId="left" type="stepAfter" dataKey="MultiLower" stroke="var(--coral)" strokeWidth={1.8} strokeDasharray="6 4" dot={false} name="Multi-step ARCH boundary (test, converging)" legendType="none" isAnimationActive={false} />
                 </ComposedChart>
               </ResponsiveContainer>
             ),
@@ -293,11 +293,11 @@ export default function Topic4({ activeTab = 1 }) {
                   <YAxis domain={sigmaDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
-                  <ReferenceLine x={tabData.train_size} stroke="#111827" strokeDasharray="4 4" />
+                  <ReferenceLine x={tabData.train_size} stroke="var(--ink)" strokeDasharray="4 4" />
                   <Line type="monotone" dataKey="RealizedAbs" stroke="var(--text-muted)" strokeWidth={1} dot={false} name="Realized |r_t - μ_t| proxy" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="OneStepSigma" stroke="#ad7b21" strokeWidth={1.7} dot={false} name="One-step σ_t (train only)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="MultiStepSigma" stroke="#7c3aed" strokeWidth={2} strokeDasharray="5 3" dot={false} name="Multi-step σ_{t+h|t} (converging)" isAnimationActive={false} />
-                  <ReferenceLine y={tabData.unconditional_vol} stroke="#6b7280" strokeDasharray="4 4" label={{ value: "Long-run σ", fill: "var(--text-muted)", position: "insideTopRight" }} />
+                  <Line type="monotone" dataKey="OneStepSigma" stroke="var(--gold)" strokeWidth={1.7} dot={false} name="One-step σ_t (train only)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="MultiStepSigma" stroke="var(--chart-violet)" strokeWidth={2} strokeDasharray="5 3" dot={false} name="Multi-step σ_{t+h|t} (converging)" isAnimationActive={false} />
+                  <ReferenceLine y={tabData.unconditional_vol} stroke="var(--muted)" strokeDasharray="4 4" label={{ value: "Long-run σ", fill: "var(--text-muted)", position: "insideTopRight" }} />
                 </LineChart>
               </ResponsiveContainer>
             ),
@@ -321,8 +321,8 @@ export default function Topic4({ activeTab = 1 }) {
                 <YAxis domain={tab1View === 'returns' ? alignedReturnDomain : alignedVarDomain} tick={{ fill: 'var(--text-muted)' }} tickFormatter={axisShort} />
                 <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                 <Legend />
-                {tab1View === 'returns' && <Line type="monotone" dataKey="RealReturn" stroke="#147d70" strokeWidth={1.5} dot={false} name="Real White Noise Returns" isAnimationActive={false} />}
-                {tab1View === 'variance' && <Area type="step" dataKey="RealVar" fill="#147d70" stroke="#147d70" fillOpacity={0.25} name="Real Rolling Variance (20d)" isAnimationActive={false} />}
+                {tab1View === 'returns' && <Line type="monotone" dataKey="RealReturn" stroke="var(--teal)" strokeWidth={1.5} dot={false} name="Real White Noise Returns" isAnimationActive={false} />}
+                {tab1View === 'variance' && <Area type="step" dataKey="RealVar" fill="var(--teal)" stroke="var(--teal)" fillOpacity={0.25} name="Real Rolling Variance (20d)" isAnimationActive={false} />}
               </ComposedChart>
             </ResponsiveContainer>
           ),
@@ -343,22 +343,22 @@ export default function Topic4({ activeTab = 1 }) {
                   <ReferenceArea
                     x1={fakeHighClusterWindow.start}
                     x2={fakeHighClusterWindow.end}
-                    fill="#d76448"
+                    fill="var(--coral)"
                     fillOpacity={0.14}
-                    label={{ value: 'Persistent high-vol regime', position: 'insideTop', fill: '#b91c1c' }}
+                    label={{ value: 'Persistent high-vol regime', position: 'insideTop', fill: 'var(--chart-red)' }}
                   />
                 )}
                 {tab1View === 'variance' && fakeLowClusterWindow && (
                   <ReferenceArea
                     x1={fakeLowClusterWindow.start}
                     x2={fakeLowClusterWindow.end}
-                    fill="#147d70"
+                    fill="var(--teal)"
                     fillOpacity={0.12}
-                    label={{ value: 'Persistent low-vol regime', position: 'insideBottom', fill: '#1d4ed8' }}
+                    label={{ value: 'Persistent low-vol regime', position: 'insideBottom', fill: 'var(--chart-blue)' }}
                   />
                 )}
-                {tab1View === 'returns' && <Line type="monotone" dataKey="FakeReturn" stroke="#d76448" strokeWidth={1.5} dot={false} name="Fake White Noise Returns" isAnimationActive={false} />}
-                {tab1View === 'variance' && <Area type="step" dataKey="FakeVar" fill="#d76448" stroke="#d76448" fillOpacity={0.25} name="Fake Rolling Variance (20d)" isAnimationActive={false} />}
+                {tab1View === 'returns' && <Line type="monotone" dataKey="FakeReturn" stroke="var(--coral)" strokeWidth={1.5} dot={false} name="Fake White Noise Returns" isAnimationActive={false} />}
+                {tab1View === 'variance' && <Area type="step" dataKey="FakeVar" fill="var(--coral)" stroke="var(--coral)" fillOpacity={0.25} name="Fake Rolling Variance (20d)" isAnimationActive={false} />}
               </ComposedChart>
             </ResponsiveContainer>
           ),
@@ -396,9 +396,9 @@ export default function Topic4({ activeTab = 1 }) {
       weight: beta
     }));
     const contributionData = [
-      { label: 'Baseline ω', value: selectedModel.omega, weight: null, color: '#6b7280' },
-      ...shockPoints.map((point, idx) => ({ label: `Shock t−${idx + 1}`, value: point.contribution, weight: point.weight, color: '#ad7b21' })),
-      ...variancePoints.map((point, idx) => ({ label: `Variance t−${idx + 1}`, value: point.contribution, weight: point.weight, color: '#147d70' }))
+      { label: 'Baseline ω', value: selectedModel.omega, weight: null, color: 'var(--muted)' },
+      ...shockPoints.map((point, idx) => ({ label: `Shock t−${idx + 1}`, value: point.contribution, weight: point.weight, color: 'var(--gold)' })),
+      ...variancePoints.map((point, idx) => ({ label: `Variance t−${idx + 1}`, value: point.contribution, weight: point.weight, color: 'var(--teal)' }))
     ];
     const contributionTotal = contributionData.reduce((sum, item) => sum + item.value, 0);
     
@@ -478,13 +478,13 @@ export default function Topic4({ activeTab = 1 }) {
                   <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                   <Legend />
                   <ReferenceLine x={trainSize} stroke="var(--text-main)" strokeDasharray="4 4" label={{ value: 'Forecast start', fill: 'var(--text-muted)', position: 'insideTopRight' }} />
-                  <ReferenceLine x={inspectTime} stroke="#111827" strokeDasharray="3 3" />
+                  <ReferenceLine x={inspectTime} stroke="var(--ink)" strokeDasharray="3 3" />
                   <Area type="step" dataKey="SquaredReturns" fill="var(--text-muted)" stroke="none" fillOpacity={0.2} name="Squared returns r_t^2 (proxy)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="GeneratedVariance" stroke="#d76448" strokeWidth={2} dot={false} name="Generated variance σ_t^2 (train)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="TrueTestVariance" stroke="#16a34a" strokeWidth={1.8} strokeDasharray="4 3" dot={false} name="True variance (test, simulation only)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="ForecastVariance" stroke="#7c3aed" strokeWidth={2.5} dot={false} name="Multi-step variance forecast" isAnimationActive={false} />
-                  <Scatter data={shockPoints} dataKey="value" fill="#ad7b21" name="Shock inputs at inspected date" isAnimationActive={false} />
-                  <Scatter data={variancePoints} dataKey="value" fill="#147d70" name="Variance-lag inputs at inspected date" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="GeneratedVariance" stroke="var(--coral)" strokeWidth={2} dot={false} name="Generated variance σ_t^2 (train)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="TrueTestVariance" stroke="var(--chart-green)" strokeWidth={1.8} strokeDasharray="4 3" dot={false} name="True variance (test, simulation only)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="ForecastVariance" stroke="var(--chart-violet)" strokeWidth={2.5} dot={false} name="Multi-step variance forecast" isAnimationActive={false} />
+                  <Scatter data={shockPoints} dataKey="value" fill="var(--gold)" name="Shock inputs at inspected date" isAnimationActive={false} />
+                  <Scatter data={variancePoints} dataKey="value" fill="var(--teal)" name="Variance-lag inputs at inspected date" isAnimationActive={false} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -509,7 +509,7 @@ export default function Topic4({ activeTab = 1 }) {
                 ]}
                 contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }}
               />
-              <ReferenceLine y={contributionTotal} stroke="#111827" strokeDasharray="4 4" label={{ value: `Total σ_t² = ${contributionTotal.toFixed(3)}`, fill: 'var(--text-muted)', position: 'insideTopRight' }} />
+              <ReferenceLine y={contributionTotal} stroke="var(--ink)" strokeDasharray="4 4" label={{ value: `Total σ_t² = ${contributionTotal.toFixed(3)}`, fill: 'var(--text-muted)', position: 'insideTopRight' }} />
               <Bar dataKey="value" name="Variance contribution" isAnimationActive={false}>
                 {contributionData.map((entry, idx) => <Cell key={`${entry.label}-${idx}`} fill={entry.color} />)}
               </Bar>
@@ -595,9 +595,9 @@ export default function Topic4({ activeTab = 1 }) {
                   <Legend />
                   
                   <Line type="step" dataKey="ProxyAbs" stroke="var(--text-muted)" strokeWidth={1} dot={false} opacity={0.5} name="Realized |r_t| proxy" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="TrueVol" stroke="#147d70" strokeWidth={3} dot={false} name="True latent σ_t (simulation)" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="GarchVol" stroke="#147d70" strokeWidth={2} strokeDasharray="3 3" dot={false} name="GARCH one-step σ_t" isAnimationActive={false} />
-                  <Line type="monotone" dataKey="ConstVol" stroke="#d76448" strokeWidth={1.5} dot={false} name="Constant σ baseline" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="TrueVol" stroke="var(--teal)" strokeWidth={3} dot={false} name="True latent σ_t (simulation)" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="GarchVol" stroke="var(--teal)" strokeWidth={2} strokeDasharray="3 3" dot={false} name="GARCH one-step σ_t" isAnimationActive={false} />
+                  <Line type="monotone" dataKey="ConstVol" stroke="var(--coral)" strokeWidth={1.5} dot={false} name="Constant σ baseline" isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -697,10 +697,10 @@ export default function Topic4({ activeTab = 1 }) {
                   <Legend />
                   
                   <Line type="monotone" dataKey="Returns" stroke="var(--text-muted)" strokeWidth={1} dot={false} name="Daily returns" isAnimationActive={false} />
-                  <Line type="step" dataKey="HistVaR" stroke="#ad7b21" strokeWidth={2} dot={false} name={`Historical ${confidenceLabel}`} isAnimationActive={false} />
-                  <Line type="step" dataKey="GarchVaR" stroke="#d76448" strokeWidth={2} dot={false} name={`GARCH ${confidenceLabel}`} isAnimationActive={false} />
-                  <Scatter dataKey="HistBreach" fill="#ad7b21" name="Historical breaches" />
-                  <Scatter dataKey="GarchBreach" fill="#d76448" name="GARCH breaches" />
+                  <Line type="step" dataKey="HistVaR" stroke="var(--gold)" strokeWidth={2} dot={false} name={`Historical ${confidenceLabel}`} isAnimationActive={false} />
+                  <Line type="step" dataKey="GarchVaR" stroke="var(--coral)" strokeWidth={2} dot={false} name={`GARCH ${confidenceLabel}`} isAnimationActive={false} />
+                  <Scatter dataKey="HistBreach" fill="var(--gold)" name="Historical breaches" />
+                  <Scatter dataKey="GarchBreach" fill="var(--coral)" name="GARCH breaches" />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -823,8 +823,8 @@ export default function Topic4({ activeTab = 1 }) {
                     <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                     <Legend />
                     <ReferenceLine y={0} yAxisId="left" stroke="var(--text-main)" strokeDasharray="3 3" />
-                    <Line yAxisId="left" type="monotone" dataKey="Residual" stroke="#d76448" strokeWidth={1} dot={false} name="ARIMA Residuals (Errors)" isAnimationActive={false} />
-                    <Area yAxisId="right" type="step" dataKey="RollingVar" fill="#ad7b21" stroke="#ad7b21" fillOpacity={0.3} dot={false} name="Rolling Variance (20-day)" isAnimationActive={false} />
+                    <Line yAxisId="left" type="monotone" dataKey="Residual" stroke="var(--coral)" strokeWidth={1} dot={false} name="ARIMA Residuals (Errors)" isAnimationActive={false} />
+                    <Area yAxisId="right" type="step" dataKey="RollingVar" fill="var(--gold)" stroke="var(--gold)" fillOpacity={0.3} dot={false} name="Rolling Variance (20-day)" isAnimationActive={false} />
                   </ComposedChart>
                 ) : (
                   <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} style={{ pointerEvents: 'auto' }}>
@@ -835,12 +835,12 @@ export default function Topic4({ activeTab = 1 }) {
                     <Legend />
 
                     <Line type="monotone" dataKey="Actual" stroke="var(--text-main)" strokeWidth={1.2} dot={false} name="Observed value" isAnimationActive={false} />
-                    <Line type="step" dataKey="ConstantUpper" stroke="#147d70" strokeWidth={1.7} strokeDasharray="6 3" dot={false} name="ARIMA + constant σ boundary" isAnimationActive={false} />
-                    <Line type="step" dataKey="ConstantLower" stroke="#147d70" strokeWidth={1.7} strokeDasharray="6 3" dot={false} name="ARIMA + constant σ boundary" legendType="none" isAnimationActive={false} />
-                    <Line type="step" dataKey="GarchUpper" stroke="#d6a11d" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σ_t boundary" isAnimationActive={false} />
-                    <Line type="step" dataKey="GarchLower" stroke="#d6a11d" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σ_t boundary" legendType="none" isAnimationActive={false} />
-                    <Scatter dataKey="ConstantBreach" fill="#0057ff" stroke="#ffffff" strokeWidth={1.2} shape="diamond" name="Outside constant interval" isAnimationActive={false} />
-                    <Scatter dataKey="GarchBreach" fill="#ff5a00" stroke="#ffffff" strokeWidth={1.2} shape="circle" name="Outside GARCH interval" isAnimationActive={false} />
+                    <Line type="step" dataKey="ConstantUpper" stroke="var(--teal)" strokeWidth={1.7} strokeDasharray="6 3" dot={false} name="ARIMA + constant σ boundary" isAnimationActive={false} />
+                    <Line type="step" dataKey="ConstantLower" stroke="var(--teal)" strokeWidth={1.7} strokeDasharray="6 3" dot={false} name="ARIMA + constant σ boundary" legendType="none" isAnimationActive={false} />
+                    <Line type="step" dataKey="GarchUpper" stroke="var(--chart-yellow)" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σ_t boundary" isAnimationActive={false} />
+                    <Line type="step" dataKey="GarchLower" stroke="var(--chart-yellow)" strokeWidth={1.9} dot={false} name="ARIMA + GARCH σ_t boundary" legendType="none" isAnimationActive={false} />
+                    <Scatter dataKey="ConstantBreach" fill="#0057ff" stroke="var(--on-accent)" strokeWidth={1.2} shape="diamond" name="Outside constant interval" isAnimationActive={false} />
+                    <Scatter dataKey="GarchBreach" fill="#ff5a00" stroke="var(--on-accent)" strokeWidth={1.2} shape="circle" name="Outside GARCH interval" isAnimationActive={false} />
                   </ComposedChart>
                 )}
               </ResponsiveContainer>;
@@ -944,9 +944,9 @@ export default function Topic4({ activeTab = 1 }) {
                       <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                       <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={dateTooltip} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                       <Legend />
-                      <Line type="monotone" dataKey="GARCH" stroke="#147d70" strokeWidth={2} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="EGARCH" stroke="#d76448" strokeWidth={2} dot={false} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="APARCH" stroke="#ad7b21" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="GARCH" stroke="var(--teal)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="EGARCH" stroke="var(--coral)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="APARCH" stroke="var(--gold)" strokeWidth={2} dot={false} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 ),
@@ -963,9 +963,9 @@ export default function Topic4({ activeTab = 1 }) {
                 <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Next-step variance σ_t²', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)' }} />
                 <Tooltip isAnimationActive={false} formatter={formatValue} labelFormatter={(l) => `Prior shock z_{t-1}: ${Number(l).toFixed(2)}`} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
                 <Legend verticalAlign="top" />
-                <Line type="monotone" dataKey="GARCH" stroke="#147d70" strokeWidth={2} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="EGARCH" stroke="#d76448" strokeWidth={2} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="APARCH" stroke="#ad7b21" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="GARCH" stroke="var(--teal)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="EGARCH" stroke="var(--coral)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="APARCH" stroke="var(--gold)" strokeWidth={2} dot={false} isAnimationActive={false} />
                 <ReferenceLine x={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
               </LineChart>
             </ResponsiveContainer>

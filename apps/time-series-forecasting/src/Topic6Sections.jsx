@@ -7,7 +7,7 @@ const prose = { display: 'flex', flexDirection: 'column', gap: '.7rem', fontSize
 const box = { padding: '1rem', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--primary-bg)' };
 const cell = { padding: '.55rem .65rem', borderBottom: '1px solid var(--border)', textAlign: 'left', verticalAlign: 'top' };
 const names = { linear: 'Linear regression', tree: 'Single tree', forest: 'Random forest', boosting: 'XGBoost', naive: 'Repeat last week', sarima: 'SARIMA', raw: 'Raw-level XGBoost', detrended: 'Trend + XGBoost remainder', calibrated: 'Calibrated quantiles', fixed: 'Calibrated fixed width' };
-const colors = { actual: 'var(--text-main)', linear: '#147d70', tree: '#c084fc', forest: '#147d70', boosting: '#5169a5', naive: '#d97706', sarima: '#06b6d4', raw: '#d76448', detrended: '#147d70', recursive: '#d76448', pooled: '#5169a5' };
+const colors = { actual: 'var(--text-main)', linear: 'var(--teal)', tree: 'var(--chart-violet)', forest: 'var(--teal)', boosting: 'var(--blue)', naive: 'var(--chart-orange)', sarima: 'var(--chart-sky)', raw: 'var(--coral)', detrended: 'var(--teal)', recursive: 'var(--coral)', pooled: 'var(--blue)' };
 const n = (v, digits = 1) => v == null ? 'n/a' : Number(v).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
 const mw = v => `${n(v)} MW`;
 const label = key => names[key] || key;
@@ -31,7 +31,7 @@ export function Frame({ Layout, title, tabs, tab, setTab, guide, dataset, contro
     chart={<div style={{ ...prose, width: '100%', minWidth: 0 }}>{children}</div>} chartHeight="auto" />;
 }
 
-export function Plot({ data, series, title, x = 'time', xLabel = 'Date', origin, band, bandColor = '#5169a5', bandName, dateKey = 'date', unit = 'MW', hourly = false }) {
+export function Plot({ data, series, title, x = 'time', xLabel = 'Date', origin, band, bandColor = 'var(--blue)', bandName, dateKey = 'date', unit = 'MW', hourly = false }) {
   const bandTitle = bandName || `Prediction interval (${unit})`;
   const amount = value => `${n(value)} ${unit}`;
   const min = data[0][x], max = data[data.length - 1][x];
@@ -48,7 +48,7 @@ export function Plot({ data, series, title, x = 'time', xLabel = 'Date', origin,
           <YAxis domain={autoYDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} width={56} tickFormatter={v => Math.abs(v) >= 1000 ? `${n(v / 1000, 0)}k` : n(v, 0)} />
           <Tooltip contentStyle={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-main)' }} labelFormatter={v => dateKey === 'date' ? lookup[v] : `${xLabel}: ${n(v)}`} formatter={(v, name) => [Array.isArray(v) ? v.map(amount).join(' – ') : amount(v), name]} />
           {band && <Area type="linear" dataKey={band} name={bandTitle} stroke={bandColor} fill={bandColor} fillOpacity={.16} isAnimationActive={false} />}
-          {origin != null && <ReferenceLine x={origin} stroke="#d97706" strokeDasharray="4 4" label={{ value: 'Forecast cutoff', position: 'insideTopRight', fill: 'var(--text-muted)', fontSize: 11 }} />}
+          {origin != null && <ReferenceLine x={origin} stroke="var(--chart-orange)" strokeDasharray="4 4" label={{ value: 'Forecast cutoff', position: 'insideTopRight', fill: 'var(--text-muted)', fontSize: 11 }} />}
           {series.map(s => <Line key={s.key} type="linear" dataKey={s.key} name={s.name} stroke={s.color || colors[s.key]} strokeWidth={s.dots ? 0 : 2} strokeDasharray={s.dash} dot={s.dots ? { r: 3, fill: s.color } : false} connectNulls={false} isAnimationActive={false} />)}
         </ComposedChart>
       </ResponsiveContainer>}
@@ -90,12 +90,12 @@ export function FittedTree({ nodes, leaves, example, unit = 'MW', labels = {} })
           const child = nodes.find(node => node.id === id), a = position(parent), b = position(child);
           const highlighted = active.has(parent.id) && active.has(child.id);
           const top = b.y - nodeHeight / 2, bottom = a.y + nodeHeight / 2, mid = (top + bottom) / 2;
-          return <g key={`${parent.id}-${id}`}><path d={`M ${a.x} ${bottom} C ${a.x} ${mid}, ${b.x} ${mid}, ${b.x} ${top}`} fill="none" stroke={highlighted ? '#147d70' : 'var(--text-muted)'} strokeWidth={highlighted ? 3 : 1.2} /><text x={(a.x + b.x) / 2} y={mid - 5} textAnchor="middle" fontSize={12} fill={highlighted ? '#147d70' : 'var(--text-muted)'}>{branch === 0 ? 'Yes' : 'No'}</text></g>;
+          return <g key={`${parent.id}-${id}`}><path d={`M ${a.x} ${bottom} C ${a.x} ${mid}, ${b.x} ${mid}, ${b.x} ${top}`} fill="none" stroke={highlighted ? 'var(--teal)' : 'var(--text-muted)'} strokeWidth={highlighted ? 3 : 1.2} /><text x={(a.x + b.x) / 2} y={mid - 5} textAnchor="middle" fontSize={12} fill={highlighted ? 'var(--teal)' : 'var(--text-muted)'}>{branch === 0 ? 'Yes' : 'No'}</text></g>;
         }))}
         {nodes.map(node => {
           const pos = position(node), selected = active.has(node.id), reached = node.id === example.leaf_id;
           return <g key={node.id} data-node-id={node.id} data-selected={selected} data-leaf={node.leaf}>
-            <rect x={pos.x - nodeWidth / 2} y={pos.y - nodeHeight / 2} width={nodeWidth} height={nodeHeight} rx={8} fill={reached ? 'rgba(16,185,129,.14)' : selected ? 'rgba(59,130,246,.12)' : 'var(--surface)'} stroke={reached ? '#147d70' : selected ? '#147d70' : 'var(--border)'} strokeWidth={selected ? 2.5 : 1.2} />
+            <rect x={pos.x - nodeWidth / 2} y={pos.y - nodeHeight / 2} width={nodeWidth} height={nodeHeight} rx={8} fill={reached ? 'rgba(16,185,129,.14)' : selected ? 'rgba(59,130,246,.12)' : 'var(--surface)'} stroke={reached ? 'var(--teal)' : selected ? 'var(--teal)' : 'var(--border)'} strokeWidth={selected ? 2.5 : 1.2} />
             <text x={pos.x} y={pos.y - 14} textAnchor="middle" fill="var(--text-main)" fontSize={12} fontWeight={600}>{node.collapsed ? 'Further splits' : node.leaf ? 'Leaf prediction' : (labels[node.feature] || shortNames[node.feature] || node.feature)}</text>
             <text x={pos.x} y={pos.y + 5} textAnchor="middle" fill="var(--text-main)" fontSize={13}>{node.collapsed ? 'Branch collapsed' : node.leaf ? `${n(node.prediction)} ${unit}` : `≤ ${n(node.threshold, 2)}?`}</text>
             <text x={pos.x} y={pos.y + 24} textAnchor="middle" fill="var(--text-muted)" fontSize={11}>{node.samples} training records</text>

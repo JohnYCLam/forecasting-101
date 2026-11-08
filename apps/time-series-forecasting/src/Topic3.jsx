@@ -42,8 +42,8 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
                 <Legend />
                 {trainSize > 0 && <ReferenceLine x={trainSize - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />}
                 <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="ModelA" name="Model A" stroke="#147d70" strokeWidth={2} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="ModelB" name="Model B" stroke="#d76448" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="ModelA" name="Model A" stroke="var(--teal)" strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="ModelB" name="Model B" stroke="var(--coral)" strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           ),
@@ -62,7 +62,7 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
                 <ReferenceLine y={0} stroke="var(--text-main)" />
                 <Bar dataKey="ResidualA" name="Model A Error">
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-a-${index}`} fill={entry.ResidualA > 0 ? '#147d70' : '#93c5fd'} />
+                    <Cell key={`cell-a-${index}`} fill={entry.ResidualA > 0 ? 'var(--teal)' : 'var(--chart-blue-light)'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -83,7 +83,7 @@ function SyncedChartsWithZoom({ chartData, trainSize, timeLabels, showTrain }) {
                 <ReferenceLine y={0} stroke="var(--text-main)" />
                 <Bar dataKey="ResidualB" name="Model B Error">
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-b-${index}`} fill={entry.ResidualB > 0 ? '#d76448' : '#fca5a5'} />
+                    <Cell key={`cell-b-${index}`} fill={entry.ResidualB > 0 ? 'var(--coral)' : '#fca5a5'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -181,14 +181,14 @@ export default function Topic3({ activeTab = 1 }) {
           </thead>
           <tbody>
             <tr>
-              <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', fontWeight: 'bold', color: '#147d70' }}>Model A (Smooth Baseline)</td>
-              <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', fontWeight: 'bold' }}>{Number(tabData.metrics_a.MAE).toFixed(2)}</td>
+              <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', fontWeight: 'bold', color: 'var(--teal)' }}>Model A (Smooth Baseline)</td>
+              <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', background: 'rgba(34, 197, 94, 0.15)', color: 'var(--chart-green)', fontWeight: 'bold' }}>{Number(tabData.metrics_a.MAE).toFixed(2)}</td>
               <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>{Number(tabData.metrics_a.RMSE).toFixed(2)}</td>
             </tr>
             <tr>
-              <td style={{ padding: '0.75rem', fontWeight: 'bold', color: '#d76448' }}>Model B (Event-Aware)</td>
+              <td style={{ padding: '0.75rem', fontWeight: 'bold', color: 'var(--coral)' }}>Model B (Event-Aware)</td>
               <td style={{ padding: '0.75rem' }}>{Number(tabData.metrics_b.MAE).toFixed(2)}</td>
-              <td style={{ padding: '0.75rem', background: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', fontWeight: 'bold' }}>{Number(tabData.metrics_b.RMSE).toFixed(2)}</td>
+              <td style={{ padding: '0.75rem', background: 'rgba(34, 197, 94, 0.15)', color: 'var(--chart-green)', fontWeight: 'bold' }}>{Number(tabData.metrics_b.RMSE).toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
@@ -274,7 +274,7 @@ export default function Topic3({ activeTab = 1 }) {
             <Tooltip contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} formatter={(val) => Number(val).toFixed(1) + '%'} />
             <Bar dataKey="value" name="Error Value">
               {metricsData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.name.includes('sMAPE') ? '#ad7b21' : '#d76448'} />
+                <Cell key={`cell-${index}`} fill={entry.name.includes('sMAPE') ? 'var(--gold)' : 'var(--coral)'} />
               ))}
             </Bar>
           </BarChart>
@@ -299,15 +299,15 @@ export default function Topic3({ activeTab = 1 }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', background: 'var(--surface)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <div style={{ flex: 1, minWidth: '100px', textAlign: 'center' }}>
             <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>MAPE</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#d76448' }}>{tabData.metrics.MAPE > 1000 ? '>1000' : Number(tabData.metrics.MAPE).toFixed(1)}%</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--coral)' }}>{tabData.metrics.MAPE > 1000 ? '>1000' : Number(tabData.metrics.MAPE).toFixed(1)}%</div>
           </div>
           <div style={{ flex: 1, minWidth: '100px', textAlign: 'center', borderLeft: '1px solid var(--border)' }}>
             <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>sMAPE</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ad7b21' }}>{Number(tabData.metrics.sMAPE).toFixed(1)}%</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--gold)' }}>{Number(tabData.metrics.sMAPE).toFixed(1)}%</div>
           </div>
           <div style={{ flex: 1, minWidth: '100px', textAlign: 'center', borderLeft: '1px solid var(--border)' }}>
             <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>wMAPE (Stable)</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#147d70' }}>{Number(tabData.metrics.wMAPE).toFixed(1)}%</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--teal)' }}>{Number(tabData.metrics.wMAPE).toFixed(1)}%</div>
           </div>
         </div>
       </div>
@@ -361,8 +361,8 @@ export default function Topic3({ activeTab = 1 }) {
                 <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
                 <ReferenceLine x={tabData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Test Set', fill: 'var(--text-muted)' }} />
                 <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={{ r: 2, fill: 'var(--text-muted)' }} isAnimationActive={false} />
-                <Line type="monotone" dataKey="InSample" name="In-Sample Fit" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} />
-                <Line type="monotone" dataKey="Forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Forecast" />
+                <Line type="monotone" dataKey="InSample" name="In-Sample Fit" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="Forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} isAnimationActive={false} name="Forecast" />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -475,11 +475,11 @@ export default function Topic3({ activeTab = 1 }) {
     const renderLegend = () => (
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '15px', height: '15px', backgroundColor: '#147d70', opacity: 0.15, border: '1px solid #147d70' }}></div>
+          <div style={{ width: '15px', height: '15px', backgroundColor: 'var(--teal)', opacity: 0.15, border: '1px solid var(--teal)' }}></div>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Training Region</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '15px', height: '15px', backgroundColor: '#147d70', opacity: 0.15, border: '1px solid #147d70' }}></div>
+          <div style={{ width: '15px', height: '15px', backgroundColor: 'var(--teal)', opacity: 0.15, border: '1px solid var(--teal)' }}></div>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Testing Region</span>
         </div>
       </div>
@@ -504,12 +504,12 @@ export default function Topic3({ activeTab = 1 }) {
                   <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
                   <Legend verticalAlign="top" />
                   
-                  <ReferenceArea x1={0} x2={activeFold.train_end} fill="#147d70" fillOpacity={0.15} />
-                  <ReferenceArea x1={activeFold.train_end} x2={activeFold.test_end} fill="#147d70" fillOpacity={0.15} />
+                  <ReferenceArea x1={0} x2={activeFold.train_end} fill="var(--teal)" fillOpacity={0.15} />
+                  <ReferenceArea x1={activeFold.train_end} x2={activeFold.test_end} fill="var(--teal)" fillOpacity={0.15} />
                   
                   <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="InSample" name="Training Fit" stroke="#147d70" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="Forecast" name="Test Forecast" stroke="#ad7b21" strokeWidth={3} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="InSample" name="Training Fit" stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="Forecast" name="Test Forecast" stroke="var(--gold)" strokeWidth={3} dot={false} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -572,8 +572,8 @@ export default function Topic3({ activeTab = 1 }) {
           <thead>
             <tr style={{ background: 'var(--surface-hover)' }}>
               <th rowSpan={2} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>Fold</th>
-              <th colSpan={3} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', color: '#147d70' }}>Expanding Window Strategy</th>
-              <th colSpan={3} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', color: '#f97316' }}>Sliding Window Strategy</th>
+              <th colSpan={3} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', color: 'var(--teal)' }}>Expanding Window Strategy</th>
+              <th colSpan={3} style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', color: 'var(--chart-orange)' }}>Sliding Window Strategy</th>
             </tr>
             <tr style={{ background: 'var(--surface-hover)' }}>
               <th style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)', fontSize: '0.85rem' }}>Train Period</th>
@@ -596,11 +596,11 @@ export default function Topic3({ activeTab = 1 }) {
                   
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText tex="t = 0" /> to <MathText tex={`t = ${exp.test_start - 1}`} /></td>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText tex={`t = ${exp.test_start}`} /> to <MathText tex={`t = ${exp.test_end - 1}`} /></td>
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: exp.metrics.RMSE <= sld.metrics.RMSE ? '#147d70' : 'inherit', fontWeight: exp.metrics.RMSE <= sld.metrics.RMSE ? 'bold' : 'normal' }}>{Number(exp.metrics.RMSE).toFixed(2)}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: exp.metrics.RMSE <= sld.metrics.RMSE ? 'var(--teal)' : 'inherit', fontWeight: exp.metrics.RMSE <= sld.metrics.RMSE ? 'bold' : 'normal' }}>{Number(exp.metrics.RMSE).toFixed(2)}</td>
                   
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', borderLeft: '2px solid var(--border)' }}><MathText tex={`t = ${sld.test_start - window_size}`} /> to <MathText tex={`t = ${sld.test_start - 1}`} /></td>
                   <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}><MathText tex={`t = ${sld.test_start}`} /> to <MathText tex={`t = ${sld.test_end - 1}`} /></td>
-                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: sld.metrics.RMSE < exp.metrics.RMSE ? '#147d70' : 'inherit', fontWeight: sld.metrics.RMSE < exp.metrics.RMSE ? 'bold' : 'normal' }}>{Number(sld.metrics.RMSE).toFixed(2)}</td>
+                  <td style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)', color: sld.metrics.RMSE < exp.metrics.RMSE ? 'var(--teal)' : 'inherit', fontWeight: sld.metrics.RMSE < exp.metrics.RMSE ? 'bold' : 'normal' }}>{Number(sld.metrics.RMSE).toFixed(2)}</td>
                 </tr>
               );
             })}
@@ -634,15 +634,15 @@ export default function Topic3({ activeTab = 1 }) {
     const renderLegend = () => (
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '15px', height: '15px', backgroundColor: '#147d70', opacity: 0.15, border: '1px solid #147d70' }}></div>
+          <div style={{ width: '15px', height: '15px', backgroundColor: 'var(--teal)', opacity: 0.15, border: '1px solid var(--teal)' }}></div>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Expanding Window</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '15px', height: '15px', backgroundColor: '#f97316', opacity: 0.15, border: '1px solid #f97316' }}></div>
+          <div style={{ width: '15px', height: '15px', backgroundColor: 'var(--chart-orange)', opacity: 0.15, border: '1px solid var(--chart-orange)' }}></div>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Sliding Window</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '15px', height: '15px', backgroundColor: '#147d70', opacity: 0.15, border: '1px solid #147d70' }}></div>
+          <div style={{ width: '15px', height: '15px', backgroundColor: 'var(--teal)', opacity: 0.15, border: '1px solid var(--teal)' }}></div>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Test Window</span>
         </div>
       </div>
@@ -669,12 +669,12 @@ export default function Topic3({ activeTab = 1 }) {
                     <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} hide />
                     <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                     <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
-                    <ReferenceArea x1={0} x2={activeExp.test_start} fill="#147d70" fillOpacity={0.05} ifOverflow="hidden" />
-                    <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#147d70" fillOpacity={0.15} ifOverflow="hidden" />
-                    <ReferenceLine x={100} stroke="#d76448" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#d76448' }} />
+                    <ReferenceArea x1={0} x2={activeExp.test_start} fill="var(--teal)" fillOpacity={0.05} ifOverflow="hidden" />
+                    <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="var(--teal)" fillOpacity={0.15} ifOverflow="hidden" />
+                    <ReferenceLine x={100} stroke="var(--coral)" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: 'var(--coral)' }} />
                     <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="ExpInSample" name="Expanding Train" stroke="#147d70" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="ExpForecast" name="Expanding Forecast" stroke="#147d70" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="ExpInSample" name="Expanding Train" stroke="var(--teal)" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="ExpForecast" name="Expanding Forecast" stroke="var(--teal)" strokeWidth={3} dot={false} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               ),
@@ -688,12 +688,12 @@ export default function Topic3({ activeTab = 1 }) {
                     <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} />
                     <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} tickFormatter={formatValue} />
                     <Tooltip isAnimationActive={false} formatter={formatValue} contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)' }} />
-                    <ReferenceArea x1={activeSld.test_start - 40} x2={activeSld.test_start} fill="#f97316" fillOpacity={0.15} ifOverflow="hidden" />
-                    <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="#147d70" fillOpacity={0.15} ifOverflow="hidden" />
-                    <ReferenceLine x={100} stroke="#d76448" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: '#d76448' }} />
+                    <ReferenceArea x1={activeSld.test_start - 40} x2={activeSld.test_start} fill="var(--chart-orange)" fillOpacity={0.15} ifOverflow="hidden" />
+                    <ReferenceArea x1={activeExp.test_start} x2={activeExp.test_end} fill="var(--teal)" fillOpacity={0.15} ifOverflow="hidden" />
+                    <ReferenceLine x={100} stroke="var(--coral)" strokeDasharray="5 5" label={{ position: 'top', value: 'Regime Shift', fill: 'var(--coral)' }} />
                     <Line type="monotone" dataKey="Actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="SldInSample" name="Sliding Train" stroke="#f97316" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="SldForecast" name="Sliding Forecast" stroke="#f97316" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="SldInSample" name="Sliding Train" stroke="var(--chart-orange)" strokeWidth={2} strokeOpacity={0.5} dot={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="SldForecast" name="Sliding Forecast" stroke="var(--chart-orange)" strokeWidth={3} dot={false} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               ),

@@ -315,14 +315,14 @@ export default function Topic5({ activeTab = 1 }) {
             </thead>
             <tbody>
               <tr>
-                <td style={{ ...tableCellStyle, fontWeight: 600, color: '#d76448' }}>ARIMA</td>
+                <td style={{ ...tableCellStyle, fontWeight: 600, color: 'var(--coral)' }}>ARIMA</td>
                 <td style={tableCellStyle}>{priceArimaMae.toFixed(1)}</td>
                 <td style={tableCellStyle}>{dispArimaMae.toFixed(1)}</td>
               </tr>
               <tr>
-                <td style={{ ...tableCellStyle, fontWeight: 600, color: '#16a34a', borderBottom: 'none' }}>VAR</td>
-                <td style={{ ...tableCellStyle, borderBottom: 'none', fontWeight: 700, color: '#16a34a' }}>{priceVarMae.toFixed(1)}</td>
-                <td style={{ ...tableCellStyle, borderBottom: 'none', fontWeight: 700, color: '#16a34a' }}>{dispVarMae.toFixed(1)}</td>
+                <td style={{ ...tableCellStyle, fontWeight: 600, color: 'var(--chart-green)', borderBottom: 'none' }}>VAR</td>
+                <td style={{ ...tableCellStyle, borderBottom: 'none', fontWeight: 700, color: 'var(--chart-green)' }}>{priceVarMae.toFixed(1)}</td>
+                <td style={{ ...tableCellStyle, borderBottom: 'none', fontWeight: 700, color: 'var(--chart-green)' }}>{dispVarMae.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>
@@ -349,14 +349,14 @@ export default function Topic5({ activeTab = 1 }) {
                       labelFormatter={(l) => { const item = timeFullMap[l]; return item ? `${item.datetime} (t=${l})` : `t=${l}`; }}
                     />
                     <Legend verticalAlign="top" height={36} wrapperStyle={{ paddingBottom: 8 }} />
-                    <ReferenceLine y={75} stroke="#d97706" strokeDasharray="3 3" label={{ position: 'insideTopLeft', value: 'Arbitrage $75', fill: '#d97706', fontSize: 10 }} />
+                    <ReferenceLine y={75} stroke="var(--chart-orange)" strokeDasharray="3 3" label={{ position: 'insideTopLeft', value: 'Arbitrage $75', fill: 'var(--chart-orange)', fontSize: 10 }} />
                     <ReferenceLine x={84} stroke="rgba(107, 114, 128, 0.6)" strokeDasharray="3 3" label={{ position: 'insideTopRight', value: 'Train spike 07:00', fill: 'var(--text-muted)', fontSize: 10 }} />
-                    <ReferenceLine x={120} stroke="#eab308" strokeDasharray="4 4" label={{ position: 'insideTopLeft', value: 'Forecast origin', fill: '#eab308', fontSize: 11 }} />
-                    <Line type="monotone" dataKey="price_actual" name="Actual" stroke="#147d70" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="price_arima_fit" name="ARIMA Fit" stroke="#d76448" strokeOpacity={0.45} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="price_var_fit" name="VAR Fit" stroke="#16a34a" strokeOpacity={0.65} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="price_arima_aic" name="ARIMA Fcst" stroke="#d76448" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="price_var_aic" name="VAR Fcst" stroke="#16a34a" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                    <ReferenceLine x={120} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ position: 'insideTopLeft', value: 'Forecast origin', fill: 'var(--chart-yellow)', fontSize: 11 }} />
+                    <Line type="monotone" dataKey="price_actual" name="Actual" stroke="var(--teal)" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="price_arima_fit" name="ARIMA Fit" stroke="var(--coral)" strokeOpacity={0.45} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="price_var_fit" name="VAR Fit" stroke="var(--chart-green)" strokeOpacity={0.65} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="price_arima_aic" name="ARIMA Fcst" stroke="var(--coral)" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="price_var_aic" name="VAR Fcst" stroke="var(--chart-green)" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               ),
@@ -376,12 +376,12 @@ export default function Topic5({ activeTab = 1 }) {
                     />
                     <Legend verticalAlign="top" height={36} wrapperStyle={{ paddingBottom: 8 }} />
                     <ReferenceLine x={85} stroke="rgba(107, 114, 128, 0.6)" strokeDasharray="3 3" label={{ position: 'insideTopRight', value: 'Train response 07:05', fill: 'var(--text-muted)', fontSize: 10 }} />
-                    <ReferenceLine x={120} stroke="#eab308" strokeDasharray="4 4" label={{ position: 'insideTopLeft', value: 'Forecast origin', fill: '#eab308', fontSize: 11 }} />
-                    <Line type="monotone" dataKey="dispatch_actual" name="Actual" stroke="#0284c7" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="dispatch_arima_fit" name="ARIMA Fit" stroke="#d76448" strokeOpacity={0.45} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="dispatch_var_fit" name="VAR Fit" stroke="#16a34a" strokeOpacity={0.65} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="dispatch_arima_aic" name="ARIMA Fcst" stroke="#d76448" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="dispatch_var_aic" name="VAR Fcst" stroke="#16a34a" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                    <ReferenceLine x={120} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ position: 'insideTopLeft', value: 'Forecast origin', fill: 'var(--chart-yellow)', fontSize: 11 }} />
+                    <Line type="monotone" dataKey="dispatch_actual" name="Actual" stroke="var(--chart-sky)" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="dispatch_arima_fit" name="ARIMA Fit" stroke="var(--coral)" strokeOpacity={0.45} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="dispatch_var_fit" name="VAR Fit" stroke="var(--chart-green)" strokeOpacity={0.65} strokeWidth={1.8} dot={false} connectNulls={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="dispatch_arima_aic" name="ARIMA Fcst" stroke="var(--coral)" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="dispatch_var_aic" name="VAR Fcst" stroke="var(--chart-green)" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 3 }} connectNulls={false} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               ),
@@ -437,12 +437,12 @@ export default function Topic5({ activeTab = 1 }) {
             <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} />
             <Tooltip contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
             <Legend verticalAlign="top" height={32} />
-            <ReferenceLine x={inspectTime - 1} stroke="#147d70" strokeDasharray="3 3" label={{ value: 't−1 inputs', fill: '#147d70', fontSize: 10, position: 'insideTopLeft' }} />
+            <ReferenceLine x={inspectTime - 1} stroke="var(--teal)" strokeDasharray="3 3" label={{ value: 't−1 inputs', fill: 'var(--teal)', fontSize: 10, position: 'insideTopLeft' }} />
             <ReferenceLine x={inspectTime} stroke="var(--text-main)" strokeDasharray="3 3" label={{ value: `t = ${inspectTime}`, fill: 'var(--text-muted)', fontSize: 11, position: 'insideTopRight' }} />
             <Line type="monotone" dataKey={actualKey} name="Actual" stroke={stroke} strokeWidth={2.2} dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={meanKey} name="Conditional mean" stroke="#d76448" strokeWidth={2} strokeDasharray="4 3" dot={false} connectNulls={false} isAnimationActive={false} />
-            <Scatter data={[{ time: inspectTime - 1, value: lagY }]} dataKey="value" fill="#147d70" name="Lagged value y_{t-1}" isAnimationActive={false} />
-            <Scatter data={[{ time: inspectTime - 1, value: lagEps }]} dataKey="value" fill="#ad7b21" name="Lagged shock ε_{t-1}" isAnimationActive={false} />
+            <Line type="monotone" dataKey={meanKey} name="Conditional mean" stroke="var(--coral)" strokeWidth={2} strokeDasharray="4 3" dot={false} connectNulls={false} isAnimationActive={false} />
+            <Scatter data={[{ time: inspectTime - 1, value: lagY }]} dataKey="value" fill="var(--teal)" name="Lagged value y_{t-1}" isAnimationActive={false} />
+            <Scatter data={[{ time: inspectTime - 1, value: lagEps }]} dataKey="value" fill="var(--gold)" name="Lagged shock ε_{t-1}" isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
       ),
@@ -529,8 +529,8 @@ export default function Topic5({ activeTab = 1 }) {
             minTime={0}
             maxTime={n - 1}
             minRange={8}
-            top={makePanel('Y₁', 'y1', 'mean1', lag.y1, lag.eps1, '#147d70')}
-            bottom={makePanel('Y₂', 'y2', 'mean2', lag.y2, lag.eps2, '#147d70')}
+            top={makePanel('Y₁', 'y1', 'mean1', lag.y1, lag.eps1, 'var(--teal)')}
+            bottom={makePanel('Y₂', 'y2', 'mean2', lag.y2, lag.eps2, 'var(--teal)')}
           />
         }
       />
@@ -949,7 +949,7 @@ export default function Topic5({ activeTab = 1 }) {
                 <td style={tableCellStyle}>{(currentCell.y2_to_y1?.granger_reject_rate * 100).toFixed(1)}%</td>
                 {isAicTab && <td style={tableCellStyle}>{(currentCell.y2_to_y1?.aic_include_rate * 100).toFixed(1)}%</td>}
                 {isAicTab && (
-                  <td style={{ ...tableCellStyle, fontWeight: (currentCell.y2_to_y1?.disagree_rate ?? 0) > 0.1 ? 700 : 400, color: (currentCell.y2_to_y1?.disagree_rate ?? 0) > 0.1 ? '#d97706' : 'inherit' }}>
+                  <td style={{ ...tableCellStyle, fontWeight: (currentCell.y2_to_y1?.disagree_rate ?? 0) > 0.1 ? 700 : 400, color: (currentCell.y2_to_y1?.disagree_rate ?? 0) > 0.1 ? 'var(--chart-orange)' : 'inherit' }}>
                     {((currentCell.y2_to_y1?.disagree_rate ?? 0) * 100).toFixed(1)}%
                   </td>
                 )}
@@ -1014,10 +1014,10 @@ export default function Topic5({ activeTab = 1 }) {
                     {p.granger_reject ? 'Rejects' : 'Does not reject'} (<MathText tex="p" /> {p.p_val < 0.0001 ? '< 0.0001' : `= ${p.p_val.toFixed(3)}`})
                   </td>
                   <td style={tableCellStyle}>{p.aic_include ? 'Adds driver' : 'Does not add'}</td>
-                  <td style={{ ...tableCellStyle, color: useful ? '#16a34a' : 'inherit', fontWeight: useful ? 600 : 400 }}>
+                  <td style={{ ...tableCellStyle, color: useful ? 'var(--chart-green)' : 'inherit', fontWeight: useful ? 600 : 400 }}>
                     {`${changePct > 0 ? '+' : ''}${changePct.toFixed(1)}%`} {useful ? '(better)' : '(worse)'}
                   </td>
-                  <td style={{ ...tableCellStyle, fontWeight: matches ? 400 : 700, color: matches ? 'var(--text-muted)' : '#d97706' }}>
+                  <td style={{ ...tableCellStyle, fontWeight: matches ? 400 : 700, color: matches ? 'var(--text-muted)' : 'var(--chart-orange)' }}>
                     {matches ? 'Match' : 'Mismatch'}
                   </td>
                 </tr>
@@ -1069,36 +1069,36 @@ export default function Topic5({ activeTab = 1 }) {
                   <ReferenceArea
                     y1={currentThreshold.f_aic}
                     y2={currentThreshold.f_crit}
-                    fill="#d97706"
+                    fill="var(--chart-orange)"
                     fillOpacity={0.12}
                   />
                 )}
                 {isAicTab && (
                   <ReferenceLine
                     y={currentThreshold.f_aic}
-                    stroke="#d97706"
+                    stroke="var(--chart-orange)"
                     strokeDasharray="4 4"
                     strokeWidth={1.8}
                   />
                 )}
                 <ReferenceLine
                   y={currentThreshold.f_crit}
-                  stroke="#dc2626"
+                  stroke="var(--chart-red)"
                   strokeDasharray="4 4"
                   strokeWidth={1.8}
                 />
                 <ReferenceLine
                   x={String(selectedB)}
-                  stroke="#eab308"
+                  stroke="var(--chart-yellow)"
                   strokeDasharray="4 4"
                   strokeWidth={2}
-                  label={{ value: `b = ${selectedB}`, fill: '#eab308', position: 'top', fontSize: 11 }}
+                  label={{ value: `b = ${selectedB}`, fill: 'var(--chart-yellow)', position: 'top', fontSize: 11 }}
                 />
                 <Area
                   type="monotone"
                   dataKey="f_band"
                   stroke="none"
-                  fill="#147d70"
+                  fill="var(--teal)"
                   fillOpacity={0.15}
                   name="IQR (q25–q75) Y₂ → Y₁"
                   legendType="none"
@@ -1107,19 +1107,19 @@ export default function Topic5({ activeTab = 1 }) {
                   type="monotone"
                   dataKey="f_median_y21"
                   name="Median F (Y₂ → Y₁, real effect b)"
-                  stroke="#147d70"
+                  stroke="var(--teal)"
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#147d70' }}
+                  dot={{ r: 4, fill: 'var(--teal)' }}
                   activeDot={{ r: 6 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="f_median_null"
                   name="Median F (Y₁ → Y₂, no real effect)"
-                  stroke="#94a3b8"
+                  stroke="var(--muted)"
                   strokeWidth={2}
                   strokeDasharray="4 4"
-                  dot={{ r: 3, fill: '#94a3b8' }}
+                  dot={{ r: 3, fill: 'var(--muted)' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -1163,16 +1163,16 @@ export default function Topic5({ activeTab = 1 }) {
                 <Legend verticalAlign="top" height={32} />
                 <ReferenceLine
                   x={String(selectedB)}
-                  stroke="#eab308"
+                  stroke="var(--chart-yellow)"
                   strokeDasharray="4 4"
                   strokeWidth={2}
-                  label={{ value: `b = ${selectedB}`, fill: '#eab308', position: 'top', fontSize: 11 }}
+                  label={{ value: `b = ${selectedB}`, fill: 'var(--chart-yellow)', position: 'top', fontSize: 11 }}
                 />
                 {isAicTab && (
                   <Area
                     type="monotone"
                     dataKey="gap_band"
-                    fill="#d97706"
+                    fill="var(--chart-orange)"
                     fillOpacity={0.18}
                     stroke="none"
                     name="Gap: AIC includes, Granger does not"
@@ -1184,25 +1184,25 @@ export default function Topic5({ activeTab = 1 }) {
                     type="monotone"
                     dataKey="aic_include_rate"
                     name="AIC includes Y₂ (ΔAIC < 0)"
-                    stroke="#d97706"
+                    stroke="var(--chart-orange)"
                     strokeWidth={2.2}
-                    dot={{ r: 3, fill: '#d97706' }}
+                    dot={{ r: 3, fill: 'var(--chart-orange)' }}
                   />
                 )}
                 <Line
                   type="monotone"
                   dataKey="granger_reject_rate"
                   name="Granger rejection rate (p < 0.05)"
-                  stroke="#dc2626"
+                  stroke="var(--chart-red)"
                   strokeWidth={2.2}
-                  dot={{ r: 3, fill: '#dc2626' }}
+                  dot={{ r: 3, fill: 'var(--chart-red)' }}
                 />
                 {!isNewDataTab && (
                 <Line
                   type="monotone"
                   dataKey="null_granger_reject_rate"
                   name="False-alarm rate (Y₁ → Y₂, no real effect)"
-                  stroke="#94a3b8"
+                  stroke="var(--muted)"
                   strokeWidth={1.6}
                   strokeDasharray="3 3"
                   dot={false}
@@ -1246,12 +1246,12 @@ export default function Topic5({ activeTab = 1 }) {
                   <ReferenceLine
                     yAxisId="share"
                     x={String(selectedB)}
-                    stroke="#eab308"
+                    stroke="var(--chart-yellow)"
                     strokeDasharray="4 4"
                     strokeWidth={2}
                   />
-                  <ReferenceLine yAxisId="share" y={0.5} stroke="#94a3b8" strokeDasharray="3 3" label={{ value: 'break-even', fill: 'var(--text-muted)', fontSize: 10, position: 'insideTopRight' }} />
-                  <ReferenceLine yAxisId="change" y={0} stroke="#1d4ed8" strokeDasharray="3 3" />
+                  <ReferenceLine yAxisId="share" y={0.5} stroke="var(--muted)" strokeDasharray="3 3" label={{ value: 'break-even', fill: 'var(--text-muted)', fontSize: 10, position: 'insideTopRight' }} />
+                  <ReferenceLine yAxisId="change" y={0} stroke="var(--chart-blue)" strokeDasharray="3 3" />
                   <Line
                     yAxisId="share"
                     type="monotone"
@@ -1267,10 +1267,10 @@ export default function Topic5({ activeTab = 1 }) {
                     type="monotone"
                     dataKey="gap_change"
                     name="Gap: typical error change"
-                    stroke="#1d4ed8"
+                    stroke="var(--chart-blue)"
                     strokeWidth={2.2}
                     strokeDasharray="5 3"
-                    dot={{ r: 3, fill: '#1d4ed8' }}
+                    dot={{ r: 3, fill: 'var(--chart-blue)' }}
                     connectNulls={false}
                   />
                 </ComposedChart>
@@ -1444,12 +1444,12 @@ export default function Topic5({ activeTab = 1 }) {
             <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} />
             <Tooltip contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
             <Legend verticalAlign="top" height={32} />
-            <ReferenceLine x={origin} stroke="#eab308" strokeDasharray="4 4" label={{ value: 'Forecast origin', fill: '#eab308', fontSize: 11, position: 'insideTopLeft' }} />
+            <ReferenceLine x={origin} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ value: 'Forecast origin', fill: 'var(--chart-yellow)', fontSize: 11, position: 'insideTopLeft' }} />
             <Line type="monotone" dataKey={actualKey} name="Actual" stroke={stroke} strokeWidth={2.2} dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={varMean} name="VAR(1) mean" stroke="#16a34a" strokeWidth={2.4} dot={false} connectNulls={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={varmaMean} name="VARMA(2,1) mean" stroke="#d76448" strokeWidth={2} strokeDasharray="6 3" dot={false} connectNulls={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={varFcst} name="VAR(1) forecast" stroke="#16a34a" strokeWidth={2.4} strokeDasharray="4 3" dot={{ r: 2.5 }} connectNulls={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={varmaFcst} name="VARMA(2,1) forecast" stroke="#d76448" strokeWidth={2} strokeDasharray="2 3" dot={{ r: 2.5 }} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={varMean} name="VAR(1) mean" stroke="var(--chart-green)" strokeWidth={2.4} dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={varmaMean} name="VARMA(2,1) mean" stroke="var(--coral)" strokeWidth={2} strokeDasharray="6 3" dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={varFcst} name="VAR(1) forecast" stroke="var(--chart-green)" strokeWidth={2.4} strokeDasharray="4 3" dot={{ r: 2.5 }} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={varmaFcst} name="VARMA(2,1) forecast" stroke="var(--coral)" strokeWidth={2} strokeDasharray="2 3" dot={{ r: 2.5 }} connectNulls={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       ),
@@ -1477,11 +1477,11 @@ export default function Topic5({ activeTab = 1 }) {
             <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--text-muted)' }} />
             <Tooltip contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }} />
             <Legend verticalAlign="top" height={36} />
-            <ReferenceLine x={approx.origin} stroke="#eab308" strokeDasharray="4 4" label={{ value: 'Fit / holdout split', fill: '#eab308', fontSize: 11, position: 'insideTopLeft' }} />
+            <ReferenceLine x={approx.origin} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ value: 'Fit / holdout split', fill: 'var(--chart-yellow)', fontSize: 11, position: 'insideTopLeft' }} />
             <Line type="monotone" dataKey={actualKey} name="Actual" stroke={stroke} strokeWidth={1.6} strokeOpacity={0.45} dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={varmaKey} name="VARMA(1,1) one-step mean" stroke="#7c3aed" strokeWidth={2.4} dot={false} connectNulls={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={var1Key} name="VAR(1) one-step" stroke="#d76448" strokeWidth={2} strokeDasharray="5 3" dot={false} connectNulls={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey={var4Key} name="VAR(4) one-step" stroke="#16a34a" strokeWidth={2.2} strokeDasharray="2 3" dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={varmaKey} name="VARMA(1,1) one-step mean" stroke="var(--chart-violet)" strokeWidth={2.4} dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={var1Key} name="VAR(1) one-step" stroke="var(--coral)" strokeWidth={2} strokeDasharray="5 3" dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey={var4Key} name="VAR(4) one-step" stroke="var(--chart-green)" strokeWidth={2.2} strokeDasharray="2 3" dot={false} connectNulls={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       ),
@@ -1502,13 +1502,13 @@ export default function Topic5({ activeTab = 1 }) {
           tabUniqTab === 1 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.25rem', alignItems: 'stretch' }}>
               <div style={{ background: 'var(--primary-bg)', padding: '0.9rem 1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowX: 'auto' }}>
-                <div style={{ fontWeight: 600, marginBottom: '0.7rem', color: '#16a34a' }}>Model 1 — VAR(1)</div>
+                <div style={{ fontWeight: 600, marginBottom: '0.7rem', color: 'var(--chart-green)' }}>Model 1 — VAR(1)</div>
                 <div style={{ fontSize: '1.05rem' }}>
                   <MathText displayMode tex={stackTex(A0, zeros, zeros)} />
                 </div>
               </div>
               <div style={{ background: 'var(--primary-bg)', padding: '0.9rem 1.25rem', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowX: 'auto' }}>
-                <div style={{ fontWeight: 600, marginBottom: '0.7rem', color: '#d76448' }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.7rem', color: 'var(--coral)' }}>
                   Model 2 — VARMA(2,1), <MathText tex={`\\lambda=${fmtN(model.lambda)}`} />
                 </div>
                 <div style={{ fontSize: '1.05rem' }}>
@@ -1519,7 +1519,7 @@ export default function Topic5({ activeTab = 1 }) {
           ) : (
             tabUniqEstView === 'approx' ? (
               <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.55 }}>
-                Holdout one-step RMSE versus the true VARMA mean — VAR(1) {fmtN(approx.dist_to_varma?.var1, 3)}, VAR(4) <strong style={{ color: '#16a34a' }}>{fmtN(approx.dist_to_varma?.var4, 3)}</strong>.
+                Holdout one-step RMSE versus the true VARMA mean — VAR(1) {fmtN(approx.dist_to_varma?.var1, 3)}, VAR(4) <strong style={{ color: 'var(--chart-green)' }}>{fmtN(approx.dist_to_varma?.var4, 3)}</strong>.
               </p>
             ) : (
             <table style={comparisonTableStyle}>
@@ -1537,7 +1537,7 @@ export default function Topic5({ activeTab = 1 }) {
                     <td style={tableCellStyle}>{s.label}</td>
                     <td style={tableCellStyle}>{fmtN(s.end_lambda)}</td>
                     <td style={tableCellStyle}>{fmtN(s.ll, 2)}</td>
-                    <td style={{ ...tableCellStyle, color: s.unique ? '#16a34a' : '#d76448', fontWeight: 700, borderBottom: s.id === 'var_ols' ? 'none' : tableCellStyle.borderBottom }}>
+                    <td style={{ ...tableCellStyle, color: s.unique ? 'var(--chart-green)' : 'var(--coral)', fontWeight: 700, borderBottom: s.id === 'var_ols' ? 'none' : tableCellStyle.borderBottom }}>
                       {s.unique ? 'Yes' : 'No — same fit as the other VARMA start'}
                     </td>
                   </tr>
@@ -1562,7 +1562,7 @@ export default function Topic5({ activeTab = 1 }) {
                       border: '1px solid var(--border)',
                       cursor: 'pointer',
                       background: lam === key ? 'var(--primary)' : 'var(--surface)',
-                      color: lam === key ? '#fff' : 'var(--text-main)',
+                      color: lam === key ? 'var(--on-accent)' : 'var(--text-main)',
                       fontWeight: lam === key ? 700 : 400,
                     }}
                   >
@@ -1591,7 +1591,7 @@ export default function Topic5({ activeTab = 1 }) {
                       border: '1px solid var(--border)',
                       cursor: 'pointer',
                       background: tabUniqEstView === opt.id ? 'var(--primary)' : 'var(--surface)',
-                      color: tabUniqEstView === opt.id ? '#fff' : 'var(--text-main)',
+                      color: tabUniqEstView === opt.id ? 'var(--on-accent)' : 'var(--text-main)',
                       fontWeight: tabUniqEstView === opt.id ? 700 : 400,
                     }}
                   >
@@ -1615,8 +1615,8 @@ export default function Topic5({ activeTab = 1 }) {
               minTime={0}
               maxTime={n - 1}
               minRange={8}
-              top={makeUniqPanel('Y₁', 'y1', 'var_mean1', 'varma_mean1', 'var_fcst1', 'varma_fcst1', '#147d70')}
-              bottom={makeUniqPanel('Y₂', 'y2', 'var_mean2', 'varma_mean2', 'var_fcst2', 'varma_fcst2', '#147d70')}
+              top={makeUniqPanel('Y₁', 'y1', 'var_mean1', 'varma_mean1', 'var_fcst1', 'varma_fcst1', 'var(--teal)')}
+              bottom={makeUniqPanel('Y₂', 'y2', 'var_mean2', 'varma_mean2', 'var_fcst2', 'varma_fcst2', 'var(--teal)')}
             />
           ) : tabUniqEstView === 'ridge' ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -1631,8 +1631,8 @@ export default function Topic5({ activeTab = 1 }) {
                 />
                 <Legend verticalAlign="top" height={36} />
                 <ReferenceLine x={0} stroke="rgba(107, 114, 128, 0.6)" strokeDasharray="3 3" label={{ value: 'true VAR (λ = 0)', fill: 'var(--text-muted)', fontSize: 11 }} />
-                <Line type="monotone" dataKey="varma_ll" name="Equivalent VARMA writings (same fit)" stroke="#d76448" strokeWidth={3} dot={{ r: 3 }} isAnimationActive={false} />
-                <Line type="monotone" dataKey="constrained_var_ll" name="VAR without the matching MA (only λ = 0 fits)" stroke="#16a34a" strokeWidth={2.4} strokeDasharray="4 3" dot={{ r: 3 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="varma_ll" name="Equivalent VARMA writings (same fit)" stroke="var(--coral)" strokeWidth={3} dot={{ r: 3 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="constrained_var_ll" name="VAR without the matching MA (only λ = 0 fits)" stroke="var(--chart-green)" strokeWidth={2.4} strokeDasharray="4 3" dot={{ r: 3 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -1641,8 +1641,8 @@ export default function Topic5({ activeTab = 1 }) {
               minTime={0}
               maxTime={(approx.n || 140) - 1}
               minRange={12}
-              top={makeApproxPanel('Y₁', 'y1', 'varma_mean1', 'var1_mean1', 'var4_mean1', '#147d70')}
-              bottom={makeApproxPanel('Y₂', 'y2', 'varma_mean2', 'var1_mean2', 'var4_mean2', '#147d70')}
+              top={makeApproxPanel('Y₁', 'y1', 'varma_mean1', 'var1_mean1', 'var4_mean1', 'var(--teal)')}
+              bottom={makeApproxPanel('Y₂', 'y2', 'varma_mean2', 'var1_mean2', 'var4_mean2', 'var(--teal)')}
             />
           )
         }
@@ -1747,7 +1747,7 @@ if (activeTab === 5) {
             </div>
 
             <div style={{ background: 'var(--surface)', padding: '0.55rem 0.8rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.84rem', lineHeight: 1.5 }}>
-              <strong>What each bar shows:</strong> Each bar is an entire multi-year forecast window (not a single quarter). Height is the aggregate error ratio <MathText tex="\text{RMSE}_{\text{VARIMA}} / \text{RMSE}_{\text{ARIMA}}" />. <span style={{ color: '#16a34a', fontWeight: 700 }}>Green (below 1.0)</span> = VARIMA won; <span style={{ color: '#d76448', fontWeight: 700 }}>Red (above 1.0)</span> = ARIMA won.
+              <strong>What each bar shows:</strong> Each bar is an entire multi-year forecast window (not a single quarter). Height is the aggregate error ratio <MathText tex="\text{RMSE}_{\text{VARIMA}} / \text{RMSE}_{\text{ARIMA}}" />. <span style={{ color: 'var(--chart-green)', fontWeight: 700 }}>Green (below 1.0)</span> = VARIMA won; <span style={{ color: 'var(--coral)', fontWeight: 700 }}>Red (above 1.0)</span> = ARIMA won.
             </div>
 
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.15rem' }}>
@@ -1756,10 +1756,10 @@ if (activeTab === 5) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
               <div style={{ background: 'var(--surface)', padding: '0.55rem 0.4rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>2 Years Ahead (8Q)</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: summary8.rmse_ratio < 1 ? '#16a34a' : '#d76448' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: summary8.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)' }}>
                   {summary8.rmse_ratio ? summary8.rmse_ratio.toFixed(2) : '—'}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: summary8.rmse_ratio < 1 ? '#16a34a' : '#d76448', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.72rem', color: summary8.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)', fontWeight: 600 }}>
                   {summary8.rmse_ratio < 1 ? `${((1 - summary8.rmse_ratio) * 100).toFixed(0)}% lower error` : 'par'}
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
@@ -1768,10 +1768,10 @@ if (activeTab === 5) {
               </div>
               <div style={{ background: 'var(--surface)', padding: '0.55rem 0.4rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>3 Years Ahead (12Q)</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: summary12.rmse_ratio < 1 ? '#16a34a' : '#d76448' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: summary12.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)' }}>
                   {summary12.rmse_ratio ? summary12.rmse_ratio.toFixed(2) : '—'}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: summary12.rmse_ratio < 1 ? '#16a34a' : '#d76448', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.72rem', color: summary12.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)', fontWeight: 600 }}>
                   {summary12.rmse_ratio < 1 ? `${((1 - summary12.rmse_ratio) * 100).toFixed(0)}% lower error` : 'par'}
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
@@ -1780,10 +1780,10 @@ if (activeTab === 5) {
               </div>
               <div style={{ background: 'var(--surface)', padding: '0.55rem 0.4rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>4 Years Ahead (16Q)</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: summary16.rmse_ratio < 1 ? '#16a34a' : '#d76448' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: summary16.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)' }}>
                   {summary16.rmse_ratio ? summary16.rmse_ratio.toFixed(2) : '—'}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: summary16.rmse_ratio < 1 ? '#16a34a' : '#d76448', fontWeight: 600 }}>
+                <div style={{ fontSize: '0.72rem', color: summary16.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)', fontWeight: 600 }}>
                   {summary16.rmse_ratio < 1 ? `${((1 - summary16.rmse_ratio) * 100).toFixed(0)}% lower error` : 'par'}
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
@@ -1859,7 +1859,7 @@ if (activeTab === 5) {
                       border: '1px solid var(--border)',
                       cursor: 'pointer',
                       background: tab4Horizon === item.h ? 'var(--primary)' : 'var(--surface)',
-                      color: tab4Horizon === item.h ? '#fff' : 'var(--text-main)',
+                      color: tab4Horizon === item.h ? 'var(--on-accent)' : 'var(--text-main)',
                       fontWeight: tab4Horizon === item.h ? 700 : 400,
                     }}
                   >
@@ -1886,7 +1886,7 @@ if (activeTab === 5) {
                       border: '1px solid var(--border)',
                       cursor: 'pointer',
                       background: tab4Series === s.id ? 'var(--primary)' : 'var(--surface)',
-                      color: tab4Series === s.id ? '#fff' : 'var(--text-main)',
+                      color: tab4Series === s.id ? 'var(--on-accent)' : 'var(--text-main)',
                       fontWeight: tab4Series === s.id ? 700 : 400,
                     }}
                   >
@@ -1942,9 +1942,9 @@ if (activeTab === 5) {
                         return `Test Window: ${it?.target || l} (${tab4Horizon}Q / ${tab4Horizon / 4} Yrs) | Trained through: ${it?.trainEnd || ''} (Click to inspect below)`;
                       }}
                     />
-                    <ReferenceLine y={1.0} stroke="#dc2626" strokeDasharray="3 3" strokeWidth={1.5} label={{ position: 'top', value: 'Parity (1.0)', fill: '#dc2626', fontSize: 10 }} />
+                    <ReferenceLine y={1.0} stroke="var(--chart-red)" strokeDasharray="3 3" strokeWidth={1.5} label={{ position: 'top', value: 'Parity (1.0)', fill: 'var(--chart-red)', fontSize: 10 }} />
                     {recessionMarkers.map((m) => (
-                      <ReferenceLine key={m.x} x={m.x} stroke="#ad7b21" strokeDasharray="2 2" label={{ position: 'top', value: m.label, fill: '#ad7b21', fontSize: 9 }} />
+                      <ReferenceLine key={m.x} x={m.x} stroke="var(--gold)" strokeDasharray="2 2" label={{ position: 'top', value: m.label, fill: 'var(--gold)', fontSize: 9 }} />
                     ))}
                     <Bar
                       dataKey="ratio"
@@ -1958,8 +1958,8 @@ if (activeTab === 5) {
                         return (
                           <Cell
                             key={`cell-${index}`}
-                            fill={entry.wins ? '#16a34a' : '#d76448'}
-                            stroke={isSelected ? '#147d70' : (entry.wins ? '#15803d' : '#b91c1c')}
+                            fill={entry.wins ? 'var(--chart-green)' : 'var(--coral)'}
+                            stroke={isSelected ? 'var(--teal)' : (entry.wins ? 'var(--chart-green)' : 'var(--chart-red)')}
                             strokeWidth={isSelected ? 3 : 1}
                             style={{ cursor: 'pointer' }}
                             onClick={() => setTab4SelectedOrigin(entry.trainEnd)}
@@ -1973,13 +1973,13 @@ if (activeTab === 5) {
 
               <div style={{ marginTop: '0.35rem', padding: '0.35rem 0.65rem', background: 'var(--primary-bg)', borderRadius: '4px', fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
                 <span>
-                  <strong>{seriesLabels[tab4Series]} Overall ({tab4Horizon}Q):</strong> RMSE Ratio = <strong style={{ color: activeSummary.rmse_ratio < 1 ? '#16a34a' : '#d76448' }}>{activeSummary.rmse_ratio ? activeSummary.rmse_ratio.toFixed(2) : '—'}</strong> ({activeSummary.rmse_ratio < 1 ? `${((1 - activeSummary.rmse_ratio) * 100).toFixed(0)}% lower error` : 'par'})
+                  <strong>{seriesLabels[tab4Series]} Overall ({tab4Horizon}Q):</strong> RMSE Ratio = <strong style={{ color: activeSummary.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)' }}>{activeSummary.rmse_ratio ? activeSummary.rmse_ratio.toFixed(2) : '—'}</strong> ({activeSummary.rmse_ratio < 1 ? `${((1 - activeSummary.rmse_ratio) * 100).toFixed(0)}% lower error` : 'par'})
                 </span>
                 <span>
                   Win Rate: <strong>{(activeSummary.window_win_rate * 100).toFixed(1)}%</strong> ({windowRatioData.filter(d => d.wins).length} of {windowRatioData.length} windows won)
                 </span>
                 <span>
-                  Average MAPE: VARIMA <strong style={{ color: '#16a34a' }}>{activeSummary.varima_mape?.toFixed(2)}%</strong> vs ARIMA <strong style={{ color: '#d76448' }}>{activeSummary.arima_mape?.toFixed(2)}%</strong>
+                  Average MAPE: VARIMA <strong style={{ color: 'var(--chart-green)' }}>{activeSummary.varima_mape?.toFixed(2)}%</strong> vs ARIMA <strong style={{ color: 'var(--coral)' }}>{activeSummary.arima_mape?.toFixed(2)}%</strong>
                 </span>
               </div>
             </div>
@@ -1989,7 +1989,7 @@ if (activeTab === 5) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', fontSize: '0.86rem', fontWeight: 600 }}>
                 <span>
                   2. Detailed Forecast Trajectory: {currentWindowLabel}
-                  <span style={{ fontSize: '0.78rem', color: '#147d70', fontWeight: 600, marginLeft: '0.5rem' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--teal)', fontWeight: 600, marginLeft: '0.5rem' }}>
                     [Trained through {activeOrigin}]
                   </span>
                 </span>
@@ -2029,9 +2029,9 @@ if (activeTab === 5) {
                           labelFormatter={(i) => `Quarter: ${windowDetailSeriesData[Math.round(i)]?.target_quarter || ''} (Step +${windowDetailSeriesData[Math.round(i)]?.step || ''})`}
                         />
                         <Legend verticalAlign="top" height={28} />
-                        <Line type="monotone" dataKey="actual" name="Actual Level" stroke="#334155" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
-                        <Line type="monotone" dataKey="varima_forecast" name="VARIMA Path" stroke="#147d70" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
-                        <Line type="monotone" dataKey="arima_forecast" name="ARIMA Path" stroke="#dc2626" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="actual" name="Actual Level" stroke="var(--ink)" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="varima_forecast" name="VARIMA Path" stroke="var(--teal)" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="arima_forecast" name="ARIMA Path" stroke="var(--chart-red)" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} isAnimationActive={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   )}
@@ -2059,9 +2059,9 @@ if (activeTab === 5) {
                     <strong>Selected Window Evaluation:</strong> VARIMA RMSE = <strong>{varimaWinLabel}</strong> vs ARIMA RMSE = <strong>{arimaWinLabel}</strong>
                   </span>
                   <span>
-                    Window Error Ratio = <strong style={{ color: currentWindowScore.rmse_ratio < 1 ? '#16a34a' : '#d76448' }}>{ratioLabel}</strong>
+                    Window Error Ratio = <strong style={{ color: currentWindowScore.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)' }}>{ratioLabel}</strong>
                     {wonByLabel && (
-                      <span style={{ marginLeft: '0.3rem', fontWeight: 600, color: currentWindowScore.rmse_ratio < 1 ? '#16a34a' : '#d76448' }}>
+                      <span style={{ marginLeft: '0.3rem', fontWeight: 600, color: currentWindowScore.rmse_ratio < 1 ? 'var(--chart-green)' : 'var(--coral)' }}>
                         ({wonByLabel})
                       </span>
                     )}
@@ -2117,10 +2117,10 @@ if (activeTab === 5) {
     // Verdict styling
     const verdictBadgeStyle =
       activeMetrics.verdict_type === 'optimal'
-        ? { color: '#16a34a', bg: 'rgba(22, 163, 74, 0.12)', border: '#16a34a' }
+        ? { color: 'var(--chart-green)', bg: 'rgba(22, 163, 74, 0.12)', border: 'var(--chart-green)' }
         : activeMetrics.verdict_type === 'underfit'
-        ? { color: '#ad7b21', bg: 'rgba(245, 158, 11, 0.12)', border: '#ad7b21' }
-        : { color: '#d76448', bg: 'rgba(239, 68, 68, 0.12)', border: '#d76448' };
+        ? { color: 'var(--gold)', bg: 'rgba(245, 158, 11, 0.12)', border: 'var(--gold)' }
+        : { color: 'var(--coral)', bg: 'rgba(239, 68, 68, 0.12)', border: 'var(--coral)' };
 
     const commentaryTabs = (
       <div className="tabs" style={{ marginBottom: '0.85rem', flexWrap: 'wrap' }}>
@@ -2207,7 +2207,7 @@ if (activeTab === 5) {
                     <td style={{ padding: '0.3rem 0.6rem', fontWeight: 600 }}>
                       <MathText tex={`${g.variable} \\to Y_1`} />
                     </td>
-                    <td style={{ padding: '0.3rem 0.6rem', color: g.action === 'keep' ? '#16a34a' : 'var(--text-muted)' }}>
+                    <td style={{ padding: '0.3rem 0.6rem', color: g.action === 'keep' ? 'var(--chart-green)' : 'var(--text-muted)' }}>
                       {g.role}
                     </td>
                     <td style={{ padding: '0.3rem 0.6rem' }}>
@@ -2216,7 +2216,7 @@ if (activeTab === 5) {
                     <td style={{ padding: '0.3rem 0.6rem' }}>
                       {g.p_val < 0.001 ? <MathText tex="p < 0.001" /> : <MathText tex={`p = ${g.p_val.toFixed(3)}`} />}
                     </td>
-                    <td style={{ padding: '0.3rem 0.6rem', fontWeight: 600, color: g.action === 'keep' ? '#16a34a' : '#d76448' }}>
+                    <td style={{ padding: '0.3rem 0.6rem', fontWeight: 600, color: g.action === 'keep' ? 'var(--chart-green)' : 'var(--coral)' }}>
                       {g.action === 'keep' ? 'Include in VAR' : 'Exclude (Noise)'}
                     </td>
                   </tr>
@@ -2349,7 +2349,7 @@ if (activeTab === 5) {
                           ? 'var(--primary-bg)'
                           : 'transparent',
                         fontWeight: isRowActive ? 700 : 400,
-                        borderLeft: isUnderfit ? '4px solid #147d70' : isRowActive ? '4px solid var(--primary)' : '4px solid transparent',
+                        borderLeft: isUnderfit ? '4px solid var(--teal)' : isRowActive ? '4px solid var(--primary)' : '4px solid transparent',
                         cursor: 'pointer',
                       }}
                       onClick={() => setTab6K(row.k)}
@@ -2357,7 +2357,7 @@ if (activeTab === 5) {
                       <td style={tableCellStyle}>
                         <strong><MathText tex={`K = ${row.k}`} /></strong>{' '}
                         {isUnderfit && (
-                          <span style={{ background: '#147d70', color: '#fff', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem', marginLeft: '0.25rem' }}>
+                          <span style={{ background: 'var(--teal)', color: 'var(--on-accent)', padding: '0.1rem 0.35rem', borderRadius: '4px', fontSize: '0.72rem', marginLeft: '0.25rem' }}>
                             Baseline
                           </span>
                         )}
@@ -2368,27 +2368,27 @@ if (activeTab === 5) {
                         )}
                       </td>
                       <td style={tableCellStyle}>{row.params}</td>
-                      <td style={{ ...tableCellStyle, color: row.obs_per_param < 5 ? '#d76448' : '#16a34a' }}>
+                      <td style={{ ...tableCellStyle, color: row.obs_per_param < 5 ? 'var(--coral)' : 'var(--chart-green)' }}>
                         {row.obs_per_param}x
                       </td>
                       <td style={tableCellStyle}>{row.in_rmse.toFixed(3)}</td>
-                      <td style={{ ...tableCellStyle, color: isOptimal ? '#16a34a' : (isWorseThanK1 ? '#d76448' : 'inherit'), fontWeight: isOptimal || isWorseThanK1 ? 700 : 400 }}>
+                      <td style={{ ...tableCellStyle, color: isOptimal ? 'var(--chart-green)' : (isWorseThanK1 ? 'var(--coral)' : 'inherit'), fontWeight: isOptimal || isWorseThanK1 ? 700 : 400 }}>
                         {row.out_rmse.toFixed(3)}
                       </td>
                       <td style={tableCellStyle}>
                         {isUnderfit ? (
-                          <span style={{ color: '#147d70', fontWeight: 600 }}>Baseline ({m1.out_rmse.toFixed(3)})</span>
+                          <span style={{ color: 'var(--teal)', fontWeight: 600 }}>Baseline ({m1.out_rmse.toFixed(3)})</span>
                         ) : deltaVsK1 < 0 ? (
-                          <span style={{ color: '#16a34a', fontWeight: 600 }}>{deltaVsK1.toFixed(1)}% (Beats Baseline)</span>
+                          <span style={{ color: 'var(--chart-green)', fontWeight: 600 }}>{deltaVsK1.toFixed(1)}% (Beats Baseline)</span>
                         ) : (
-                          <span style={{ color: '#d76448', fontWeight: 700 }}>+{deltaVsK1.toFixed(1)}% (Worse than Baseline!)</span>
+                          <span style={{ color: 'var(--coral)', fontWeight: 700 }}>+{deltaVsK1.toFixed(1)}% (Worse than Baseline!)</span>
                         )}
                       </td>
                       <td style={tableCellStyle}>
-                        {isUnderfit && <span style={{ color: '#ad7b21' }}>Underfitting (Misses Driver <MathText tex="Y_2" />)</span>}
-                        {isOptimal && <span style={{ color: '#16a34a' }}>Optimal (Lowest Test Error)</span>}
-                        {row.k >= 3 && !isWorseThanK1 && <span style={{ color: '#d76448' }}>Degrading (Extra Parameters)</span>}
-                        {isWorseThanK1 && <span style={{ color: '#d76448', fontWeight: 700 }}>Severe Overfit (Noise Trapped)</span>}
+                        {isUnderfit && <span style={{ color: 'var(--gold)' }}>Underfitting (Misses Driver <MathText tex="Y_2" />)</span>}
+                        {isOptimal && <span style={{ color: 'var(--chart-green)' }}>Optimal (Lowest Test Error)</span>}
+                        {row.k >= 3 && !isWorseThanK1 && <span style={{ color: 'var(--coral)' }}>Degrading (Extra Parameters)</span>}
+                        {isWorseThanK1 && <span style={{ color: 'var(--coral)', fontWeight: 700 }}>Severe Overfit (Noise Trapped)</span>}
                       </td>
                     </tr>
                   );
@@ -2427,14 +2427,14 @@ if (activeTab === 5) {
                         labelFormatter={(i) => `Step: ${timeline[Math.round(i)]?.step_label || ''} (${timeline[Math.round(i)]?.is_test ? 'Holdout Test' : 'Training Sample'})`}
                       />
                       <Legend verticalAlign="top" height={32} />
-                      <ReferenceLine x={splitIndex} stroke="#eab308" strokeDasharray="4 4" label={{ position: 'top', value: 'Forecast Origin (t = 90)', fill: '#eab308', fontSize: 11 }} />
+                      <ReferenceLine x={splitIndex} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ position: 'top', value: 'Forecast Origin (t = 90)', fill: 'var(--chart-yellow)', fontSize: 11 }} />
 
                       {/* Actual Target Series Y1 */}
                       <Line
                         type="monotone"
                         dataKey="y1_actual"
                         name="Target Series Y1 (Actual)"
-                        stroke="#334155"
+                        stroke="var(--ink)"
                         strokeWidth={2.5}
                         dot={{ r: 2 }}
                         isAnimationActive={false}
@@ -2460,7 +2460,7 @@ if (activeTab === 5) {
                         type="monotone"
                         dataKey={activeFcKey}
                         name={`Active Model Forecast (K=${tab6K})`}
-                        stroke={tab6K === 2 ? '#16a34a' : (tab6K === 1 ? '#147d70' : '#d76448')}
+                        stroke={tab6K === 2 ? 'var(--chart-green)' : (tab6K === 1 ? 'var(--teal)' : 'var(--coral)')}
                         strokeWidth={3}
                         strokeDasharray="4 4"
                         dot={{ r: 3.5 }}
@@ -2664,7 +2664,7 @@ if (activeTab === 5) {
               </div>
             </div>
             <div style={{ background: 'var(--surface)', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#16a34a', marginBottom: '0.35rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--chart-green)', marginBottom: '0.35rem' }}>
                 Strategy 2: Reset Training Origin
               </div>
               <div style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text-main)' }}>
@@ -2692,7 +2692,7 @@ if (activeTab === 5) {
                     border: '1px solid var(--border)',
                     cursor: 'pointer',
                     background: tab7Var === k ? 'var(--primary)' : 'var(--surface)',
-                    color: tab7Var === k ? '#fff' : 'var(--text-main)',
+                    color: tab7Var === k ? 'var(--on-accent)' : 'var(--text-main)',
                     fontWeight: tab7Var === k ? 700 : 400,
                     fontSize: '0.82rem',
                   }}
@@ -2737,9 +2737,9 @@ if (activeTab === 5) {
                         <XAxis dataKey="time" type="number" domain={zoomDomain} allowDataOverflow={true} tick={{ fill: 'var(--text-muted)' }} tickFormatter={(i) => trajectory[Math.round(i)]?.origin || ''} />
                         <YAxis
                           domain={[-1.4, 1.4]}
-                          tick={{ fill: '#5169a5' }}
+                          tick={{ fill: 'var(--blue)' }}
                           tickFormatter={(v) => v.toFixed(1)}
-                          label={{ value: 'Recursive CUSUM Statistic', angle: -90, position: 'insideLeft', offset: -5, fill: '#5169a5' }}
+                          label={{ value: 'Recursive CUSUM Statistic', angle: -90, position: 'insideLeft', offset: -5, fill: 'var(--blue)' }}
                         />
                         <Tooltip
                           contentStyle={{ backgroundColor: 'var(--chart-tooltip-bg)', borderColor: 'var(--border)', color: 'var(--chart-tooltip-text)' }}
@@ -2748,18 +2748,18 @@ if (activeTab === 5) {
                         />
                         <Legend verticalAlign="top" height={32} />
                         <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
-                        <ReferenceLine y={CUSUM_BOUND} stroke="#d76448" strokeDasharray="3 3" label={{ position: 'top', value: `+95% Critical Bound (+${CUSUM_BOUND})`, fill: '#d76448', fontSize: 11 }} />
-                        <ReferenceLine y={-CUSUM_BOUND} stroke="#d76448" strokeDasharray="3 3" label={{ position: 'bottom', value: `-95% Critical Bound (-${CUSUM_BOUND})`, fill: '#d76448', fontSize: 11 }} />
+                        <ReferenceLine y={CUSUM_BOUND} stroke="var(--coral)" strokeDasharray="3 3" label={{ position: 'top', value: `+95% Critical Bound (+${CUSUM_BOUND})`, fill: 'var(--coral)', fontSize: 11 }} />
+                        <ReferenceLine y={-CUSUM_BOUND} stroke="var(--coral)" strokeDasharray="3 3" label={{ position: 'bottom', value: `-95% Critical Bound (-${CUSUM_BOUND})`, fill: 'var(--coral)', fontSize: 11 }} />
                         {b1981Index >= 0 && (
-                          <ReferenceLine x={b1981Index} stroke="#d76448" strokeDasharray="4 4" label={{ position: 'top', value: `1981Q3 Early Warning (${cusum1981 >= 0 ? '+' : ''}${Number(cusum1981).toFixed(3)})`, fill: '#d76448', fontSize: 11 }} />
+                          <ReferenceLine x={b1981Index} stroke="var(--coral)" strokeDasharray="4 4" label={{ position: 'top', value: `1981Q3 Early Warning (${cusum1981 >= 0 ? '+' : ''}${Number(cusum1981).toFixed(3)})`, fill: 'var(--coral)', fontSize: 11 }} />
                         )}
                         {gmIndex >= 0 && (
-                          <ReferenceLine x={gmIndex} stroke="#147d70" strokeDasharray="4 4" label={{ position: 'top', value: 'Great Moderation (1984Q1)', fill: '#147d70', fontSize: 11 }} />
+                          <ReferenceLine x={gmIndex} stroke="var(--teal)" strokeDasharray="4 4" label={{ position: 'top', value: 'Great Moderation (1984Q1)', fill: 'var(--teal)', fontSize: 11 }} />
                         )}
                         {b2001Index >= 0 && (
-                          <ReferenceLine x={b2001Index} stroke="#d76448" strokeDasharray="4 4" label={{ position: 'bottom', value: `2001Q3 Borderline Alert (${cusum2001 >= 0 ? '+' : ''}${Number(cusum2001).toFixed(3)})`, fill: '#d76448', fontSize: 11 }} />
+                          <ReferenceLine x={b2001Index} stroke="var(--coral)" strokeDasharray="4 4" label={{ position: 'bottom', value: `2001Q3 Borderline Alert (${cusum2001 >= 0 ? '+' : ''}${Number(cusum2001).toFixed(3)})`, fill: 'var(--coral)', fontSize: 11 }} />
                         )}
-                        <Line type="monotone" dataKey="cusum" name="Recursive CUSUM Path" stroke="#5169a5" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="cusum" name="Recursive CUSUM Path" stroke="var(--blue)" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
                       </ComposedChart>
                     ) : (
                       <ComposedChart data={trajectoryWithCI} margin={{ top: 15, right: 35, left: 10, bottom: 20 }} style={{ pointerEvents: 'auto' }}>
@@ -2782,20 +2782,20 @@ if (activeTab === 5) {
                         <Legend verticalAlign="top" height={32} />
                         <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="3 3" />
                         {gmIndex >= 0 && (
-                          <ReferenceLine x={gmIndex} stroke="#147d70" strokeDasharray="4 4" label={{ position: 'top', value: 'Great Moderation (1984Q1)', fill: '#147d70', fontSize: 11 }} />
+                          <ReferenceLine x={gmIndex} stroke="var(--teal)" strokeDasharray="4 4" label={{ position: 'top', value: 'Great Moderation (1984Q1)', fill: 'var(--teal)', fontSize: 11 }} />
                         )}
                         {rec1990Index >= 0 && (
-                          <ReferenceLine x={rec1990Index} stroke="#ad7b21" strokeDasharray="4 4" label={{ position: 'top', value: '1990 Recession', fill: '#ad7b21', fontSize: 11 }} />
+                          <ReferenceLine x={rec1990Index} stroke="var(--gold)" strokeDasharray="4 4" label={{ position: 'top', value: '1990 Recession', fill: 'var(--gold)', fontSize: 11 }} />
                         )}
                         {tab7ShowCI && (
                           <>
                             <Area
                               type="monotone"
                               dataKey="ci_band"
-                              stroke="#93c5fd"
+                              stroke="var(--chart-blue-light)"
                               strokeDasharray="4 4"
                               strokeWidth={1}
-                              fill="#147d70"
+                              fill="var(--teal)"
                               fillOpacity={0.12}
                               name="95% Confidence Band (±1.96 SE)"
                               isAnimationActive={false}
@@ -2804,7 +2804,7 @@ if (activeTab === 5) {
                               type="monotone"
                               dataKey={currentConfig.upperKey}
                               name="+95% Confidence Bound"
-                              stroke="#93c5fd"
+                              stroke="var(--chart-blue-light)"
                               strokeDasharray="4 4"
                               strokeWidth={1.2}
                               dot={false}
@@ -2815,7 +2815,7 @@ if (activeTab === 5) {
                               type="monotone"
                               dataKey={currentConfig.lowerKey}
                               name="-95% Confidence Bound"
-                              stroke="#93c5fd"
+                              stroke="var(--chart-blue-light)"
                               strokeDasharray="4 4"
                               strokeWidth={1.2}
                               dot={false}
@@ -2828,7 +2828,7 @@ if (activeTab === 5) {
                           type="monotone"
                           dataKey={currentConfig.betaKey}
                           name={`Recursive β (${currentConfig.title})`}
-                          stroke="#147d70"
+                          stroke="var(--teal)"
                           strokeWidth={2.5}
                           dot={{ r: 2 }}
                           isAnimationActive={false}
@@ -3043,7 +3043,7 @@ if (activeTab === 5) {
               <div style={{ background: 'var(--surface)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 <strong>Series A adjusts down:</strong><br />
                 {alphaA !== null ? <MathText tex={`\\alpha_A = ${alphaA}`} /> : 'n/a'}{' '}
-                <span style={{ color: '#0284c7', fontSize: '0.78rem' }}>
+                <span style={{ color: 'var(--chart-sky)', fontSize: '0.78rem' }}>
                   (t = {metrics.alpha_a_tstat ?? 'n/a'}{pA ? `, p = ${pA}` : ''})
                 </span><br />
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Pulls growth downward toward parity.</span>
@@ -3051,7 +3051,7 @@ if (activeTab === 5) {
               <div style={{ background: 'var(--surface)', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
                 <strong>Series B adjusts up:</strong><br />
                 {alphaB !== null ? <MathText tex={`\\alpha_B = ${alphaB}`} /> : 'n/a'}{' '}
-                <span style={{ color: '#16a34a', fontSize: '0.78rem' }}>
+                <span style={{ color: 'var(--chart-green)', fontSize: '0.78rem' }}>
                   (t = {metrics.alpha_b_tstat != null && metrics.alpha_b_tstat > 0 ? `+${metrics.alpha_b_tstat}` : (metrics.alpha_b_tstat ?? 'n/a')}{pB ? `, p = ${pB}` : ''})
                 </span><br />
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Pushes growth upward to meet Series A.</span>
@@ -3165,7 +3165,7 @@ if (activeTab === 5) {
                       ? <><MathText tex={`\\alpha_B = ${metrics.alpha_b_speed > 0 ? `+${metrics.alpha_b_speed.toFixed(4)}` : metrics.alpha_b_speed.toFixed(4)}`} /> <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>(t = {metrics.alpha_b_tstat != null && metrics.alpha_b_tstat > 0 ? `+${metrics.alpha_b_tstat}` : (metrics.alpha_b_tstat ?? 'n/a')})</span></>
                       : 'n/a'}
                     {tab8CommentaryTab === 3 && metrics.alpha_b_pvalue !== undefined && (
-                      <div style={{ marginTop: '0.35rem', fontSize: '0.74rem', color: '#16a34a' }}>
+                      <div style={{ marginTop: '0.35rem', fontSize: '0.74rem', color: 'var(--chart-green)' }}>
                         * Series B is weakly exogenous in truth (<MathText tex="\alpha_B = 0" />; fails to reject <MathText tex="H_0" />, <MathText tex={`p = ${Number(metrics.alpha_b_pvalue).toFixed(3)}`} />).
                       </div>
                     )}
@@ -3206,7 +3206,7 @@ if (activeTab === 5) {
                         border: '1px solid var(--border)',
                         cursor: 'pointer',
                         background: tab8View === m.id ? 'var(--primary)' : 'var(--surface)',
-                        color: tab8View === m.id ? '#fff' : 'var(--text-main)',
+                        color: tab8View === m.id ? 'var(--on-accent)' : 'var(--text-main)',
                         fontWeight: tab8View === m.id ? 700 : 400,
                       }}
                     >
@@ -3229,7 +3229,7 @@ if (activeTab === 5) {
                         border: '1px solid var(--border)',
                         cursor: 'pointer',
                         background: activeSeriesKey === sKey ? 'var(--primary)' : 'var(--surface)',
-                        color: activeSeriesKey === sKey ? '#fff' : 'var(--text-main)',
+                        color: activeSeriesKey === sKey ? 'var(--on-accent)' : 'var(--text-main)',
                         fontWeight: activeSeriesKey === sKey ? 700 : 400,
                       }}
                     >
@@ -3244,7 +3244,7 @@ if (activeTab === 5) {
         extraCardTitle={
           tab8CommentaryTab === 1 ? null : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Compass size={18} color="#0284c7" />
+              <Compass size={18} color="var(--chart-sky)" />
               {tab8CommentaryTab === 2
                 ? 'Johansen Sequential Cointegration Rank Test'
                 : tab8CommentaryTab === 3
@@ -3279,13 +3279,13 @@ if (activeTab === 5) {
                         {johansen.map((row, idx) => (
                           <tr key={idx}>
                             <td style={tableCellStyle}><strong>{row.hypothesized_rank}</strong></td>
-                            <td style={{ ...tableCellStyle, fontWeight: 700, color: row.trace_stat > row.cv_95 ? '#16a34a' : 'var(--text-main)' }}>
+                            <td style={{ ...tableCellStyle, fontWeight: 700, color: row.trace_stat > row.cv_95 ? 'var(--chart-green)' : 'var(--text-main)' }}>
                               {row.trace_stat.toFixed(2)}
                             </td>
                             <td style={tableCellStyle}>{row.cv_90.toFixed(2)}</td>
                             <td style={tableCellStyle}>{row.cv_95.toFixed(2)}</td>
                             <td style={tableCellStyle}>{row.cv_99.toFixed(2)}</td>
-                            <td style={{ ...tableCellStyle, color: row.rejected_95 ? '#16a34a' : '#d76448', fontWeight: 600 }}>
+                            <td style={{ ...tableCellStyle, color: row.rejected_95 ? 'var(--chart-green)' : 'var(--coral)', fontWeight: 600 }}>
                               {row.rejected_95 ? 'Reject Null (Cointegrated)' : 'Fail to Reject Null (No Cointegration)'}
                             </td>
                           </tr>
@@ -3318,20 +3318,20 @@ if (activeTab === 5) {
                         <tr>
                           <td style={tableCellStyle}><strong>Series A</strong></td>
                           <td style={tableCellStyle}>Follower (Endogenous)</td>
-                          <td style={{ ...tableCellStyle, fontWeight: 700, color: '#0284c7' }}>{metrics.alpha_a_speed ?? 'n/a'}</td>
+                          <td style={{ ...tableCellStyle, fontWeight: 700, color: 'var(--chart-sky)' }}>{metrics.alpha_a_speed ?? 'n/a'}</td>
                           <td style={tableCellStyle}>{metrics.alpha_a_stderr ?? 'n/a'}</td>
                           <td style={tableCellStyle}>{metrics.alpha_a_tstat ?? 'n/a'}</td>
                           <td style={tableCellStyle}>{metrics.alpha_a_pvalue !== undefined ? metrics.alpha_a_pvalue.toFixed(4) : 'n/a'}</td>
-                          <td style={{ ...tableCellStyle, color: '#16a34a', fontWeight: 600 }}>Rejects <MathText tex="H_0" /> (Actively Adjusts to ECT)</td>
+                          <td style={{ ...tableCellStyle, color: 'var(--chart-green)', fontWeight: 600 }}>Rejects <MathText tex="H_0" /> (Actively Adjusts to ECT)</td>
                         </tr>
                         <tr>
                           <td style={tableCellStyle}><strong>Series B</strong></td>
                           <td style={tableCellStyle}>Leader (Autonomous Anchor)</td>
-                          <td style={{ ...tableCellStyle, fontWeight: 700, color: '#16a34a' }}>{metrics.alpha_b_speed ?? 'n/a'}</td>
+                          <td style={{ ...tableCellStyle, fontWeight: 700, color: 'var(--chart-green)' }}>{metrics.alpha_b_speed ?? 'n/a'}</td>
                           <td style={tableCellStyle}>{metrics.alpha_b_stderr ?? 'n/a'}</td>
                           <td style={tableCellStyle}>{metrics.alpha_b_tstat ?? 'n/a'}</td>
                           <td style={tableCellStyle}>{metrics.alpha_b_pvalue !== undefined ? metrics.alpha_b_pvalue.toFixed(4) : 'n/a'}</td>
-                          <td style={{ ...tableCellStyle, color: '#16a34a', fontWeight: 600 }}>
+                          <td style={{ ...tableCellStyle, color: 'var(--chart-green)', fontWeight: 600 }}>
                             Fails to Reject <MathText tex="H_0" /> (Weakly Exogenous Anchor)
                           </td>
                         </tr>
@@ -3358,7 +3358,7 @@ if (activeTab === 5) {
             {tab8CommentaryTab === 1 && tab8View === 'levels' && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.75rem', background: 'rgba(2, 132, 199, 0.08)', border: '1px solid rgba(2, 132, 199, 0.3)', borderRadius: '6px', marginBottom: '0.45rem', fontSize: '0.84rem' }}>
-                  <span style={{ color: '#0284c7', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--chart-sky)', fontWeight: 600 }}>
                     System in Levels: Series A and B track closely in long-run parity. At 2002Q4, a sudden supply shock displaces Series A
                     {shockDisplacement != null ? ` +${shockDisplacement.toFixed(1)} units` : ''} above Series B.
                   </span>
@@ -3389,9 +3389,9 @@ if (activeTab === 5) {
                             />
                             <Legend verticalAlign="top" height={32} />
                             {splitIndex >= 0 && (
-                              <ReferenceLine x={splitIndex} stroke="#eab308" strokeDasharray="4 4" label={{ position: 'top', value: 'Shock Origin (2002Q4)', fill: '#eab308', fontSize: 11 }} />
+                              <ReferenceLine x={splitIndex} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ position: 'top', value: 'Shock Origin (2002Q4)', fill: 'var(--chart-yellow)', fontSize: 11 }} />
                             )}
-                            <Line type="monotone" dataKey="series_a_actual" name="Series A (Displaced / Follower)" stroke="#0284c7" strokeWidth={2.4} dot={{ r: 2 }} isAnimationActive={false} />
+                            <Line type="monotone" dataKey="series_a_actual" name="Series A (Displaced / Follower)" stroke="var(--chart-sky)" strokeWidth={2.4} dot={{ r: 2 }} isAnimationActive={false} />
                             <Line type="monotone" dataKey="series_b_actual" name="Series B (Anchor)" stroke="#64748b" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 2 }} isAnimationActive={false} />
                           </LineChart>
                         </ResponsiveContainer>
@@ -3405,7 +3405,7 @@ if (activeTab === 5) {
             {tab8CommentaryTab === 1 && tab8View === 'spread' && (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.45rem 0.75rem', background: 'rgba(22, 163, 74, 0.08)', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: '6px', marginBottom: '0.45rem', fontSize: '0.84rem' }}>
-                  <span style={{ color: '#16a34a', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--chart-green)', fontWeight: 600 }}>
                     Equilibrium Error Term (ECT_t): Strictly stationary around ZERO. Notice the +7.6 spike rapidly mean-reverting back to parity!
                   </span>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -3436,11 +3436,11 @@ if (activeTab === 5) {
                               labelFormatter={(i) => `Quarter: ${spreadTimeline[Math.round(i)]?.quarter || ''}`}
                             />
                             <Legend verticalAlign="top" height={32} />
-                            <ReferenceLine y={0} stroke="#147d70" strokeWidth={1.5} strokeDasharray="3 3" label={{ position: 'top', value: 'Zero Parity Equilibrium (ECT = 0)', fill: '#147d70', fontSize: 11 }} />
+                            <ReferenceLine y={0} stroke="var(--teal)" strokeWidth={1.5} strokeDasharray="3 3" label={{ position: 'top', value: 'Zero Parity Equilibrium (ECT = 0)', fill: 'var(--teal)', fontSize: 11 }} />
                             {splitIndex >= 0 && (
-                              <ReferenceLine x={splitIndex} stroke="#eab308" strokeDasharray="4 4" label={{ position: 'top', value: 'Shock Origin (2002Q4)', fill: '#eab308', fontSize: 11 }} />
+                              <ReferenceLine x={splitIndex} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ position: 'top', value: 'Shock Origin (2002Q4)', fill: 'var(--chart-yellow)', fontSize: 11 }} />
                             )}
-                            <Line type="monotone" dataKey="ect_spread" name="Equilibrium Error (ECT_t)" stroke="#0284c7" strokeWidth={2.4} dot={{ r: 2 }} isAnimationActive={false} />
+                            <Line type="monotone" dataKey="ect_spread" name="Equilibrium Error (ECT_t)" stroke="var(--chart-sky)" strokeWidth={2.4} dot={{ r: 2 }} isAnimationActive={false} />
                           </LineChart>
                         </ResponsiveContainer>
                       );
@@ -3457,38 +3457,38 @@ if (activeTab === 5) {
                     <>
                       <div style={{ background: 'rgba(22, 163, 74, 0.08)', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: '6px', padding: '0.4rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700, textTransform: 'uppercase' }}>Winner: VECM Rank-1 (Anchored)</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--chart-green)', fontWeight: 700, textTransform: 'uppercase' }}>Winner: VECM Rank-1 (Anchored)</div>
                           <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>RMSE {currMetrics.vecm_rmse.toFixed(2)} {currentScenarioData.units || ''}</div>
                         </div>
-                        <span style={{ fontSize: '0.72rem', background: '#16a34a', color: '#fff', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>{Math.abs(currMetrics.pct_worse).toFixed(1)}% Lower Error</span>
+                        <span style={{ fontSize: '0.72rem', background: 'var(--chart-green)', color: 'var(--on-accent)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>{Math.abs(currMetrics.pct_worse).toFixed(1)}% Lower Error</span>
                       </div>
                       <div style={{ background: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.3)', borderRadius: '6px', padding: '0.4rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700, textTransform: 'uppercase' }}>Differenced VAR (Extrapolates Shock)</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--chart-red)', fontWeight: 700, textTransform: 'uppercase' }}>Differenced VAR (Extrapolates Shock)</div>
                           <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>RMSE {currMetrics.varima_rmse.toFixed(2)} {currentScenarioData.units || ''}</div>
                         </div>
-                        <span style={{ fontSize: '0.72rem', background: '#dc2626', color: '#fff', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>Unanchored Drift</span>
+                        <span style={{ fontSize: '0.72rem', background: 'var(--chart-red)', color: 'var(--on-accent)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>Unanchored Drift</span>
                       </div>
                     </>
                   ) : (
                     <>
                       <div style={{ background: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.3)', borderRadius: '6px', padding: '0.4rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700, textTransform: 'uppercase' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--chart-red)', fontWeight: 700, textTransform: 'uppercase' }}>
                             {tab8CommentaryTab === 3 && activeSeriesKey === 'series_b' ? 'Unconstrained VECM (Weak Exogeneity Trap)' : 'Forced VECM Rank-1 (Phantom Anchor)'}
                           </div>
                           <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>RMSE {is2Var ? `${currMetrics.vecm_rmse.toFixed(2)} ${currentScenarioData.units || ''}` : `$${currMetrics.vecm_rmse.toFixed(1)}B`}</div>
                         </div>
-                        <span style={{ fontSize: '0.72rem', background: '#dc2626', color: '#fff', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>+{currMetrics.pct_worse.toFixed(1)}% Worse</span>
+                        <span style={{ fontSize: '0.72rem', background: 'var(--chart-red)', color: 'var(--on-accent)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>+{currMetrics.pct_worse.toFixed(1)}% Worse</span>
                       </div>
                       <div style={{ background: 'rgba(22, 163, 74, 0.08)', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: '6px', padding: '0.4rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <div style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700, textTransform: 'uppercase' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--chart-green)', fontWeight: 700, textTransform: 'uppercase' }}>
                             Winner: Differenced {is2Var ? 'VAR' : 'VARIMA(2,1,0)'}
                           </div>
                           <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>RMSE {is2Var ? `${currMetrics.varima_rmse.toFixed(2)} ${currentScenarioData.units || ''}` : `$${currMetrics.varima_rmse.toFixed(1)}B`}</div>
                         </div>
-                        <span style={{ fontSize: '0.72rem', background: '#16a34a', color: '#fff', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>Correct Baseline</span>
+                        <span style={{ fontSize: '0.72rem', background: 'var(--chart-green)', color: 'var(--on-accent)', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>Correct Baseline</span>
                       </div>
                     </>
                   )}
@@ -3496,7 +3496,7 @@ if (activeTab === 5) {
 
                 {tab8CommentaryTab === 3 && activeSeriesKey === 'series_b' && (
                   <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '0.45rem 0.75rem', fontSize: '0.82rem', lineHeight: 1.5, marginBottom: '0.45rem' }}>
-                    <strong style={{ color: '#dc2626' }}>Weak-exogeneity trap:</strong> Series B is an autonomous anchor in the DGP (<MathText tex="\alpha_B = 0" />
+                    <strong style={{ color: 'var(--chart-red)' }}>Weak-exogeneity trap:</strong> Series B is an autonomous anchor in the DGP (<MathText tex="\alpha_B = 0" />
                     {metrics.alpha_b_pvalue !== undefined ? <>; fails to reject <MathText tex="H_0" />, <MathText tex={`p = ${Number(metrics.alpha_b_pvalue).toFixed(3)}`} /></> : null}
                     ). Unconstrained estimation still yields a small nonzero loading
                     {metrics.alpha_b_speed !== undefined ? <> (<MathText tex={`\\hat{\\alpha}_B = ${Number(metrics.alpha_b_speed).toFixed(4)}`} />)</> : null}
@@ -3530,14 +3530,14 @@ if (activeTab === 5) {
                             />
                             <Legend verticalAlign="top" height={32} />
                             {splitIndex >= 0 && (
-                              <ReferenceLine x={splitIndex} stroke="#eab308" strokeDasharray="4 4" label={{ position: 'top', value: 'Split Origin (2002Q4)', fill: '#eab308', fontSize: 11 }} />
+                              <ReferenceLine x={splitIndex} stroke="var(--chart-yellow)" strokeDasharray="4 4" label={{ position: 'top', value: 'Split Origin (2002Q4)', fill: 'var(--chart-yellow)', fontSize: 11 }} />
                             )}
-                            <Line type="monotone" dataKey={actualKey} name={`Actual ${seriesLabels[activeSeriesKey] || activeSeriesKey}`} stroke="#334155" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
+                            <Line type="monotone" dataKey={actualKey} name={`Actual ${seriesLabels[activeSeriesKey] || activeSeriesKey}`} stroke="var(--ink)" strokeWidth={2.5} dot={{ r: 2 }} isAnimationActive={false} />
                             <Line
                               type="monotone"
                               dataKey={varimaKey}
                               name={currMetrics.pct_worse < 0 ? 'Differenced VAR (Extrapolates Shock)' : 'Differenced VARIMA (Wins)'}
-                              stroke={currMetrics.pct_worse < 0 ? '#dc2626' : '#16a34a'}
+                              stroke={currMetrics.pct_worse < 0 ? 'var(--chart-red)' : 'var(--chart-green)'}
                               strokeWidth={2.5}
                               strokeDasharray="3 3"
                               dot={{ r: 3 }}
@@ -3554,7 +3554,7 @@ if (activeTab === 5) {
                                   ? 'Unconstrained VECM (Shock Contamination)'
                                   : 'VECM Rank-1 (Phantom Anchor)'
                               }
-                              stroke={currMetrics.pct_worse < 0 ? '#16a34a' : '#dc2626'}
+                              stroke={currMetrics.pct_worse < 0 ? 'var(--chart-green)' : 'var(--chart-red)'}
                               strokeWidth={2.5}
                               strokeDasharray="5 5"
                               dot={{ r: 3 }}

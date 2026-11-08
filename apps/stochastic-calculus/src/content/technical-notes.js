@@ -2,7 +2,7 @@ import { prose, h } from './helpers.js';
 
 export const technicalNotes = () => prose`
 ${h('physical-crossover','Optional note: the physical crossover to diffusion')}
-<p>Section 2 uses the observed/modelled spreading law to motivate the coin-walk scaling. A more detailed equilibrium inertial model keeps velocity as well as position:</p>
+<p>Section 3 uses the observed/modelled spreading law to motivate the coin-walk scaling. A more detailed equilibrium inertial model keeps velocity as well as position:</p>
 \[m\,\mathrm dV_t=-\gamma V_t\,\mathrm dt+\sqrt{2\gamma k_B\mathcal T}\,\mathrm dW_t,\qquad\mathrm dX_t=V_t\,\mathrm dt.\]
 <p>With stationary initial velocity, define the relaxation time \(\tau=m/\gamma\) and diffusivity \(D=k_B\mathcal T/\gamma\). Integrating the stationary velocity covariance gives:</p>
 \[\mathbb E[(X_t-X_0)^2]=2D\left[t-\tau(1-e^{-t/\tau})\right].\]
@@ -13,7 +13,7 @@ ${h('brownian-regularity','Optional note: Brownian path regularity')}
 \[\mathbb E\!\left[\sum_{i=0}^{n-1}|\Delta W_i|\right]=n\sqrt{\frac{2\Delta t}{\pi}}=\sqrt{\frac{2Tn}{\pi}}.\]
 <p>The expectation's growth illustrates the roughness; the infinite-variation and nowhere-differentiability statements require pathwise theorems, not only this expectation calculation. The Evans reference provides the formal treatment.</p>
 ${h('weighted-squares','Optional note: why starting-point weights preserve the squared-step rule')}
-<p>Taylor expansion in Section 4 creates the weights: the factor \(\tfrac12 f_{xx}(t_i,W_i)\) changes with the starting point of the step. This is why we need a weighted version of quadratic variation.</p>
+<p>Taylor expansion in Section 5 creates the weights: the factor \(\tfrac12 f_{xx}(t_i,W_i)\) changes with the starting point of the step. This is why we need a weighted version of quadratic variation.</p>
 <p>For bounded coefficients \(G_i\) determined before the next increment, write the difference between a weighted squared-step sum and its time-step counterpart as:</p>
 \[R_n=\sum_iG_i\bigl[(\Delta W_i)^2-\Delta t\bigr].\]
 <p>Each bracket has conditional mean zero given the past. Consequently cross expectations between different intervals vanish, and the mean square of the difference is:</p>

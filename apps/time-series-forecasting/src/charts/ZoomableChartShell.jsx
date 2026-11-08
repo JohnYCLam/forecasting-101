@@ -39,6 +39,7 @@ export default function ZoomableChartShell({
 
   return (
     <div
+      className="zoomable-chart-shell"
       ref={chartRef}
       style={{
         width: '100%',

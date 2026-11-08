@@ -113,9 +113,9 @@ export default function Topic6Intro({ data: t, Layout, shared, originControl }) 
         <Legend verticalAlign="top" height={85} wrapperStyle={{ paddingTop: 28, fontSize: '0.8rem' }} />
         <ReferenceLine x={t.origin_index} stroke="var(--text-muted)" strokeDasharray="4 4" label={{ value: 'Cutoff', position: 'insideTopLeft', fill: 'var(--text-muted)' }} />
         <Line dataKey="actual" name="Actual load" stroke="var(--text-main)" dot={false} isAnimationActive={false} strokeWidth={2} />
-        <Line dataKey={key} name="Linear regression" stroke="#147d70" strokeDasharray="5 3" dot={false} isAnimationActive={false} strokeWidth={2} />
-        {tab === 4 && <Line dataKey="repeat_week" name="Repeat last week" stroke="#d97706" dot={false} isAnimationActive={false} strokeWidth={2} />}
-        {tab === 3 && showInvalid && <Line dataKey="invalid" name="Future answer (invalid)" stroke="#d76448" strokeDasharray="3 3" dot={false} isAnimationActive={false} strokeWidth={2} />}
+        <Line dataKey={key} name="Linear regression" stroke="var(--teal)" strokeDasharray="5 3" dot={false} isAnimationActive={false} strokeWidth={2} />
+        {tab === 4 && <Line dataKey="repeat_week" name="Repeat last week" stroke="var(--chart-orange)" dot={false} isAnimationActive={false} strokeWidth={2} />}
+        {tab === 3 && showInvalid && <Line dataKey="invalid" name="Future answer (invalid)" stroke="var(--coral)" strokeDasharray="3 3" dot={false} isAnimationActive={false} strokeWidth={2} />}
       </LineChart></ResponsiveContainer>}
     </ZoomableChartShell></div>;
   };
