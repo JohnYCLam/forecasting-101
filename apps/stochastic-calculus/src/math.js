@@ -53,3 +53,43 @@ export function ou(theta,sigma,T,n,seed,count=20,x0=0) {
   for(let m=0;m<count;m++){const path=[x0];for(let i=0;i<n;i++)path.push(decay*path[i]+sd*z());paths.push(path);}return paths;
 }
 export const gbm=(s0,mu,sigma,t,w)=>s0*Math.exp((mu-.5*sigma*sigma)*t+sigma*w);
+export function lambdaIntegral(w,lambda) {
+  const integral=[0];for(let i=1;i<w.length;i++)integral.push(integral[i-1]+((1-lambda)*w[i-1]+lambda*w[i])*(w[i]-w[i-1]));return integral;
+}
+export function jumpDiffusion(rate,size,seed,T=2,n=256,sigma=.4) {
+  const w=brownian(n,T,seed)[0],random=rng(seed+700),z=gaussian(rng(seed+800));const events=[];
+  if(rate>0){let t=0;while(true){t+=-Math.log(Math.max(random(),Number.MIN_VALUE))/rate;if(t>T)break;events.push({t,jump:random()<.5?-size:size});}}
+  const base=[],jumped=[];let j=0,total=0;
+  for(let i=0;i<n;i++){const t0=i*T/n,t1=(i+1)*T/n;let bt=t0,bw=w[i];if(i===0){base.push([0,0]);jumped.push([0,0]);}
+    while(j<events.length&&events[j].t<=t1){const e=events[j++],u=(e.t-bt)/(t1-bt);bw=bw+u*(w[i+1]-bw)+Math.sqrt(Math.max(0,(e.t-bt)*(t1-e.t)/(t1-bt)))*z();bt=e.t;base.push([e.t,sigma*bw]);jumped.push([e.t,sigma*bw+total]);total+=e.jump;jumped.push([e.t,sigma*bw+total]);}
+    base.push([t1,sigma*w[i+1]]);jumped.push([t1,sigma*w[i+1]+total]);}
+  return {base,jumped,events};
+}
+export const fractionalCorrelation=(H,k)=>.5*((k+1)**(2*H)-2*k**(2*H)+Math.abs(k-1)**(2*H));
+export function fractionalCholesky(H,n) {
+  const rows=[];for(let i=0;i<n;i++){const row=new Float64Array(i+1);for(let j=0;j<=i;j++){let v=fractionalCorrelation(H,i-j);for(let k=0;k<j;k++)v-=row[k]*(j===i?row[k]:rows[j][k]);if(i===j)row[j]=Math.sqrt(Math.max(v,0));else row[j]=v/rows[j][j];}rows.push(row);}return rows;
+}
+export function fractionalPath(H,n,seed,factor=fractionalCholesky(H,n)) {
+  const normal=gaussian(rng(seed)),z=Array.from({length:n},normal),increments=[],path=[0],scale=(1/n)**H;
+  for(let i=0;i<n;i++){let v=0;for(let j=0;j<=i;j++)v+=factor[i][j]*z[j];increments.push(v);path.push(path[i]+v*scale);}return {path,increments};
+}
+export function sampleCorrelation(values,k) {
+  const {mean}=moments(values);let a=0,b=0,c=0;for(let i=k;i<values.length;i++){const x=values[i]-mean,y=values[i-k]-mean;a+=x*y;b+=x*x;c+=y*y;}return a/Math.sqrt(b*c);
+}
+export const mixtureVariance=(g,t)=>.09+g*g*t;
+export const mixturePdf=(x,g,t)=>.5*(normalPdf(x,-2,Math.sqrt(mixtureVariance(g,t)))+normalPdf(x,2,Math.sqrt(mixtureVariance(g,t))));
+export const mixtureScore=(x,g,t)=>(2*Math.tanh(2*x/mixtureVariance(g,t))-x)/mixtureVariance(g,t);
+export function reverseDiffusion(g,seed,count=4000,n=1000) {
+  const random=rng(seed),normal=gaussian(random),terminalSd=Math.sqrt(mixtureVariance(g,1));
+  const initial=Float64Array.from({length:count},()=> (random()<.5?-2:2)+terminalSd*normal());
+  const sde=initial.slice(),ode=initial.slice(),snapS=[sde.slice()],snapO=[ode.slice()];
+  const pathsS=Array.from({length:20},(_,i)=>[initial[i]]),pathsO=Array.from({length:20},(_,i)=>[initial[i]]);
+  const h=1/n,root=Math.sqrt(h),g2=g*g,noise=gaussian(rng(seed+12345));
+  for(let k=0;k<n;k++){const t=1-k*h;for(let m=0;m<count;m++){
+    sde[m]+=g2*mixtureScore(sde[m],g,t)*h+g*root*noise();
+    const velocity=.5*g2*mixtureScore(ode[m],g,t),predictor=ode[m]+h*velocity;
+    ode[m]+=.5*h*(velocity+.5*g2*mixtureScore(predictor,g,Math.max(0,t-h)));
+    if(m<20){pathsS[m].push(sde[m]);pathsO[m].push(ode[m]);}}
+    if((k+1)%(n/20)===0){snapS.push(sde.slice());snapO.push(ode.slice());}}
+  return {snapS,snapO,pathsS,pathsO};
+}

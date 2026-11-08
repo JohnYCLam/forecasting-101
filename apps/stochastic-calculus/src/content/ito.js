@@ -91,7 +91,7 @@ ${h('integral','Use these changes to build an integral')}
 <h3>Why does this order keep the mean at zero?</h3>
 <p>The next displacement is a fresh mean-zero change, independent of the past. If the multiplier is chosen <em>before</em> that change, its product with the next displacement has mean zero:</p>
 \[\mathbb E[H_{t_i}\Delta W_i]=0.\]
-<p>Adding such contributions keeps the mean zero. A multiplier that uses the end of the interval would already depend on the displacement being multiplied. Choosing the multiplier before that displacement is part of the Itô integral’s definition.</p>
+<p>Adding such contributions keeps the mean zero. A multiplier that uses the end of the interval would already depend on the displacement being multiplied; we will see in Section 6 that this changes the integral.</p>
 <h3>How large can the accumulated integral be?</h3>
 <p>Square the finite sum. For a diagonal term, the future squared increment has average \(\Delta t_i\), independently of the multiplier already chosen:</p>
 \[\mathbb E[H_{t_i}^2(\Delta W_i)^2]=\mathbb E[H_{t_i}^2]\Delta t_i.\]

@@ -62,7 +62,7 @@ ${h('physical-scaling','Does a real diffusing particle justify this scaling?')}
 <h3>How this connects to the diffusion equation</h3>
 <p>Let \(p(x,t)\) be the position density of a large collection of particles. The constant-diffusivity equation is:</p>
 \[\frac{\partial p}{\partial t}=D\frac{\partial^2p}{\partial x^2}.\]
-<p>Its Gaussian solution, for particles all starting at zero, has variance \(2Dt\). This equation describes a distribution; Section 5 will instead specify the local rule for an individual random path. For spherical particles in the regime where the Stokes–Einstein relation applies, the physical parameters determine \(D\):</p>
+<p>Its Gaussian solution, for particles all starting at zero, has variance \(2Dt\). We will derive this density equation from an SDE in Section 8B, where it helps explain diffusion generative models. For spherical particles in the regime where the Stokes–Einstein relation applies, the physical parameters determine \(D\):</p>
 \[D=\frac{k_B\mathcal T}{6\pi\eta r}.\]
 <p>The symbols are Boltzmann's constant \(k_B\), absolute temperature \(\mathcal T\), viscosity \(\eta\), and particle radius \(r\). Einstein and Smoluchowski developed quantitative theories of this diffusion; Perrin's experiments provided important evidence for the molecular explanation.</p>
 <h3>Where the approximation stops working</h3>
