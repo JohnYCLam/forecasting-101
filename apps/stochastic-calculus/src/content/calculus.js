@@ -26,14 +26,20 @@ ${h('additive','First solve an equation with constant coefficients')}
 ` + demos.drift + prose`
 ${h('general-ito','A tool for changing variables: Itô’s lemma')}
 <p>Direct integration worked because the coefficients were constant. If the unknown state appears in those coefficients, writing an integral can leave the unknown inside it. A change of variables may simplify that equation. This is the same strategy as solving an ordinary differential equation by substitution, but we need the stochastic chain rule.</p>
-<p>Suppose \(X_t\) obeys our SDE and choose a smooth function \(f(t,x)\). Define a new quantity \(Y_t=f(t,X_t)\). <strong>Itô’s lemma gives the equation for \(Y_t\) from the equation for \(X_t\).</strong> It is a calculation tool. To obtain a solution, choose a useful \(f\), apply the lemma, integrate the simpler equation, and recover \(X_t\).</p>
+<p>Suppose \(X_t\) obeys our SDE. Choose a smooth function \(f(t,x)\): this is the transformation rule, with \(x\) as its ordinary input. Substituting the random state \(X_t\) into that rule defines a transformed process:</p>
+\[Y_t:=f(t,X_t).\]
+<p>So \(f\) names the function, while \(Y_t\) names its value along the process \(X_t\). <strong>Itô’s lemma calculates the change \(\mathrm dY_t\) from the equation for \(\mathrm dX_t\).</strong> To obtain a solution, choose a useful \(f\), apply the lemma, integrate the simpler equation for \(Y_t\), and undo the transformation to recover \(X_t\).</p>
 <p>Section 5 did this for \(f(t,W_t)\). Here the state also has drift and a noise multiplier, so we first calculate its squared differential.</p>
 <p>Over a finite step, \(\Delta X_i\approx a_i\Delta t_i+b_i\Delta W_i\). Squaring and then using the accumulated product rules gives:</p>
 \[(a_i h+b_i\Delta W_i)^2=a_i^2h^2+2a_ib_i h\,\Delta W_i+b_i^2(\Delta W_i)^2.\]
 <p>The first two sums vanish under refinement; the last is a weighted squared-step sum, with \(b_i^2\) known before the next Brownian increment. Its limit is \(\int b^2\,\mathrm dt\). In the shorthand of the table:</p>
 \[(\mathrm dX_t)^2=(a\,\mathrm dt+b\,\mathrm dW_t)^2=b^2\,\mathrm dt.\]
-<p>Apply the same Taylor-sum argument to \(f(t,X_t)\):</p>
-\[\begin{aligned}\mathrm df&=f_t\,\mathrm dt+f_x\,\mathrm dX_t+\tfrac12f_{xx}(\mathrm dX_t)^2\\&=\left(f_t+af_x+\tfrac12b^2f_{xx}\right)\mathrm dt+bf_x\,\mathrm dW_t.\end{aligned}\]
+<p>Apply the same Taylor-sum argument to the transformed process \(Y_t=f(t,X_t)\). Its change is \(\mathrm dY_t=\mathrm d[f(t,X_t)]\), so the lemma reads:</p>
+\[\begin{aligned}
+\mathrm dY_t&=\mathrm d\!\left[f(t,X_t)\right]\\
+&=f_t\,\mathrm dt+f_x\,\mathrm dX_t+\tfrac12f_{xx}(\mathrm dX_t)^2\\
+&=\left(f_t+af_x+\tfrac12b^2f_{xx}\right)\mathrm dt+bf_x\,\mathrm dW_t.
+\end{aligned}\]
 <p>The derivatives and coefficients are evaluated at the current \((t,X_t)\). The diffusion coefficient is squared in the correction because the correction measures local variance, not the signed fluctuation.</p>
 
 <p>Two examples will show how to choose \(f\): an exponential time factor cancels a restoring drift, and a logarithm turns proportional changes into additive changes. In each case we will write down the transformation before doing the algebra.</p>
@@ -46,7 +52,9 @@ ${h('mean-reversion','A restoring force: Ornstein–Uhlenbeck dynamics')}
 <p>First measure the deviation from the preferred level: \(U_t=X_t-m\). Since \(m\) is constant, \(\mathrm dU_t=\mathrm dX_t\), and the equation becomes:</p>
 \[\mathrm dU_t=-\theta U_t\,\mathrm dt+\sigma\,\mathrm dW_t,\qquad U_0=x_0-m.\]
 <p>Without noise, this deviation would decay as \(U_0e^{-\theta t}\). That suggests multiplying by the opposite exponential, \(A_t=e^{\theta t}\), to undo the decay. This smooth, deterministic factor has differential \(\mathrm dA_t=\theta A_t\,\mathrm dt\).</p>
-<p>Apply the lemma to \(f(t,x)=e^{\theta t}(x-m)\), so \(Y_t=A_tU_t\). Its ordinary derivatives are:</p>
+<p>Choose the function \(f(t,x)=e^{\theta t}(x-m)\). Following the definition in the lemma, this choice gives the transformed process:</p>
+\[Y_t=f(t,X_t)=e^{\theta t}(X_t-m)=A_tU_t.\]
+<p>We will apply Itô’s lemma to calculate \(\mathrm dY_t\). First differentiate the function \(f\) with respect to its ordinary inputs \(t\) and \(x\):</p>
 \[f_t=\theta e^{\theta t}(x-m),\qquad f_x=e^{\theta t},\qquad f_{xx}=0.\]
 <p>Substitute the OU drift \(a=-\theta(X_t-m)\) and diffusion coefficient \(b=\sigma\) into the lemma. The drift terms cancel, and the curvature correction is zero because \(f_{xx}=0\):</p>
 \[\begin{aligned}
@@ -57,7 +65,9 @@ ${h('mean-reversion','A restoring force: Ornstein–Uhlenbeck dynamics')}
 \end{aligned}\]
 <p>This is the payoff from changing variables: the right-hand side no longer contains the unknown \(Y_t\). Equivalently, the product rule gives the same cancellation; its mixed product vanishes because \(\mathrm dA_t\) contains only \(\mathrm dt\), and both \((\mathrm dt)^2\) and \((\mathrm dt)(\mathrm dW_t)\) vanish in the accumulated-product rules.</p>
 <h3>Integrate, then undo the multiplication</h3>
-<p>Integrating from zero to \(t\) turns the differential on the left into the change of the product. Since \(A_0=1\):</p>
+<p>Integrate the simpler equation for \(Y_t\) from zero to \(t\):</p>
+\[Y_t-Y_0=\sigma\int_0^t e^{\theta s}\,\mathrm dW_s.\]
+<p>Now undo the definition \(Y_t=A_tU_t=e^{\theta t}U_t\). Since \(A_0=1\), the starting value is \(Y_0=U_0\), giving:</p>
 \[e^{\theta t}U_t-U_0=\sigma\int_0^t e^{\theta s}\,\mathrm dW_s.\]
 <p>Multiply by \(e^{-\theta t}\). For a fixed final time \(t\), that factor is constant with respect to the integration variable \(s\), so it can go inside the integral:</p>
 \[\begin{aligned}
