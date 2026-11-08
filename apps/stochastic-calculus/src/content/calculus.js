@@ -3,7 +3,7 @@ import { eulerDemo } from './sde-demos.js';
 
 export const sdes = demos => prose`
 ${h('sde-definition','What does an SDE specify?')}
-<p>Section 4 supplied two tools: an integral for accumulating random changes and a chain rule for transforming them. Now we use those tools to answer one question: <em>if we specify how a system changes locally, how can we find its evolution?</em> We will solve a constant-coefficient equation, learn how transformations help, solve two state-dependent examples, then approximate a solution on a time grid.</p>
+<p>Section 5 supplied two tools: an integral for accumulating random changes and a chain rule for transforming them. Now we use those tools to answer one question: <em>if we specify how a system changes locally, how can we find its evolution?</em> We will solve a constant-coefficient equation, learn how transformations help, solve two state-dependent examples, then approximate a solution on a time grid.</p>
 <p>Itô’s lemma started with a known process \(W_t\) and computed what happens to a known function of it. In a modeling problem, we usually know a local rule for change and want to find the evolving state. This is the same shift that leads from ordinary derivatives to ordinary differential equations.</p>
 <p>An Itô stochastic differential equation specifies:</p>
 \[\mathrm dX_t=\underbrace{a(t,X_t)\,\mathrm dt}_{\text{drift}}+\underbrace{b(t,X_t)\,\mathrm dW_t}_{\text{diffusion}},\qquad X_0=x_0.\]
@@ -15,19 +15,19 @@ ${h('sde-definition','What does an SDE specify?')}
 <p>After finding the solution, we can ask for its mean and variance across repeated paths. Those statistics answer a different question from the path formula itself.</p>
 <p>Appropriate regularity and growth assumptions are needed for existence and uniqueness. Here we use familiar well-behaved examples rather than develop that theory.</p>
 ${h('additive','First solve an equation with constant coefficients')}
-<p>Return to the traveler from Section 0. The clock advances by \(h\); the traveler gains a predictable distance \(\mu h\) and a random displacement \(\sigma\Delta W_i\). Earlier we called a random displacement a “kick.” Its size varies from one interval to the next: \(\Delta W_i=\sqrt h\,Z_i\), where \(Z_i\) is a standard normal draw. The <em>noise amplitude</em> \(\sigma\ge0\) is the multiplier that controls the spread of those displacements:</p>
+<p>Return to the traveler from Section 1. The clock advances by \(h\); the traveler gains a predictable distance \(\mu h\) and a random displacement \(\sigma\Delta W_i\). Earlier we called a random displacement a “kick.” Its size varies from one interval to the next: \(\Delta W_i=\sqrt h\,Z_i\), where \(Z_i\) is a standard normal draw. The <em>noise amplitude</em> \(\sigma\ge0\) is the multiplier that controls the spread of those displacements:</p>
 \[\mathbb E[\sigma\Delta W_i]=0,\qquad \operatorname{SD}(\sigma\Delta W_i)=\sigma\sqrt h.\]
 <p>Thus \(\sigma\) is not a fixed distance traveled at each step. For the same interval \(h\), doubling \(\sigma\) doubles the standard deviation of the random displacement. Meanwhile, \(\mu\) is the predictable speed. Add the changes: the durations total \(t\), and the signed random displacements telescope to \(\sigma W_t\), since \(W_0=0\).</p>
 \[\Delta X_i=\mu h+\sigma\Delta W_i \quad\Longrightarrow\quad X_t=x_0+\mu t+\sigma W_t.\]
 <p>The spread after time \(t\) is \(\sigma\sqrt t\) for \(\sigma\ge0\). Here “spread” means standard deviation. Before touching the controls, predict what doubling the speed will do to that spread.</p>
-<p>In the integral notation of Section 4, the same sum reads:</p>
+<p>In the integral notation of Section 5, the same sum reads:</p>
 \[\begin{aligned}X_t&=x_0+\int_0^t\mu\,\mathrm ds+\int_0^t\sigma\,\mathrm dW_s\\&=x_0+\mu t+\sigma W_t,\\X_t&\sim\mathcal N(x_0+\mu t,\sigma^2t).\end{aligned}\]
 <p>We have now solved the equation: the state at time \(t\) is explicitly expressed using the starting value, elapsed time, and Brownian motion. This returns to the introduction’s steady motion plus disturbances, now as a continuous model. Setting \(\sigma=0\) recovers one deterministic path. Changing \(\mu\) moves the mean, while changing \(\sigma\) changes the spread around it.</p>
 ` + demos.drift + prose`
 ${h('general-ito','A tool for changing variables: Itô’s lemma')}
 <p>Direct integration worked because the coefficients were constant. If the unknown state appears in those coefficients, writing an integral can leave the unknown inside it. A change of variables may simplify that equation. This is the same strategy as solving an ordinary differential equation by substitution, but we need the stochastic chain rule.</p>
 <p>Suppose \(X_t\) obeys our SDE and choose a smooth function \(f(t,x)\). Define a new quantity \(Y_t=f(t,X_t)\). <strong>Itô’s lemma gives the equation for \(Y_t\) from the equation for \(X_t\).</strong> It is a calculation tool. To obtain a solution, choose a useful \(f\), apply the lemma, integrate the simpler equation, and recover \(X_t\).</p>
-<p>Section 4 did this for \(f(t,W_t)\). Here the state also has drift and a noise multiplier, so we first calculate its squared differential.</p>
+<p>Section 5 did this for \(f(t,W_t)\). Here the state also has drift and a noise multiplier, so we first calculate its squared differential.</p>
 <p>Over a finite step, \(\Delta X_i\approx a_i\Delta t_i+b_i\Delta W_i\). Squaring and then using the accumulated product rules gives:</p>
 \[(a_i h+b_i\Delta W_i)^2=a_i^2h^2+2a_ib_i h\,\Delta W_i+b_i^2(\Delta W_i)^2.\]
 <p>The first two sums vanish under refinement; the last is a weighted squared-step sum, with \(b_i^2\) known before the next Brownian increment. Its limit is \(\int b^2\,\mathrm dt\). In the shorthand of the table:</p>
@@ -77,7 +77,7 @@ U_t&=U_0e^{-\theta t}+\sigma\int_0^t e^{-\theta t}e^{\theta s}\,\mathrm dW_s\\
 \end{aligned}\]
 <p>To find the variance, subtract this mean first. The entire deviation from the mean is the stochastic integral:</p>
 \[X_t-\mathbb E[X_t]=\sigma\int_0^t e^{-\theta(t-s)}\,\mathrm dW_s.\]
-<p>Variance is the expected square of that deviation. The Itô isometry from Section 4 turns the expected square of the integral into an ordinary integral of the squared weight:</p>
+<p>Variance is the expected square of that deviation. The Itô isometry from Section 5 turns the expected square of the integral into an ordinary integral of the squared weight:</p>
 \[\begin{aligned}
 \operatorname{Var}(X_t)
 &=\sigma^2\,\mathbb E\!\left[\left(\int_0^t e^{-\theta(t-s)}\,\mathrm dW_s\right)^2\right]\\

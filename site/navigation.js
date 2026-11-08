@@ -9,12 +9,12 @@ export const upcomingTopics = {
     {number:'11',label:'Foundation models',status:'Planned'},
   ],
   calculus: [
-    {number:'06',label:'Stratonovich and the λ-family',status:'In progress'},
-    {number:'07',label:'Jumps, memory, and beyond',status:'In progress'},
-    {number:'08A',label:'ML: learn random dynamics',status:'In progress'},
-    {number:'08B',label:'ML: distributions and generation',status:'In progress'},
-    {number:'08C',label:'ML: payoffs and equation solving',status:'In progress'},
-    {number:'08D',label:'ML: sampling and optimization',status:'In progress'},
+    {number:'7',label:'Stratonovich and the λ-family',status:'In progress'},
+    {number:'8',label:'Jumps, memory, and beyond',status:'In progress'},
+    {number:'9',label:'ML: learn random dynamics',status:'In progress'},
+    {number:'10',label:'ML: distributions and generation',status:'In progress'},
+    {number:'11',label:'ML: payoffs and equation solving',status:'In progress'},
+    {number:'12',label:'ML: sampling and optimization',status:'In progress'},
   ],
 };
 

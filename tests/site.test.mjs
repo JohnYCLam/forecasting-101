@@ -13,14 +13,14 @@ const read=p=>fs.readFileSync(new URL(p,root),'utf8');
 test('published menus and source files match the branch scope',()=>{
   const numeric=chapters.filter(ch=>/^\d/.test(ch.number));
   assert.ok(numeric.every(ch=>parseInt(ch.number,10)<=scope.calculusMax));
-  for(let i=0;i<=Math.min(scope.calculusMax,7);i++)assert.ok(numeric.some(ch=>parseInt(ch.number,10)===i));
+  assert.deepEqual(numeric.map(ch=>ch.number),Array.from({length:scope.calculusMax},(_,i)=>String(i+1)));
   assert.equal(fs.existsSync(new URL('apps/time-series-forecasting/src/Topic6.jsx',root)),scope.forecastingMax>=6);
   assert.equal(fs.existsSync(new URL('apps/time-series-forecasting/public/topic6_data.json',root)),scope.forecastingMax>=6);
   const app=read('apps/time-series-forecasting/src/App.jsx');
   assert.equal(app.includes('<Topic6 '),scope.forecastingMax>=6);
   const portal=read('site/index.html');
   assert.ok(portal.includes('Sections 1–'+scope.forecastingMax));
-  assert.ok(portal.includes('Sections 0–'+scope.calculusMax));
+  assert.ok(portal.includes('Sections 1–'+scope.calculusMax));
 });
 
 test('all chapter links resolve within the published calculus scope',()=>{

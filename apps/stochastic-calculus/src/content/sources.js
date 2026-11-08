@@ -10,7 +10,7 @@ ${h('sources','Foundation of this lesson: attribution and license')}
 
 const references = [
   {author:'Paul Bourgade',title:'Stochastic Analysis',url:'https://cims.nyu.edu/~bourgade/SA2010/StochasticAnalysis.pdf',chapter:'reference',section:'brownian-regularity',use:'Formal background for Brownian path regularity and the optional core calculus notes.'},
-  {author:'Lawrence C. Evans',title:'An Introduction to Stochastic Differential Equations, version 1.2',url:'https://www.math.uh.edu/~sanders/Math3338/LawrenceEvans-SDE-course.pdf',chapter:'sde',section:'general-ito',use:'Brownian motion, stochastic integration, the Itô chain rule, and solving SDEs in Sections 3–5.'},
+  {author:'Lawrence C. Evans',title:'An Introduction to Stochastic Differential Equations, version 1.2',url:'https://www.math.uh.edu/~sanders/Math3338/LawrenceEvans-SDE-course.pdf',chapter:'sde',section:'general-ito',use:'Brownian motion, stochastic integration, the Itô chain rule, and solving SDEs in Sections 4–6.'},
 ];
 
 export const lessonReferences = () => prose`

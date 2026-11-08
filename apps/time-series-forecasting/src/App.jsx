@@ -221,7 +221,7 @@ export default function App() {
       <div className="course-page">
         <header className="topbar">
           <div className="topbar-location"><button className="shell-expand" data-sidebar-toggle aria-controls="sidebar" aria-label="Show navigation"><span data-icon="panel" aria-hidden="true" /></button><span>{activeTopic} / TIME-SERIES FORECASTING</span></div>
-          <div className="top-actions"><button className="quiet" onClick={() => window.print()}><span data-icon="print" aria-hidden="true" />Print lesson</button><button className="theme-toggle" data-theme-toggle><span data-theme-icon aria-hidden="true" /><span data-theme-label>Dark mode</span></button></div>
+          <div className="top-actions"><button className="theme-toggle" data-theme-toggle><span data-theme-icon aria-hidden="true" /><span data-theme-label>Dark mode</span></button></div>
         </header>
       <main id="main" className="app-container" tabIndex={-1}>
         <div className="chapter-top">

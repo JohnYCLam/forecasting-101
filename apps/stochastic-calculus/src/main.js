@@ -196,7 +196,7 @@ document.addEventListener('click',e=>{
   if(btn.dataset.new){const id=btn.dataset.new;seeds[id]=(seed(id)+7919)>>>0;clear(id);if(id==='coin'){coinCount=0;coinSequence++;coinMessage='A new sequence is ready. Reveal its tosses below.';}renderers[id]?.();}
   if(btn.id==='coin-toss'){coinCount=Math.min(12,coinCount+1);coinMessage=`${coinCount} of 12 tosses revealed.`;renderers.coin();}
   if(btn.id==='coin-reset'){coinCount=0;coinMessage='Same sequence rewound. “Toss next coin” reveals the same outcomes again.';renderers.coin();}
-  if(btn.id==='print')window.print();
+
 });
 window.addEventListener('hashchange',()=>navigate());
 window.addEventListener('hub:theme-change',()=>{refreshPalette();drawChapter(active);});
