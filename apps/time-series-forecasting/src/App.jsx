@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Activity, TrendingUp, Waves, Info, BookOpen, LineChart as ChartIcon, BrainCircuit, Sparkles, Sun, Moon, Menu, X, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Activity, TrendingUp, Waves, Info, Lock, BookOpen, LineChart as ChartIcon, Cpu, BrainCircuit, Sparkles, Sun, Moon, Menu, X, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import './index.css';
 import Topic2 from './Topic2';
 import Topic3 from './Topic3';
 import Topic4 from './Topic4';
 import Topic5 from './Topic5';
+import Topic6 from './Topic6';
 import { ZoomableChartShell } from './charts';
 import { formatValue } from './utils';
 import { MathText, ModelOrder } from './MathText';
@@ -104,7 +105,7 @@ export default function App() {
 
       {/* Mobile Menu Button */}
       <div className="mobile-header">
-        <button className="mobile-menu-btn" aria-label={isMobileMenuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
         <div className="brand" style={{ margin: 0, paddingLeft: '10px' }}>
@@ -257,15 +258,48 @@ export default function App() {
               </div>
             </div>
           )}
+          <div className={`nav-item ${activeTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveTopic(6); setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
+            <Cpu size={18} />
+            <span>6. Traditional ML</span>
+          </div>
+          {activeTopic === 6 && (
+            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+              {['From Time Series to ML', 'Support Vector Regression', 'Trees & Classical Comparison', 'Direct & Recursive Forecasting', 'Extrapolation', 'Prediction Ranges & Calibration'].map((title, index) => (
+                <div key={title} className={`nav-item ${activeSubTopic === index + 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(index + 1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                  <span>6.{index + 1} {title}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="nav-item locked">
+            <Lock size={16} />
+            <span>7. Facebook Prophet</span>
+          </div>
+          <div className="nav-item locked">
+            <Lock size={16} />
+            <span>8. Traditional DL</span>
+          </div>
+          <div className="nav-item locked">
+            <Lock size={16} />
+            <span>9. Modern DL</span>
+          </div>
+          <div className="nav-item locked">
+            <Lock size={16} />
+            <span>10. RAG Demo</span>
+          </div>
+          <div className="nav-item locked">
+            <Lock size={16} />
+            <span>11. Foundation Models</span>
+          </div>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="app-container">
+      <main className="app-container" style={activeTopic === 6 ? { minWidth: 0 } : undefined}>
         <header>
           <div>
-            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : activeTopic === 4 ? 'Topic 4: Volatility & GARCH' : activeTopic === 5 ? 'Topic 5: VARIMA — Forecasting Connected Series' : ''}</h1>
-            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : ''}</div>
+            <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : activeTopic === 4 ? 'Topic 4: Volatility & GARCH' : activeTopic === 5 ? 'Topic 5: VARIMA — Forecasting Connected Series' : activeTopic === 6 ? 'Topic 6: Traditional Machine Learning' : ''}</h1>
+            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : activeTopic === 6 ? 'Controlled and Real Rental Forecasts, Classical Comparisons, and Uncertainty' : ''}</div>
           </div>
           <button
             className="theme-toggle"
@@ -435,6 +469,8 @@ export default function App() {
             <Topic4 activeTab={activeSubTopic} />
           ) : activeTopic === 5 ? (
             <Topic5 activeTab={activeSubTopic} />
+          ) : activeTopic === 6 ? (
+            <Topic6 activeTab={activeSubTopic} />
           ) : null}
         </div>
       </main>

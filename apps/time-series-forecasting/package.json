@@ -16,6 +16,7 @@
     "data:topic3": "python scripts/generators/run.py 3",
     "data:topic4": "python scripts/generators/run.py 4",
     "data:topic5": "python scripts/generators/run.py 5",
+    "data:topic6": "python scripts/generators/run.py 6",
     "data:all": "python scripts/generators/run.py all",
     "data:validate": "python scripts/generators/run.py all --validate"
   },
