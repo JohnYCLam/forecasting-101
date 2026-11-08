@@ -11,6 +11,7 @@
     "build": "node scripts/build-site.mjs",
     "test": "node scripts/check-site.mjs",
     "lint": "npm --prefix apps/time-series-forecasting run lint",
+    "predev": "npm run build",
     "dev": "node scripts/serve-site.mjs"
   }
 }
