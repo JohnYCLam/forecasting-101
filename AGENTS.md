@@ -6,4 +6,4 @@ Preserve existing forecasting instructions in `apps/time-series-forecasting/.age
 
 Main publishes only forecasting Sections 1–5 and calculus Sections 0–5. Later material belongs on the named development branches. Do not restore development sections, datasets, source lists, or navigation links to main during a routine merge.
 
-Forecasting development/review notes are preserved on its development branch. Local research material is ignored under `research-local/`. Preserve the calculus author/source/license attribution on every branch.
+Forecasting development/review notes are preserved on its development branch. Local research material is ignored under `research-local/`. Local forecasting references and experiments are available under `research-local/forecasting/`; the reference directories are linked to the original files. Preserve the calculus author/source/license attribution on every branch.
