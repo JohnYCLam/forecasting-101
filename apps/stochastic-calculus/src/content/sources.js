@@ -9,10 +9,10 @@ ${h('sources','Foundation of this lesson: attribution and license')}
 `;
 
 const references = [
-  {author:'Lawrence C. Evans',title:'An Introduction to Stochastic Differential Equations, version 1.2',url:'https://www.math.uh.edu/~sanders/Math3338/LawrenceEvans-SDE-course.pdf',chapter:'sde',section:'general-ito',use:'Brownian motion, stochastic integration, the Itô chain rule, and solving SDEs in Sections 3–5.'},
-  {author:'Yang Song et al.',title:'Score-Based Generative Modeling through Stochastic Differential Equations (2021)',url:'https://arxiv.org/abs/2011.13456',chapter:'diffusion',section:'forward-sde',use:'Section 8B’s forward and reverse SDEs, score matching, probability-flow ODE, conditioning, and density relationships.'},
-  {author:'Jiequn Han, Arnulf Jentzen, and Weinan E',title:'Solving High-Dimensional Partial Differential Equations Using Deep Learning (2018)',url:'https://arxiv.org/abs/1707.02568',chapter:'pricing',section:'deep-bsde',use:'The Deep BSDE approach behind Section 8C’s small square-payoff trainer and its connection to value equations.'},
-  {author:'Max Welling and Yee Whye Teh',title:'Bayesian Learning via Stochastic Gradient Langevin Dynamics (2011)',url:'https://icml.cc/2011/papers/398_icmlpaper.pdf',chapter:'sampling',section:'langevin',use:'Section 8D’s parameter-sampling update, stochastic gradients, and step-size qualifications.'},
+  {author:'Lawrence C. Evans',title:'An Introduction to Stochastic Differential Equations, version 1.2',url:'https://www.math.uh.edu/~sanders/Math3338/LawrenceEvans-SDE-course.pdf',chapter:'sde',section:'general-ito',use:'Brownian motion, stochastic integration, the Itô chain rule, and solving SDEs in Sections 4–6.'},
+  {author:'Yang Song et al.',title:'Score-Based Generative Modeling through Stochastic Differential Equations (2021)',url:'https://arxiv.org/abs/2011.13456',chapter:'diffusion',section:'forward-sde',use:'Section 10’s forward and reverse SDEs, score matching, probability-flow ODE, conditioning, and density relationships.'},
+  {author:'Jiequn Han, Arnulf Jentzen, and Weinan E',title:'Solving High-Dimensional Partial Differential Equations Using Deep Learning (2018)',url:'https://arxiv.org/abs/1707.02568',chapter:'pricing',section:'deep-bsde',use:'The Deep BSDE approach behind Section 11’s small square-payoff trainer and its connection to value equations.'},
+  {author:'Max Welling and Yee Whye Teh',title:'Bayesian Learning via Stochastic Gradient Langevin Dynamics (2011)',url:'https://icml.cc/2011/papers/398_icmlpaper.pdf',chapter:'sampling',section:'langevin',use:'Section 12’s parameter-sampling update, stochastic gradients, and step-size qualifications.'},
 ];
 
 export const lessonReferences = () => prose`

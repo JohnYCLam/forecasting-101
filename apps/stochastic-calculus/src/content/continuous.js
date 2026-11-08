@@ -2,7 +2,7 @@ import { prose, h, check, link, note } from './helpers.js';
 
 export const scaling = demos => prose`
 ${h('clt','One destination is not yet a whole journey')}
-<p>Section 1 described a walk one coin toss at a time. Now imagine making more and more steps within the <em>same amount of physical time</em>. Can the increasingly detailed walk approach a useful continuous model?</p>
+<p>Section 2 described a walk one coin toss at a time. Now imagine making more and more steps within the <em>same amount of physical time</em>. Can the increasingly detailed walk approach a useful continuous model?</p>
 <p>First recall what we know about its final position. Let \(\xi_i\) be the direction of toss \(i\): heads gives \(+1\), tails gives \(-1\). The position after \(n\) unit steps is:</p>
 \[S_n=\xi_1+\cdots+\xi_n.\]
 <p>A fair step has mean zero and variance one. Because the steps are independent, the sum has mean zero and variance \(n\). Its standard deviation—its typical spread around the mean—is therefore \(\sqrt n\). Dividing by that spread gives a quantity with variance one:</p>
@@ -62,7 +62,7 @@ ${h('physical-scaling','Does a real diffusing particle justify this scaling?')}
 <h3>How this connects to the diffusion equation</h3>
 <p>Let \(p(x,t)\) be the position density of a large collection of particles. The constant-diffusivity equation is:</p>
 \[\frac{\partial p}{\partial t}=D\frac{\partial^2p}{\partial x^2}.\]
-<p>Its Gaussian solution, for particles all starting at zero, has variance \(2Dt\). We will derive this density equation from an SDE in Section 8B, where it helps explain diffusion generative models. For spherical particles in the regime where the Stokes–Einstein relation applies, the physical parameters determine \(D\):</p>
+<p>Its Gaussian solution, for particles all starting at zero, has variance \(2Dt\). We will derive this density equation from an SDE in Section 10, where it helps explain diffusion generative models. For spherical particles in the regime where the Stokes–Einstein relation applies, the physical parameters determine \(D\):</p>
 \[D=\frac{k_B\mathcal T}{6\pi\eta r}.\]
 <p>The symbols are Boltzmann's constant \(k_B\), absolute temperature \(\mathcal T\), viscosity \(\eta\), and particle radius \(r\). Einstein and Smoluchowski developed quantitative theories of this diffusion; Perrin's experiments provided important evidence for the molecular explanation.</p>
 <h3>Where the approximation stops working</h3>
@@ -70,14 +70,14 @@ ${h('physical-scaling','Does a real diffusing particle justify this scaling?')}
 ${h('path-limit','Give the limiting random walk a name')}
 <p>Put the construction together: keep physical time fixed, take more independent centered steps, and shrink each spatial step like the square root of its duration. The continuous limiting random path is called <strong>Brownian motion</strong>.</p>
 <p>Informally, Brownian motion is an idealized continuous random walk: it has no preferred direction; changes over disjoint time intervals have no memory of one another; and the variance of a change is proportional to its duration. It models position, not a smooth microscopic velocity.</p>
-<p>The central limit theorem explained the endpoint's bell curve. A stronger theorem, Donsker's invariance principle, establishes convergence of the suitably connected paths as well. We will use that result without proving it. Section 3 now turns this picture into a precise set of assumptions and asks what kind of calculus such a path will need.</p>
+<p>The central limit theorem explained the endpoint's bell curve. A stronger theorem, Donsker's invariance principle, establishes convergence of the suitably connected paths as well. We will use that result without proving it. Section 4 now turns this picture into a precise set of assumptions and asks what kind of calculus such a path will need.</p>
 ` + check('If a time step becomes four times shorter, how should a Brownian spatial step change?',String.raw`It becomes half as large: \(\sqrt{\Delta t/4}=\sqrt{\Delta t}/2\). Four independent smaller steps then have the same total variance as the original step.`);
 
 export const brownian = demos => prose`
 ${h('intuition','What has our coin walk become?')}
-<p>At the end of Section 2, we named the limiting picture Brownian motion. Let's describe it before writing the formal definition. Imagine watching a tiny particle in a fluid. Its position changes continuously, but each future displacement is uncertain because of unresolved kicks. Across many repeated experiments, we can predict a cloud of possible positions even though we cannot predict one particular path.</p>
+<p>At the end of Section 3, we named the limiting picture Brownian motion. Let's describe it before writing the formal definition. Imagine watching a tiny particle in a fluid. Its position changes continuously, but each future displacement is uncertain because of unresolved kicks. Across many repeated experiments, we can predict a cloud of possible positions even though we cannot predict one particular path.</p>
 <p>Our mathematical idealization keeps that uncertainty and leaves out the very short-time inertial details. We write \(W(t)\), or equivalently \(W_t\), for its position at time \(t\). The letter \(W\) is conventional and gives the alternative name <em>Wiener process</em>.</p>
-<p>How far does the particle move over a short interval? Recall the <a href="#scaling/diffusive-scaling">coin walk in Section 2</a>: each fair toss moved exactly \(\sqrt{\Delta t}\) to the right or left, so its variance was \(\Delta t\). Now watch \(m\) consecutive tosses, starting anywhere along the walk. Call the time we watch \(h=m\Delta t\). The tosses are independent, so their variances add:</p>
+<p>How far does the particle move over a short interval? Recall the <a href="#scaling/diffusive-scaling">coin walk in Section 3</a>: each fair toss moved exactly \(\sqrt{\Delta t}\) to the right or left, so its variance was \(\Delta t\). Now watch \(m\) consecutive tosses, starting anywhere along the walk. Call the time we watch \(h=m\Delta t\). The tosses are independent, so their variances add:</p>
 \[\operatorname{Var}(\text{net displacement})=m\,\Delta t=h,\qquad \text{standard deviation}=\sqrt h.\]
 <p>Standard Brownian motion keeps this rule in the limit. Its net displacement from time \(t\) to time \(t+h\) is \(W_{t+h}-W_t\). It has mean zero, and by its <strong>typical size</strong> we mean its standard deviation, \(\sqrt h\). For example, over \(0.01\) seconds the spread is \(0.1\); an individual path can move less or more, in either direction.</p>
 ${h('definition','Write down the model we have built')}
@@ -138,6 +138,6 @@ Q_n&=\sum_{i=0}^{n-1}(\Delta W_i)^2,\\
 &=nh=\frac{T}{h}\,h=T.
 \end{aligned}\]
 <p>There are \(T/h\) terms, and each squared move contributes \(h\) on average. The factors cancel, leaving the fixed duration \(T\) even as the grid gets finer. Over one second, 100 intervals contribute \(100\times0.01=1\) on average. With 10,000 intervals, they still contribute \(10{,}000\times0.0001=1\).</p>
-<p>This is why we cannot dismiss the squared changes: their accumulated contribution stays at \(T\) on average. But an average alone does not tell us how close a particular total is to \(T\). As we refine the grid, do the totals concentrate around that average? Section 4 answers this question by <a href="#ito/quadratic-variation">calculating their fluctuations</a>.</p>
-<p>In Section 4’s <a href="#ito/demo-qv">Refine one path</a> experiment, you can watch the squared total on finer grids of the same path. <a href="#ito/demo-integral">See the missing half</a> then shows how those squares affect the change in \(W_t^2/2\). That function is half the squared position, so each squared-change contribution is halved too. The ${link('reference','brownian-regularity','optional regularity note')} discusses further path properties.</p>
+<p>This is why we cannot dismiss the squared changes: their accumulated contribution stays at \(T\) on average. But an average alone does not tell us how close a particular total is to \(T\). As we refine the grid, do the totals concentrate around that average? Section 5 answers this question by <a href="#ito/quadratic-variation">calculating their fluctuations</a>.</p>
+<p>In Section 5’s <a href="#ito/demo-qv">Refine one path</a> experiment, you can watch the squared total on finer grids of the same path. <a href="#ito/demo-integral">See the missing half</a> then shows how those squares affect the change in \(W_t^2/2\). That function is half the squared position, so each squared-change contribution is halved too. The ${link('reference','brownian-regularity','optional regularity note')} discusses further path properties.</p>
 ` + check(String.raw`Are \(W_1\) and \(W_2\) independent?`,String.raw`No. The position at time 2 includes the movement up to time 1. It is the new increment \(W_2-W_1\) that is independent of \(W_1\).`);

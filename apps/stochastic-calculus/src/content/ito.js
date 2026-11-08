@@ -2,7 +2,7 @@ import { prose, h, check, link, note } from './helpers.js';
 
 export const ito = demos => prose`
 ${h('finite-increments','Add changes instead of differentiating the path')}
-<p>Section 3 gave us a problem and a way forward. Brownian motion has no ordinary velocity, so we cannot rely on a derivative \(W'(t)\). But we can still observe the position at a series of times, subtract consecutive values, and add up those finite changes.</p>
+<p>Section 4 gave us a problem and a way forward. Brownian motion has no ordinary velocity, so we cannot rely on a derivative \(W'(t)\). But we can still observe the position at a series of times, subtract consecutive values, and add up those finite changes.</p>
 <p>We will do three things: work out the size of a finite Brownian change, determine which products survive when many such changes are added, and use those results to build an integral and a chain rule.</p>
 <h3>Define the time grid and its increments</h3>
 <p>Divide \([0,T]\) into \(n\) equal intervals, each lasting \(\Delta t=T/n\). Write \(t_i=i\Delta t\), and use \(W_i\) as a short name for \(W(t_i)\). Then:</p>
@@ -10,7 +10,7 @@ ${h('finite-increments','Add changes instead of differentiating the path')}
 <p>These are actual finite changes. For example, a time interval might last 0.01 seconds, and a sampled path might move from 0.3 to 0.24, giving \(\Delta W_i=-0.06\).</p>
 <p>We will also write \(h\) for the common interval length: \(h=\Delta t=T/n\). These two symbols refer to the same time step.</p>
 <h3>Derive the square-root representation</h3>
-<p>The Brownian increment law from Section 3 says that a displacement over duration \(\Delta t\) is normal with mean zero and variance \(\Delta t\):</p>
+<p>The Brownian increment law from Section 4 says that a displacement over duration \(\Delta t\) is normal with mean zero and variance \(\Delta t\):</p>
 \[\Delta W_i\sim\mathcal N(0,\Delta t).\]
 <p>Its standard deviation is therefore \(\sqrt{\Delta t}\). To put this normal variable on a unit scale, divide it by its standard deviation and name the result \(Z_i\):</p>
 \[Z_i:=\frac{\Delta W_i}{\sqrt{\Delta t}}.\]
@@ -21,10 +21,10 @@ ${h('finite-increments','Add changes instead of differentiating the path')}
 <p>This is an exact finite-step relation when \(Z_i\) is defined this way. To simulate a step, reverse the procedure: draw a standard normal number and multiply it by \(\sqrt{\Delta t}\). Non-overlapping Brownian increments give independent \(Z_i\).</p>
 <p>For \(\Delta t=0.04\), the multiplier is 0.2. A draw \(Z_i=0.7\) produces a displacement 0.14; a draw \(Z_i=-1.2\) produces −0.24. Unlike a single coin, a Gaussian increment can take a continuous range of values. It represents the limiting effect of many small coin-like kicks.</p>
 ${h('quadratic-variation','Do the squared totals concentrate around their average?')}
-<p>Section 3 found that the squared-change total has average \(T\). We now need to know whether its fluctuations shrink as the grid gets finer. Start with the finite-step representation we just derived and square it:</p>
+<p>Section 4 found that the squared-change total has average \(T\). We now need to know whether its fluctuations shrink as the grid gets finer. Start with the finite-step representation we just derived and square it:</p>
 \[(\Delta W_i)^2=\Delta t\,Z_i^2.\]
 <p>For a standard normal variable, \(\mathbb E[Z_i^2]=1\). Thus one squared Brownian step has mean \(\Delta t\), but its actual value varies with the draw. A squared draw of 0.49 gives \(0.49\Delta t\); a squared draw of 1.44 gives \(1.44\Delta t\).</p>
-<p>Recall the total from Section 3:</p>
+<p>Recall the total from Section 4:</p>
 \[Q_n:=\sum_{i=0}^{n-1}(\Delta W_i)^2.\]
 <p>Unlike the sum of signed moves, this total depends on the observation grid. Suppose a move of \(+0.2\) is followed by \(-0.2\). Observing just the start and finish gives a net move of zero and a squared-move total of \(0^2=0\). Observing the middle point gives the same net move, but a squared-move total of \(0.2^2+(-0.2)^2=0.08\). That dependence on the grid is why we ask what happens as it is refined.</p>
 <p>There are \(n\) terms, each with average \(\Delta t\), so:</p>
@@ -91,7 +91,7 @@ ${h('integral','Use these changes to build an integral')}
 <h3>Why does this order keep the mean at zero?</h3>
 <p>The next displacement is a fresh mean-zero change, independent of the past. If the multiplier is chosen <em>before</em> that change, its product with the next displacement has mean zero:</p>
 \[\mathbb E[H_{t_i}\Delta W_i]=0.\]
-<p>Adding such contributions keeps the mean zero. A multiplier that uses the end of the interval would already depend on the displacement being multiplied; we will see in Section 6 that this changes the integral.</p>
+<p>Adding such contributions keeps the mean zero. A multiplier that uses the end of the interval would already depend on the displacement being multiplied; we will see in Section 7 that this changes the integral.</p>
 <h3>How large can the accumulated integral be?</h3>
 <p>Square the finite sum. For a diagonal term, the future squared increment has average \(\Delta t_i\), independently of the multiplier already chosen:</p>
 \[\mathbb E[H_{t_i}^2(\Delta W_i)^2]=\mathbb E[H_{t_i}^2]\Delta t_i.\]
@@ -142,5 +142,5 @@ ${h('worked-square','Return to the square: write the full differential')}
 <p>The first term is centered work from the next impulse; the second supplies a positive mean energy input. This model has no dissipative drag, so it is not an equilibrium thermal model. It illustrates how a mean-zero kick can still change the average of a curved quantity such as energy.</p>
 ${h('algebraic-view','An optional symbolic perspective')}
 <p>Some computational methods encode the same multiplication rules using truncated polynomials. This is not needed to follow the derivation above; the ${link('reference','symbolic-calculus','symbolic-calculus note')} retains that perspective and the source author's further reading.</p>
-<p>We now have a way to accumulate random changes and a rule for transforming them. Section 5 uses these tools to model systems whose local trend and noise depend on the current state.</p>
+<p>We now have a way to accumulate random changes and a rule for transforming them. Section 6 uses these tools to model systems whose local trend and noise depend on the current state.</p>
 ` + check('Why does the second-order term disappear for a smooth path but survive for Brownian motion?',String.raw`A smooth displacement has size proportional to \(\Delta t\), so its squares sum to zero. A Brownian displacement has size proportional to \(\sqrt{\Delta t}\), so its squares accumulate at the same scale as time.`);

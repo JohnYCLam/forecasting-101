@@ -2,15 +2,15 @@ import { prose, h, check, link, note } from './helpers.js';
 
 export const stratonovich = demos => prose`
 ${h('endpoint-choice','Why change the integral convention?')}
-<p>In the last chapter we read the noise coefficient at the start of each interval. Section 4 gives us a way to test that choice without solving another equation. Follow the same Brownian step from \(W_i\) to \(W_i+\Delta W_i\). What difference would it make to use the average of those two positions as the multiplier?</p>
+<p>In the last chapter we read the noise coefficient at the start of each interval. Section 5 gives us a way to test that choice without solving another equation. Follow the same Brownian step from \(W_i\) to \(W_i+\Delta W_i\). What difference would it make to use the average of those two positions as the multiplier?</p>
 \[\begin{aligned}
 \text{left contribution}&=W_i\Delta W_i,\\
 \text{midpoint contribution}&=(W_i+\tfrac12\Delta W_i)\Delta W_i,\\
 \text{difference}&=\tfrac12(\Delta W_i)^2 .
 \end{aligned}\]
-<p>For a move from 0.3 to 0.1, the contributions are −0.06 and −0.04. Even on a downward move, the difference is positive. On a finite grid these differences add to \(Q_n/2\); as the grid is refined, the limit is \(T/2\). We have found Section 4’s missing triangular pieces again.</p>
+<p>For a move from 0.3 to 0.1, the contributions are −0.06 and −0.04. Even on a downward move, the difference is positive. On a finite grid these differences add to \(Q_n/2\); as the grid is refined, the limit is \(T/2\). We have found Section 5’s missing triangular pieces again.</p>
 <p>The left choice is Itô’s. The symmetric choice gives the Stratonovich integral, written with a small circle, \(\circ\,\mathrm dW\). It takes both ends of the step to compute that contribution. Slide a fraction \(\lambda\) of the way from the starting state to the ending state: zero selects the left end and one half selects the midpoint.</p>
-<p>The simplest calculation shows why the choice matters. Using the finite identity from Section 4:</p>
+<p>The simplest calculation shows why the choice matters. Using the finite identity from Section 5:</p>
 \[\begin{aligned}I_{\lambda,n}&=\sum_i(W_{t_i}+\lambda\Delta W_i)\Delta W_i\\&=\frac12W_T^2+\left(\lambda-\frac12\right)Q_n\\&\xrightarrow{L^2}\frac12W_T^2+\left(\lambda-\frac12\right)T.\end{aligned}\]
 <p>The arrow marked \(L^2\) means that the average squared error tends to zero. Since \(\mathbb E[W_T^2]=T\), the limiting integral has expectation \(\lambda T\). At \(\lambda=0\), we recover Itô’s mean-zero integral. At \(\lambda=1/2\), we recover \(W_T^2/2\), the familiar chain-rule expression. At \(\lambda=1\), the result is \(W_T^2/2+T/2\), the right-endpoint or Hänggi–Klimontovich convention in this scalar family.</p>
 ` + demos.lambda + prose`
@@ -52,7 +52,7 @@ ${h('physical-applications','Applications: what the convention helps describe')}
 <h3>Biological diffusion in a heterogeneous medium</h3>
 <p>Suppose the intended concentration equation is Fick’s law with a positive position-dependent diffusivity \(D(x)\):</p>
 \[\partial_tp=\partial_x\!\left(D(x)\partial_xp\right).\]
-<p>Insert \(b=\sqrt{2D}\) into the ${link('diffusion','fokker-planck','density equation derived in Section 8B')}. The product rule gives:</p>
+<p>Insert \(b=\sqrt{2D}\) into the ${link('diffusion','fokker-planck','density equation derived in Section 10')}. The product rule gives:</p>
 \[-\partial_x(ap)+\partial_{xx}(Dp)=\partial_x(D\,\partial_xp)+\partial_x\!\left[(D'-a)p\right].\]
 <p>To recover the intended law for arbitrary densities, set the extra drift term to zero: \(a=D'\). Since \(bb'=D'\), the equivalent scalar \(\lambda\)-convention drift is:</p>
 \[a_\lambda=(1-\lambda)D'.\]
@@ -66,7 +66,7 @@ ${h('midpoint-methods','Numerical methods must match the convention')}
 ${h('comparison','Compare the conventions')}
 <div class="table-wrap"><table><thead><tr><th>Convention</th><th>Evaluation</th><th>\(\int_0^T W_t\diamond_\lambda\mathrm dW_t\)</th><th>Expected value</th></tr></thead><tbody><tr><td>Itô, \(\lambda=0\)</td><td>Left state</td><td>\(W_T^2/2-T/2\)</td><td>\(0\)</td></tr><tr><td>Stratonovich, \(\lambda=1/2\)</td><td>Symmetric / midpoint limit</td><td>\(W_T^2/2\)</td><td>\(T/2\)</td></tr><tr><td>Right endpoint, \(\lambda=1\)</td><td>Right state</td><td>\(W_T^2/2+T/2\)</td><td>\(T\)</td></tr></tbody></table></div>
 <p>For an Itô integral with finite mean-square size and weights chosen using only the past, the best prediction for its next change is zero. Such a running total is called a martingale. The other conventions do not generally have this property. The multidimensional drift correction involves diffusion vector fields and their derivatives; the scalar formula above cannot be copied unchanged into every matrix-valued problem.</p>
-<p>All these conventions started with the same noise: continuous Brownian paths with independent increments. Changing the evaluation point cannot turn a continuous path into one with a sudden jump. Section 7 asks when we need to change the noise itself.</p>
+<p>All these conventions started with the same noise: continuous Brownian paths with independent increments. Changing the evaluation point cannot turn a continuous path into one with a sudden jump. Section 8 asks when we need to change the noise itself.</p>
 ` + check('When do all these conventions give the same drift coefficient?',String.raw`For additive noise \(b=b(t)\), the spatial derivative \(\partial_xb\) vanishes. The conversion correction is then zero.`);
 
 export const beyond = demos => prose`
@@ -100,6 +100,6 @@ ${h('memory','Allow correlated increments')}
 ${h('other-integrals','Why the integration theory must change too')}
 <p>For \(H\ne1/2\), fractional Brownian motion is generally not a semimartingale. Ordinary Itô integration cannot simply be reused. Young integration handles many regular-integrand problems when \(H>1/2\). Rough-path constructions cover important rougher cases; the standard multidimensional Gaussian rough-path lift applies for \(H>1/4\). Smaller Hurst parameters need additional constructions or renormalization.</p>
 <p>Jump models can represent abrupt claims or shocks. Correlated-noise models can represent persistent or anti-persistent fluctuations. These are modeling possibilities, not evidence that any particular real-world dataset follows one of these processes.</p>
-<p>We now have the tools to specify and solve stochastic models. Section 8A changes the starting point: instead of knowing the coefficients, we observe data and ask a learner to estimate the dynamics. Section 8B will then use deliberately added noise to build a generative model.</p>
+<p>We now have the tools to specify and solve stochastic models. Section 9 changes the starting point: instead of knowing the coefficients, we observe data and ask a learner to estimate the dynamics. Section 10 will then use deliberately added noise to build a generative model.</p>
 ` + check('Can independent increments scaled by a different power of time reproduce fractional Brownian motion?', 'No. The required correlations between increments are part of its definition. Both scaling and covariance must be represented.');
 

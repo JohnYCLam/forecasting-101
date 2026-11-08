@@ -1,6 +1,6 @@
 # Stochastic Calculus — interactive introduction
 
-One Vite app containing the full teaching progression, 21 guided experiments, detailed derivations, applications, notation, companion code, primary references, and explicit source attribution. Plain JavaScript, CSS, and Canvas; no React or backend required.
+This branch contains Sections 1–12. One Vite app contains the full teaching progression, 21 guided experiments, detailed derivations, applications, notation, companion code, primary references, and explicit source attribution. Plain JavaScript, CSS, and Canvas; no React or backend required.
 
 Based on and adapted from **[Introduction to Stochastic Calculus by Ji-Ha Kim](https://jiha-kim.github.io/posts/introduction-to-stochastic-calculus/)**, licensed by the author under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**. This project rewrites and reorganizes the explanations, expands or corrects derivations and example code, rebuilds illustrations as interactive experiments, and adds numerical and ML examples. See [ATTRIBUTION.md](ATTRIBUTION.md) for the source credit, license, and description of changes.
 
@@ -36,10 +36,10 @@ The main source files are:
 - `src/content/calculus.js`: reading SDEs, the transformation strategy, OU and GBM solutions, and Euler approximation.
 - `src/content/technical-notes.js`: optional proofs and more technical background, kept in the reference chapter.
 - `src/content/applications.js`: Stratonovich and the lambda-family, jumps, and correlated noise.
-- `src/content/generative.js`: Section 8B, Fokker–Planck and score-based generation.
-- `src/content/learning.js`: Section 8A, fitting dynamics and evaluating forecasts.
-- `src/content/pricing.js`: Section 8C, Black–Scholes and Deep BSDE methods.
-- `src/content/sampling.js`: Section 8D, parameter sampling and noisy optimization.
+- `src/content/generative.js`: Section 10, Fokker–Planck and score-based generation.
+- `src/content/learning.js`: Section 9, fitting dynamics and evaluating forecasts.
+- `src/content/pricing.js`: Section 11, Black–Scholes and Deep BSDE methods.
+- `src/content/sampling.js`: Section 12, parameter sampling and noisy optimization.
 - `src/ou-comparison.js` and `src/content/sde-demos.js`: coupled exact OU/Euler comparison.
 - `src/content/reference.js`: source attribution, key references, notation, and companion code.
 - `src/content/sources.js`: Ji-Ha Kim attribution, CC BY 4.0 notice, and references mapped to related discussions.
@@ -57,19 +57,19 @@ The main source files are:
 
 `dist/` is the compiled site for static hosting, generated from this same app. Serve it over HTTP rather than opening `index.html` directly with a file URL. Direct subsection links use routes such as `#ito/multiplication-table` or `#diffusion/reverse-sde`.
 
-LaTeX equations are typeset with KaTeX, bundled with its fonts in the app. No accounts, analytics, external script or font downloads, AI calls, or backend services. All experiments run in the browser. External references load only if clicked. The app is not published to a hosting provider.
+LaTeX equations are typeset with KaTeX, bundled with its fonts in the app. No accounts, analytics, external script or font downloads, AI calls, or backend services. All experiments run in the browser. External references load only if clicked. This development branch builds the extended course; main publishes the core lessons.
 
 ## Editorial scope
 
 The original files are not edited. This app rewrites and corrects their teaching content, removes the repeated editorial prefix, and retains the original progression from discrete steps to stochastic calculus and applications. The sources page credits Ji-Ha Kim’s foundational post and lists four additional key works. The source-heading index is retained only for internal checks.
 
-Section 0 introduces predictable motion, uncertain disturbances, and the reason to study coin-driven steps. It has no interactive demo or early shortcut button. The first experiment in Section 1 reveals actual coin tosses one at a time. The former opening demo now follows the additive-SDE derivation in Section 5 and starts at zero noise.
+Section 1 introduces predictable motion, uncertain disturbances, and the reason to study coin-driven steps. It has no interactive demo or early shortcut button. The first experiment in Section 2 reveals actual coin tosses one at a time. The former opening demo now follows the additive-SDE derivation in Section 6 and starts at zero noise.
 
-Sections 1–4 explain the notation and transitions before using them. The coin demo distinguishes replaying a fixed sequence from drawing a new one, and labels right as +1 and left as −1. The twelve-walk plot highlights one path in blue; darker overlaps are not a probability scale. The scaling experiment uses two fixed endpoint windows (−4 to 4 and −128 to 128), reports out-of-view endpoints, and keeps its path range fixed. Brownian roughness is introduced through its consequence for velocity and Taylor expansion. The weighted-squares discussion follows the Taylor term that needs it; formal background is retained in optional reference notes.
+Sections 2–5 explain the notation and transitions before using them. The coin demo distinguishes replaying a fixed sequence from drawing a new one, and labels right as +1 and left as −1. The twelve-walk plot highlights one path in blue; darker overlaps are not a probability scale. The scaling experiment uses two fixed endpoint windows (−4 to 4 and −128 to 128), reports out-of-view endpoints, and keeps its path range fixed. Brownian roughness is introduced through its consequence for velocity and Taylor expansion. The weighted-squares discussion follows the Taylor term that needs it; formal background is retained in optional reference notes.
 
 Core derivations are expanded in the main reading flow: finite increment rules, the multiplication table, the isometry, Taylor expansion, the square example, GBM, Fokker–Planck, and integral-convention conversion. The ML chapter includes general forward and reverse-time SDEs, the reverse-generator argument, learned scores, probability-flow transport, conditioning, likelihoods, neural SDEs, SGLD, and a worked Deep BSDE example with an in-browser trainer.
 
-Section 3 derives the average squared-change total and leaves its concentration to Section 4. Section 4 calculates each accumulated product before introducing its differential shorthand, distinguishes `(dW)^2` from `d(W^2)`, and introduces weighted sums and integrals after the product rules. The finite square identity motivates the changing weight; the full differential of squared position follows the integral and chain rule.
+Section 4 derives the average squared-change total and leaves its concentration to Section 5. Section 5 calculates each accumulated product before introducing its differential shorthand, distinguishes `(dW)^2` from `d(W^2)`, and introduces weighted sums and integrals after the product rules. The finite square identity motivates the changing weight; the full differential of squared position follows the integral and chain rule.
 
 Source article attribution and primary mathematical references are included in the app. This is an independent adaptation, not an official publication by the source author. All nine original Python/TikZ code appendices are restored as viewable and downloadable examples, with specific corrections noted in the app. Their Python syntax was checked; the full animation scripts were not all executed to render their outputs during this revision.
 
@@ -83,8 +83,8 @@ The third experiment fixes two known endpoint readings and infers crossings in t
 
 `npm test` checks formula rendering, source coverage destinations, introductory/demo ordering, the three scaling laws, histogram normalization and out-of-window accounting, exact finite-sum identities, binomial laws, seeded Gaussian moments, Brownian and OU moments, scalar drift conversion, fractional Gaussian covariance, Poisson jump rendering data, the analytic mixture score, and reverse-diffusion distribution recovery, and held-out Deep BSDE error against its analytic grid benchmark. A finite simulation illustrates a theorem; it does not establish the continuous-time result.
 
-Section 5 follows one question: specify an SDE, solve a constant-coefficient case, learn the change-of-variables tool, apply it to OU and GBM, then test Euler–Maruyama against a coupled exact solution. Neuron firing is removed. Section 8 is split into 8A–8D, each with its own navigation entry, outline, and purpose. Old subsection and demo bookmarks redirect to their relocated content. The OU demo shows a chosen initial value returning toward zero; the Euler demo uses nested Brownian increments and exact weighted-integral coupling, with zero-drift and zero-noise checks.
+Section 6 follows one question: specify an SDE, solve a constant-coefficient case, learn the change-of-variables tool, apply it to OU and GBM, then test Euler–Maruyama against a coupled exact solution. Neuron firing is removed. The ML material is split across Sections 9–12, each with its own navigation entry, outline, and purpose. Old subsection and demo bookmarks redirect to their relocated content. The OU demo shows a chosen initial value returning toward zero; the Euler demo uses nested Brownian increments and exact weighted-integral coupling, with zero-drift and zero-noise checks.
 
 ## Local Appendix B
 
-Review and revision notes have been exported to `research-local/APPENDIX_B_REVIEW_AND_REVISION.md`. The entire `research-local/` folder is ignored by Git and is outside Vite’s public assets and module imports. Appendix B is not part of the site navigation, application bundle, or offline lesson. The source article’s B.1–B.5 and C.1–C.4 companion examples remain available with author, source, license, and modification notices.
+Review and revision notes have been exported to the repository-root `research-local/APPENDIX_B_REVIEW_AND_REVISION.md`. The entire `research-local/` folder is ignored by Git and is outside Vite’s public assets and module imports. Appendix B is not part of the site navigation, application bundle, or offline lesson. The source article’s B.1–B.5 and C.1–C.4 companion examples remain available with author, source, license, and modification notices.

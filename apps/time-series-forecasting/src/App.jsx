@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { Activity, TrendingUp, Waves, Info, BookOpen, LineChart as ChartIcon, BrainCircuit, Sparkles, Sun, Moon, Menu, X, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Activity, TrendingUp, Waves, Info } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import './index.css';
 import Topic2 from './Topic2';
@@ -10,6 +10,8 @@ import Topic5 from './Topic5';
 import { ZoomableChartShell } from './charts';
 import { formatValue } from './utils';
 import { MathText, ModelOrder } from './MathText';
+import { pendingTopics } from '../../../site/navigation.js';
+import scope from '../../../course-scope.json';
 
 export default function App() {
   const [activeTopic, setActiveTopic] = useState(1);
@@ -22,23 +24,18 @@ export default function App() {
   const [beta, setBeta] = useState(0.5);
   const [gamma, setGamma] = useState(0.5);
 
-  // Theme state
-  // Theme state
-  const [theme, setTheme] = useState('light');
-
-  // Mobile Menu state
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Desktop sidebar collapse
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  // Zoom and Pan states
   const maxTime = 119;
 
   useEffect(() => {
-    // Apply theme class to body
-    document.body.className = 'forecasting ' + theme;
-  }, [theme]);
+    window.dispatchEvent(new Event('hub:controls-ready'));
+  }, [data]);
+
+  useEffect(() => {
+    document.querySelectorAll('#navigation .nav-item').forEach(button => {
+      if (button.classList.contains('active')) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+  }, [activeTopic, activeSubTopic, data]);
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}topic1_data.json`)
@@ -100,181 +97,140 @@ export default function App() {
   }
 
   return (
-    <div className={`main-layout ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-
-      {/* Mobile Menu Button */}
-      <div className="mobile-header">
-        <button className="mobile-menu-btn" aria-label={isMobileMenuOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        <div className="brand" style={{ margin: 0, paddingLeft: '10px' }}>
-          <ChartIcon size={20} color="var(--primary)" />
-          <span>Forecasting 101</span>
+    <div className="main-layout">
+      <a className="skip" href="#main">Skip to lesson</a>
+      <aside id="sidebar" className="sidebar course-sidebar">
+        <div className="sidebar-heading">
+          <a className="brand" href="/time-series-forecasting/" aria-label="Time-series forecasting home"><span className="brand-mark" data-icon="wave" aria-hidden="true" /><span>Time-series<br />forecasting</span></a>
+          <button className="shell-collapse" data-sidebar-toggle aria-controls="sidebar" aria-label="Hide navigation"><span data-icon="panel" aria-hidden="true" /></button>
         </div>
-      </div>
-
-      {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div className="mobile-menu-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>
-      )}
-
-      {/* Expand sidebar button (desktop, when collapsed) */}
-      {isSidebarCollapsed && (
-        <button
-          className="sidebar-expand-btn desktop-only"
-          onClick={() => setIsSidebarCollapsed(false)}
-          title="Show navigation"
-          aria-label="Show navigation"
-        >
-          <PanelLeft size={18} />
-        </button>
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside className={`glass sidebar ${isMobileMenuOpen ? 'mobile-open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="sidebar-header desktop-only">
-          <div className="brand" style={{ marginBottom: 0 }}>
-            <ChartIcon size={24} color="#5169a5" />
-            <span>Forecasting 101</span>
-          </div>
-          <button
-            className="sidebar-collapse-btn"
-            onClick={() => setIsSidebarCollapsed(true)}
-            title="Hide navigation"
-            aria-label="Hide navigation"
-          >
-            <PanelLeftClose size={18} />
+        <a className="all-topics" href="/"><span data-icon="arrow" aria-hidden="true" />All topics</a>
+        <div className="side-caption">AN INTERACTIVE INTRODUCTION</div>
+        <details id="mobile-menu" open><summary>Contents <span data-icon="chevron" aria-hidden="true" /></summary>
+        <nav id="navigation" className="nav-menu" aria-label="Lesson chapters">
+          <button type="button" className={`nav-item ${activeTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveTopic(1); }} style={{ cursor: 'pointer' }}>
+            <span className="nav-number">1</span><span>Basic Forecast</span>
           </button>
-        </div>
-
-        <a className="all-topics" href="/">← All topics</a>
-        <nav className="nav-menu" style={{ overflowY: 'auto', paddingRight: '0.5rem', maxHeight: 'calc(100vh - 120px)' }}>
-          <div className={`nav-item ${activeTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
-            <BookOpen size={18} />
-            <span>1. Basic Forecast</span>
-          </div>
-          <div className={`nav-item ${activeTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
-            <Sparkles size={16} />
-            <span>2. ARIMA & Selection</span>
-          </div>
+          <button type="button" className={`nav-item ${activeTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveTopic(2); setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
+            <span className="nav-number">2</span><span>ARIMA & Selection</span>
+          </button>
           {activeTopic === 2 && (
-            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+            <div className="nav-subsections">
+              <button type="button" className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
                 <span>2.1 <ModelOrder name="ARMA">p, q</ModelOrder> Basics</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); }} style={{ cursor: 'pointer' }}>
                 <span>2.2 ARMA vs HW Behaviours</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); }} style={{ cursor: 'pointer' }}>
                 <span>2.3 Real World Data</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); }} style={{ cursor: 'pointer' }}>
                 <span>2.4 Auto ARIMA</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); }} style={{ cursor: 'pointer' }}>
                 <span>2.5 SARIMA vs HW</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); }} style={{ cursor: 'pointer' }}>
                 <span>2.6 SARIMAX</span>
-              </div>
+              </button>
             </div>
           )}
-          <div className={`nav-item ${activeTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveTopic(3); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
-            <Activity size={18} />
-            <span>3. Metrics & Validation</span>
-          </div>
+          <button type="button" className={`nav-item ${activeTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveTopic(3); setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
+            <span className="nav-number">3</span><span>Metrics & Validation</span>
+          </button>
           {activeTopic === 3 && (
-            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+            <div className="nav-subsections">
+              <button type="button" className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
                 <span>3.1 MAE vs RMSE</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); }} style={{ cursor: 'pointer' }}>
                 <span>3.2 MAPE Family</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); }} style={{ cursor: 'pointer' }}>
                 <span>3.3 Walk-Forward Validation</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); }} style={{ cursor: 'pointer' }}>
                 <span>3.4 Validation Strategy</span>
-              </div>
+              </button>
             </div>
           )}
-          <div className={`nav-item ${activeTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveTopic(4); setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
-            <Activity size={18} />
-            <span>4. Volatility: GARCH</span>
-          </div>
+          <button type="button" className={`nav-item ${activeTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveTopic(4); setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
+            <span className="nav-number">4</span><span>Volatility: GARCH</span>
+          </button>
           {activeTopic === 4 && (
-            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+            <div className="nav-subsections">
+              <button type="button" className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
                 <span>4.1 Introduction to ARCH</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); }} style={{ cursor: 'pointer' }}>
                 <span>4.2 The <ModelOrder name="GARCH">p, q</ModelOrder> Model</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); }} style={{ cursor: 'pointer' }}>
                 <span>4.3 Performance Validation</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); }} style={{ cursor: 'pointer' }}>
                 <span>4.4 Value at Risk (VaR)</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); }} style={{ cursor: 'pointer' }}>
                 <span>4.5 ARIMA-GARCH</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); }} style={{ cursor: 'pointer' }}>
                 <span>4.6 Extensions & Limits</span>
-              </div>
+              </button>
             </div>
           )}
-          <div className={`nav-item ${activeTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveTopic(5); setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
-            <BrainCircuit size={18} />
-            <span>5. VARIMA</span>
-          </div>
+          <button type="button" className={`nav-item ${activeTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveTopic(5); setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
+            <span className="nav-number">5</span><span>VARIMA</span>
+          </button>
           {activeTopic === 5 && (
-            <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+            <div className="nav-subsections">
+              <button type="button" className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); }} style={{ cursor: 'pointer' }}>
                 <span>5.1 What VARMA Is</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); }} style={{ cursor: 'pointer' }}>
                 <span>5.2 Coefficient Matrices</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 3 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(3); }} style={{ cursor: 'pointer' }}>
                 <span>5.3 Problems with VARMA</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 4 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(4); }} style={{ cursor: 'pointer' }}>
                 <span>5.4 Granger Causality</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 5 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(5); }} style={{ cursor: 'pointer' }}>
                 <span>5.5 Walk-Forward Validation</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 6 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(6); }} style={{ cursor: 'pointer' }}>
                 <span>5.6 Curse of Dimensionality</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 7 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(7); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 7 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(7); }} style={{ cursor: 'pointer' }}>
                 <span>5.7 Coefficient Stability</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 8 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(8); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+              </button>
+              <button type="button" className={`nav-item ${activeSubTopic === 8 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(8); }} style={{ cursor: 'pointer' }}>
                 <span>5.8 Cointegration & VECM</span>
-              </div>
+              </button>
             </div>
           )}
         </nav>
+        <div dangerouslySetInnerHTML={{ __html: pendingTopics('forecasting', scope.forecastingMax) }} />
+        </details>
+        <div className="side-foot"><span className="status-dot" /> Learn by changing one thing.<br /><small>All experiments run on your device.</small></div>
       </aside>
 
       {/* Main Content */}
-      <main className="app-container">
-        <header>
+      <div className="course-page">
+        <header className="topbar">
+          <div className="topbar-location"><button className="shell-expand" data-sidebar-toggle aria-controls="sidebar" aria-label="Show navigation"><span data-icon="panel" aria-hidden="true" /></button><span>{activeTopic} / TIME-SERIES FORECASTING</span></div>
+          <div className="top-actions"><button className="theme-toggle" data-theme-toggle><span data-theme-icon aria-hidden="true" /><span data-theme-label>Dark mode</span></button></div>
+        </header>
+      <main id="main" className="app-container" tabIndex={-1}>
+        <div className="chapter-top">
+          <div className="chapter-num">SECTION {activeTopic}</div>
           <div>
             <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : activeTopic === 4 ? 'Topic 4: Volatility & GARCH' : activeTopic === 5 ? 'Topic 5: VARIMA — Forecasting Connected Series' : ''}</h1>
             <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : ''}</div>
           </div>
-          <button
-            className="theme-toggle"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
-        </header>
+        </div>
 
         <div style={{ marginTop: '1rem' }}>
           {activeTopic === 1 ? (
@@ -418,8 +374,8 @@ export default function App() {
                           <ReferenceLine x={modelData.train_size - 1} stroke="var(--text-muted)" strokeDasharray="3 3" label={{ position: 'top', value: 'Forecast Start', fill: 'var(--text-muted)' }} />
 
                           <Line type="monotone" dataKey="actual" stroke="var(--text-muted)" strokeWidth={2} dot={false} name="Actual Data" isAnimationActive={false} />
-                          <Line type="monotone" dataKey="inSample" stroke="#d76448" strokeWidth={2} strokeOpacity={0.4} dot={false} name="In-Sample Fit" isAnimationActive={false} />
-                          <Line type="monotone" dataKey="forecast" stroke="#d76448" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Forecast" isAnimationActive={false} />
+                          <Line type="monotone" dataKey="inSample" stroke="var(--coral)" strokeWidth={2} strokeOpacity={0.4} dot={false} name="In-Sample Fit" isAnimationActive={false} />
+                          <Line type="monotone" dataKey="forecast" stroke="var(--coral)" strokeWidth={3} strokeDasharray="5 5" dot={false} name="Forecast" isAnimationActive={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     )}
@@ -438,6 +394,8 @@ export default function App() {
           ) : null}
         </div>
       </main>
+      <footer className="course-footer"><span><span className="author-credit">by Yi Chun LAM</span>Time-series forecasting · Learning Hub</span><a href="/">All topics →</a></footer>
+      </div>
       <Analytics />
     </div>
   );

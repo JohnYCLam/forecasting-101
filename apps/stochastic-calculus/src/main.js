@@ -8,12 +8,19 @@ import * as P from './predictive-ml.js';
 import * as S from './switching-ml.js';
 import * as H from './barrier-ml.js';
 import { ouComparison } from './ou-comparison.js';
+import { pendingTopics } from '../../../site/navigation.js';
+import scope from '../../../course-scope.json' with { type: 'json' };
 let model=B.learner();
 const heldOut=B.testPaths();
 let barrierSelectedIndex=null;
 
 const $=id=>document.getElementById(id);
-const C={teal:'#147d70',coral:'#d76448',blue:'#5169a5',gray:'#acb8ac',gold:'#ad7b21'};
+const C={};
+function refreshPalette(){
+  const styles=getComputedStyle(document.documentElement);
+  for(const key of ['teal','coral','blue','gray','gold','muted','line'])C[key]=styles.getPropertyValue(`--${key}`).trim();
+}
+refreshPalette();
 const store=new Map(),seeds={coin:42};let active='intro',replayTimer,coinCount=0,coinSequence=1,coinMessage='Reveal the tosses one at a time.';
 const seed=id=>seeds[id]??(seeds[id]=Array.from(id).reduce((s,c)=>Math.imul(s,31)+c.charCodeAt(0),1234)>>>0);
 const cached=(id,key,create)=>{const k=`${id}:${seed(id)}:${key}`;if(!store.has(k))store.set(k,create());return store.get(k);};
@@ -33,15 +40,15 @@ function chart(id,xlim,ylim,xlabel='Time t',ylabel='Value',options={}){
   const rawStep=(ylim[1]-ylim[0])/4,power=10**Math.floor(Math.log10(rawStep)),fraction=rawStep/power;
   const step=([1,2,2.5,5,10].find(n=>n>=fraction)??10)*power;
   const yt=options.yTicks??Array.from({length:Math.max(1,Math.floor((ylim[1]-Math.ceil(ylim[0]/step)*step)/step)+1)},(_,i)=>Math.ceil(ylim[0]/step)*step+i*step);
-  ctx.font='11px system-ui';ctx.fillStyle='#52695e';ctx.lineWidth=1;
+  ctx.font='11px system-ui';ctx.fillStyle=C.muted;ctx.lineWidth=1;
   const labelWidth=Math.max(...yt.map(y=>ctx.measureText(options.yFormat?options.yFormat(y):tick(y)).width),20);
   const pad={l:Math.max(49,labelWidth+27),r:20,t:17,b:48},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
   const xp=x=>pad.l+(x-xlim[0])/(xlim[1]-xlim[0])*pw,yp=y=>h-pad.b-(y-ylim[0])/(ylim[1]-ylim[0])*ph;
-  for(const y of yt){if(y<ylim[0]||y>ylim[1])continue;ctx.strokeStyle='#e0e7da';ctx.beginPath();ctx.moveTo(pad.l,yp(y));ctx.lineTo(w-pad.r,yp(y));ctx.stroke();ctx.textAlign='right';ctx.fillText(options.yFormat?options.yFormat(y):tick(y),pad.l-8,yp(y)+3);}
+  for(const y of yt){if(y<ylim[0]||y>ylim[1])continue;ctx.strokeStyle=C.line;ctx.beginPath();ctx.moveTo(pad.l,yp(y));ctx.lineTo(w-pad.r,yp(y));ctx.stroke();ctx.textAlign='right';ctx.fillText(options.yFormat?options.yFormat(y):tick(y),pad.l-8,yp(y)+3);}
   const xCount=pw<240?2:4;
   const xt=options.xTicks??Array.from({length:xCount+1},(_,i)=>xlim[0]+i*(xlim[1]-xlim[0])/xCount);
   for(const x of xt){ctx.textAlign='center';ctx.fillText(options.xFormat?options.xFormat(x):tick(x),xp(x),h-pad.b+18);}
-  ctx.strokeStyle='#b9c8b9';ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
+  ctx.strokeStyle=C.line;ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
   ctx.textAlign='center';ctx.fillText(xlabel,pad.l+pw/2,h-7);ctx.save();ctx.translate(12,pad.t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(ylabel,0,0);ctx.restore();
   function clipped(draw){ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,pw,ph);ctx.clip();draw();ctx.restore();}
   return {band(lower,upper,color=C.teal){clipped(()=>{ctx.fillStyle=color;ctx.globalAlpha=.14;ctx.beginPath();[...lower,...upper.toReversed()].forEach(([x,y],i)=>i?ctx.lineTo(xp(x),yp(y)):ctx.moveTo(xp(x),yp(y)));ctx.closePath();ctx.fill();});},line(points,color=C.teal,width=1.7,dash=[],alpha=1){clipped(()=>{ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(xp(x),yp(y)):ctx.moveTo(xp(x),yp(y)));ctx.stroke();});},bars(points,width,color=C.teal,alpha=.45,outline=false){clipped(()=>{ctx.fillStyle=color;ctx.strokeStyle=color;ctx.globalAlpha=alpha;for(const [x,y] of points){const xx=xp(x-width/2),ww=Math.max(.5,xp(x+width/2)-xx);if(outline){ctx.setLineDash([3,2]);ctx.lineWidth=1.6;ctx.strokeRect(xx,yp(Math.max(0,y)),ww,Math.abs(yp(y)-yp(0)));}else ctx.fillRect(xx,Math.min(yp(y),yp(0)),ww,Math.abs(yp(y)-yp(0)));}});},point(x,y,color=C.coral){clipped(()=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(xp(x),yp(y),4,0,Math.PI*2);ctx.fill();});}};
@@ -110,7 +117,7 @@ barrier(){
   }
   const ymax=Math.min(1,Math.max(.2,Math.ceil(Math.max(exact,current.actual,...results.map(r=>r.predicted))*12)/10));
   const c=chart('barrier-refinement',[0,6],[0,ymax],'Observation intervals · nested grids','Crossing fraction',{xTicks:[0,1,2,3,4,5,6],xFormat:x=>2**x,yFormat:y=>`${Math.round(100*y)}%`});
-  c?.line([[0,current.actual],[6,current.actual]],'#7e897e',2,[5,3]);c?.line([[0,current.fine],[6,current.fine]],C.gold,1.7,[2,4]);
+  c?.line([[0,current.actual],[6,current.actual]],C.gray,2,[5,3]);c?.line([[0,current.fine],[6,current.fine]],C.gold,1.7,[2,4]);
   c?.line(results.map((r,k)=>[k,r.seen]),C.coral,2.5);c?.line(results.map((r,k)=>[k,r.predicted]),C.teal,2.5);
   c?.point(value('barrier-observations'),current.seen,C.coral);c?.point(value('barrier-observations'),current.predicted,C.teal);
   const calibration=H.reliability(current.predictions,current.labels),d=chart('barrier-calibration',[0,1],[0,1],'Predicted probability','Observed event frequency');
@@ -136,7 +143,7 @@ switching(){
   const c=chart('switch-paths',[0,T],range,'Time since forecast','State');
   c?.line([[0,S.THRESHOLD],[T,S.THRESHOLD]],C.gray,1,[2,5]);
   sde.paths.forEach(p=>c?.line(series(p,T),C.teal,1.1,[],.3));
-  c?.line(series(test.mean,T),'#7e897e',2,[6,4]);c?.line(series(sde.mean,T),C.gold,2.8);c?.line(series(point.paths[0],T),C.coral,2.8);
+  c?.line(series(test.mean,T),C.gray,2,[6,4]);c?.line(series(sde.mean,T),C.gold,2.8);c?.line(series(point.paths[0],T),C.coral,2.8);
   const histograms=Object.fromEntries(Object.entries({test,sde,kernel}).map(([name,result])=>[name,M.histogramDensity(result.endpoints,45,range)]));
   const top=Math.max(.1,...Object.values(histograms).flatMap(h=>h.points.map(p=>p[1])))*1.15;
   const d=chart('switch-density',range,[0,top],'State at final time','Density');
@@ -144,7 +151,7 @@ switching(){
   d?.line(histograms.kernel.points,C.blue,2,[5,3]);d?.line(histograms.sde.points,C.teal,2.5);
   d?.line([[point.endpoints[0],0],[point.endpoints[0],top]],C.coral,2.4);
   const p=chart('switch-hits',[0,T],[0,1],'Time since forecast','Probability of reaching right');
-  p?.line(series(test.cumulative,T),'#7e897e',3);p?.line(series(kernel.cumulative,T),C.blue,2,[6,4]);p?.line(series(sde.cumulative,T),C.teal,2.5);p?.line(series(point.cumulative,T),C.coral,2,[3,3]);
+  p?.line(series(test.cumulative,T),C.gray,3);p?.line(series(kernel.cumulative,T),C.blue,2,[6,4]);p?.line(series(sde.cumulative,T),C.teal,2.5);p?.line(series(point.cumulative,T),C.coral,2,[3,3]);
   out('switch-fit',`Cubic drift fitted from ${training.model.n.toLocaleString()} observed transitions: coefficients (${cs.map(x=>fmt(x,3)).join(', ')}), in order 1, x, x², x³. Learned noise strength ${fmt(training.model.sigma,3)}. All models use the same training records.`);
   for(const [name,result]of Object.entries(predictions)){
     const score=S.scores(result,test);
@@ -289,6 +296,7 @@ diffusion(){const g=value('diff-g'),progress=value('diff-progress'),idx=Math.rou
 };
 
 const nav=$('navigation');
+nav.insertAdjacentHTML('afterend',pendingTopics('calculus',scope.calculusMax));
 document.querySelector('.skip').addEventListener('click',e=>{e.preventDefault();$('main').focus();});
 nav.innerHTML=chapters.map(ch=>`${ch.id==='reference'?'<div class="nav-divider"></div>':''}<a href="#${ch.id}" data-nav="${ch.id}"><span>${ch.number}</span>${ch.label}</a>`).join('');
 $('main').innerHTML=chapters.map((ch,i)=>`<article class="chapter" data-id="${ch.id}" id="chapter-${ch.id}" ${i?'hidden':''}>${ch.id==='intro'?'':`<div class="chapter-top"><div class="chapter-num">${/^\d/.test(ch.number)?'SECTION':'REFERENCE'} ${ch.number}</div><h1>${ch.title}</h1><p class="deck">${ch.deck}</p></div><div class="chapter-outline" aria-label="In this section"></div>`}${ch.html()}<div class="chapter-bottom">${i?`<a href="#${chapters[i-1].id}">← ${chapters[i-1].label}</a>`:'<span></span>'}${i<chapters.length-1?`<a class="next" href="#${chapters[i+1].id}">Continue · ${chapters[i+1].label} →</a>`:'<a class="next" href="#intro">Back to the beginning ↑</a>'}</div></article>`).join('');
@@ -297,6 +305,11 @@ document.querySelectorAll('.chapter').forEach(ch=>{
   const label=document.createElement('span');label.className='outline-label';label.textContent='IN THIS SECTION';outline.append(label);
   ch.querySelectorAll('h2[data-section]').forEach(heading=>{const a=document.createElement('a');a.href=`#${ch.dataset.id}/${heading.dataset.section}`;a.textContent=heading.textContent;outline.append(a);});
 });
+document.querySelectorAll('button[data-new]').forEach(button=>{
+  button.textContent=button.textContent.replace(' ↻','');
+  const icon=document.createElement('span');icon.dataset.icon='refresh';icon.setAttribute('aria-hidden','true');button.append(icon);
+});
+window.dispatchEvent(new Event('hub:controls-ready'));
 function drawChapter(id){document.querySelectorAll(`#chapter-${id} [data-lab]`).forEach(l=>renderers[l.dataset.lab]?.());}
 function destinationIn(article,section){
   return Array.from(article.querySelectorAll('h2[data-section], [data-lab]')).find(el=>
@@ -349,10 +362,10 @@ document.addEventListener('click',e=>{
     const next=H.findMissed(rows,2**value('barrier-observations'),value('barrier-sigma'),value('barrier-threshold'),barrierSelectedIndex??-1);
     if(next!==null)barrierSelectedIndex=next;renderers.barrier();
   }
-  if(btn.id==='print')window.print();
 });
 window.addEventListener('hashchange',()=>navigate());
+window.addEventListener('hub:theme-change',()=>{refreshPalette();drawChapter(active);});
 let resizeFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);if(innerWidth>780)$('mobile-menu').open=true;resizeFrame=requestAnimationFrame(()=>drawChapter(active));});
-window.addEventListener('beforeprint',()=>{document.querySelectorAll('.chapter').forEach(el=>el.hidden=false);chapters.filter(c=>c.id!=='review').forEach(ch=>drawChapter(ch.id));document.querySelectorAll('details').forEach(d=>{d.dataset.wasOpen=d.open?'1':'0';d.open=true;});});
-window.addEventListener('afterprint',()=>{document.querySelectorAll('details').forEach(d=>d.open=d.dataset.wasOpen==='1');navigate(false);});
+window.addEventListener('beforeprint',()=>{refreshPalette();document.querySelectorAll('.chapter').forEach(el=>el.hidden=false);chapters.filter(c=>c.id!=='review').forEach(ch=>drawChapter(ch.id));document.querySelectorAll('details').forEach(d=>{d.dataset.wasOpen=d.open?'1':'0';d.open=true;});});
+window.addEventListener('afterprint',()=>{refreshPalette();document.querySelectorAll('details').forEach(d=>d.open=d.dataset.wasOpen==='1');navigate(false);});
 navigate(Boolean(location.hash.includes('/')));

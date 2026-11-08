@@ -4,9 +4,9 @@ import { switchingMl } from './switching-ml.js';
 import { barrierMl } from './barrier-ml.js';
 export const learnedDynamics = () => prose`
 ${h('learning-question','What is the machine learning task?')}
-<p>In Section 5 we chose an equation and calculated its consequences. Now hide the equation and give a learner observed trajectories. Can it infer the local trend and variability, then predict unseen futures?</p>
+<p>In Section 6 we chose an equation and calculated its consequences. Now hide the equation and give a learner observed trajectories. Can it infer the local trend and variability, then predict unseen futures?</p>
 <p>This first ML chapter studies that question through three increasingly demanding tasks. First predict a spread around a mean; then predict random switching between states; finally infer whether an event happened between readings. Each experiment separates training observations from evaluation paths and states what it learns.</p>
-<p>Section 8 is split by purpose: <strong>8A</strong> learns dynamics from observations; ${link('diffusion','','8B')} generates data by following evolving distributions; ${link('pricing','','8C')} uses a network to solve a future-payoff problem; ${link('sampling','','8D')} uses noise to explore model parameters. These are different uses of stochastic calculus.</p>
+<p>Sections 9–12 have different purposes: <strong>9</strong> learns dynamics from observations; ${link('diffusion','','10')} generates data by following evolving distributions; ${link('pricing','','11')} uses a network to solve a future-payoff problem; ${link('sampling','','12')} uses noise to explore model parameters. These are different uses of stochastic calculus.</p>
 ` + predictiveMl() + switchingMl() + barrierMl() + prose`
 ${h('neural-sde','From regression to a neural SDE')}
 <p>The experiments used regression models so their fitted equations could be inspected. A neural network can instead represent the coefficient functions when the relationship is more complex. This changes the model class; it does not remove the need for independent evaluation.</p>
