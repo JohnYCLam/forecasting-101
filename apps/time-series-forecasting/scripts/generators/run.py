@@ -4,8 +4,8 @@ Usage:
     python scripts/generators/run.py <topic_number | all | incident> [--validate]
 
 Examples:
-    python scripts/generators/run.py 6
-    python scripts/generators/run.py 6 --validate
+    python scripts/generators/run.py 5
+    python scripts/generators/run.py 5 --validate
     python scripts/generators/run.py all
     python scripts/generators/run.py incident
 """
@@ -27,7 +27,6 @@ TOPIC_SCRIPTS = {
     3: SCRIPT_DIR / "generate_topic3_data.py",
     4: SCRIPT_DIR / "generate_topic4_data.py",
     5: SCRIPT_DIR / "generate_topic5_data.py",
-    6: SCRIPT_DIR / "generate_topic6_data.py",
 }
 
 EXTRA_SCRIPTS = {
@@ -77,7 +76,7 @@ def main():
         "target",
         nargs="?",
         default="all",
-        help="Topic number (1-6), 'all' to run all topics, or 'incident' for audit plots.",
+        help="Topic number (1-5), 'all' to run all topics, or 'incident' for audit plots.",
     )
     parser.add_argument(
         "--validate",
@@ -122,7 +121,7 @@ def main():
     try:
         topic_num = int(target_str)
     except ValueError:
-        print(f"[ERROR] Invalid topic argument '{args.target}'. Expected 1-6, 'all', or 'incident'.")
+        print(f"[ERROR] Invalid topic argument '{args.target}'. Expected 1-5, 'all', or 'incident'.")
         sys.exit(1)
 
     if topic_num not in TOPIC_SCRIPTS:

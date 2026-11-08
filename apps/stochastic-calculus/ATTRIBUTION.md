@@ -12,7 +12,7 @@ Attribution 4.0 International (CC BY 4.0)**:
 
 The post supplies the foundation and much of the mathematical progression
 from coin-driven random walks through Brownian motion, Itô calculus,
-stochastic differential equations, and integral conventions.
+stochastic differential equations.
 
 ## Changes in this adaptation
 
@@ -20,7 +20,7 @@ stochastic differential equations, and integral conventions.
 - Clarified notation, assumptions, and the interpretation of finite increments.
 - Expanded or corrected derivations and adapted companion example code.
 - Rebuilt illustrations as browser-based interactive experiments.
-- Added numerical comparisons and synthetic machine-learning examples.
+- Added numerical comparisons.
 
 The project’s maintainers are responsible for these adaptation choices.
 Crediting Ji-Ha Kim identifies the source; it does not imply endorsement.

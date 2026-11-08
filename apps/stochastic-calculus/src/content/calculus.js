@@ -1,4 +1,4 @@
-import { prose, h, check, link } from './helpers.js';
+import { prose, h, check } from './helpers.js';
 import { eulerDemo } from './sde-demos.js';
 
 export const sdes = demos => prose`
@@ -122,5 +122,5 @@ ${h('numerics','When a transformation does not give an explicit solution')}
 <p>OU is our checkable benchmark. For an equation without a known solution, refinement comparisons and appropriate numerical methods become essential. Accuracy and stability depend on both the equation and the time step.</p>
 ${h('solution-map','What have we learned to do?')}
 <p>An SDE specifies local drift and random variation. A solution describes the resulting process. Itô’s lemma describes a transformed process and can help us find a solution. Euler–Maruyama approximates paths when we work on a grid. The three earlier experiments use exact sampled solutions; the final experiment deliberately introduces numerical error so we can study it.</p>
-<p>Section 6 changes how a stochastic integral reads its coefficient within each interval. Later, Section 8 separates further questions: ${link('learning','','learning a law from observations')}, ${link('diffusion','','evolving distributions and generating data')}, and ${link('pricing','','valuing a future payoff')}. Each starts with its own question and develops the tools needed to answer it.</p>
+<p>This completes the core introduction: a local rule, a transformation tool, exact examples, and a numerical approximation. Return to an earlier experiment to compare the equation, one path, and its mean and variance.</p>
 ` + check("Does applying Itô’s lemma automatically solve an SDE?","It gives the equation for a chosen function of the state. A helpful transformation may simplify that equation enough to integrate it; the solution comes from that integration and transforming back.");

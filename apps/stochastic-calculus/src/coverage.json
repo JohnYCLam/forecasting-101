@@ -14,13 +14,6 @@
     "status": "Retained, checked, and rewritten"
   },
   {
-    "sourceSection": "0",
-    "sourceTitle": "Deep Dive: Score-Based Generative Diffusion Models in Machine Learning",
-    "chapter": "diffusion",
-    "section": "forward-sde",
-    "status": "Moved after SDE prerequisites; full ML chapter"
-  },
-  {
     "sourceSection": "1",
     "sourceTitle": "1. Motivation: From Discrete Coin Flips to Stochastic Differential Equations",
     "chapter": "walk",
@@ -228,70 +221,7 @@
     "sourceTitle": "Beyond Closed-Form Solutions: Euler–Maruyama, Fokker–Planck, and the Probability Flow ODE",
     "chapter": "sde",
     "section": "numerics",
-    "status": "Euler approximation in Section 5; Fokker–Planck and probability flow developed in Section 8B"
-  },
-  {
-    "sourceSection": "6",
-    "sourceTitle": "6. Stratonovich Calculus and the \\(\\lambda\\)-Family of Stochastic Integrals",
-    "chapter": "stratonovich",
-    "section": "endpoint-choice",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "6",
-    "sourceTitle": "Bridge: Why Would Physics Want a Different Stochastic Integral?",
-    "chapter": "stratonovich",
-    "section": "endpoint-choice",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "6",
-    "sourceTitle": "The \\(\\lambda\\)-Parameterized Family of Stochastic Integrals",
-    "chapter": "stratonovich",
-    "section": "endpoint-choice",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "6",
-    "sourceTitle": "Universal Transformation Formulas Across the \\(\\lambda\\)-Family",
-    "chapter": "stratonovich",
-    "section": "integral-conversion",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "6",
-    "sourceTitle": "Applications of Stratonovich Calculus",
-    "chapter": "stratonovich",
-    "section": "physical-applications",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "6",
-    "sourceTitle": "Summary Comparison Across the \\(\\lambda\\)-Family",
-    "chapter": "stratonovich",
-    "section": "comparison",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "7",
-    "sourceTitle": "7. Beyond Brownian Motion: Is Stochastic Calculus Only About \\(dW(t)\\)?",
-    "chapter": "beyond",
-    "section": "continuous-noise",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "7",
-    "sourceTitle": "Why \\(dW(t)\\) Dominates: Uniqueness of Continuous Memoryless Noise",
-    "chapter": "beyond",
-    "section": "continuous-noise",
-    "status": "Retained, checked, and rewritten"
-  },
-  {
-    "sourceSection": "7",
-    "sourceTitle": "Three Extensions When Continuity or Memorylessness Is Relaxed",
-    "chapter": "beyond",
-    "section": "jumps",
-    "status": "Retained, checked, and rewritten"
+    "status": "Euler–Maruyama approximation in Section 5"
   },
   {
     "sourceSection": "appendix",
