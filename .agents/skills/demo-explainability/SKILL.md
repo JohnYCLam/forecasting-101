@@ -13,7 +13,7 @@ A reader who only knows the previous topics must understand the page without ask
 - After building it (self-review, fix all failures).
 
 ## Mechanical check (run first)
-Run BOTH scripts. Each tolerates known debt in its baseline file and fails only on NEW hits. NEVER run either with `--update-baseline` unless the user asks, and never edit a baseline to hide a violation.
+For changed reader-visible content, run BOTH scripts once at the final gate, or reuse their results if the relevant inputs have not changed. During implementation run a script early only when it helps diagnose the current edit. Each tolerates known debt in its baseline file and fails only on NEW hits. NEVER run either with `--update-baseline` unless the user asks, and never edit a baseline to hide a violation.
 1. `node .agents/skills/demo-explainability/scripts/check-commentary-numbers.mjs` flags typed-in non-zero fallbacks (`?? 76.4`), typed metrics (`RMSE = 12.34`),
    typed percentages and "~n" claims in prose (standard levels 1/5/10/90/95/99/100 % are allowed), and typed critical F values. Fix by interpolating from loaded data or showing "n/a".
 2. `node .agents/skills/plain-language-guard/scripts/check-commentary-shape.mjs` flags commentary bodies over 260 words, conversational question headings, repeated text between paragraphs,
@@ -21,10 +21,10 @@ Run BOTH scripts. Each tolerates known debt in its baseline file and fails only 
 
 ## Procedure
 1. Open the page using the `visual-check` skill (or read the JSX if no browser is available, and say so). Walk through it as a first-time reader.
-2. Fill in every item below with PASS/FAIL and a quote or line reference as evidence.
+2. Apply the relevant checklist items to the changed views. Mark irrelevant criteria N/A (for example, a table transformation does not need a forecast baseline or zoom). Record evidence for the reader outcome, failures and material limitations; do not generate a separate report row for every unchanged criterion.
 3. Fix each FAIL (edit commentary, labels, defaults). Re-check.
 
-## Checklist (all must PASS)
+## Checklist (applicable items must PASS)
 
 ### Title and claim
 - [ ] Title states the idea ("5.1 What VARMA Is"), not a vague label.
@@ -90,4 +90,4 @@ Run BOTH scripts. Each tolerates known debt in its baseline file and fails only 
 - Do not fix explainability by adding long text; prefer better labels, defaults and short targeted paragraphs.
 
 ## Done when
-All items PASS with evidence, listed in the final report.
+Applicable items pass with evidence in the single final report. Report any unverified browser behavior explicitly; a prose self-score or a passing regex check does not prove a first-time reader understands the demo.

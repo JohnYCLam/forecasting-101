@@ -42,6 +42,7 @@ Python script fits models -> `public/topicN_data.json` -> `TopicN.jsx` fetches `
 
 | The user wants... | Use |
 |---|---|
+| Implement an already approved task brief or plan, including existing-content revisions | `/implement-plan`; do not restart the advice/planning workflow |
 | Asks Gemini "what do you recommend / which concept or chart would explain X / what should we cover" (advice, no changes yet) | `/advise` |
 | Ask, doubt, suggest or change something about EXISTING content, or says a page is confusing (the user is reacting to the page) | `/content-feedback` |
 | Asks Gemini to proactively improve a subtab: elaborate commentary, add a graph/view, or make it clearer | `/enhance-demo <subtab> <elaborate\|add-view\|clarify>` |
@@ -56,6 +57,7 @@ Python script fits models -> `public/topicN_data.json` -> `TopicN.jsx` fetches `
 
 ## Skills (read the SKILL.md in full before using)
 - Entry gate for substantive statistical-demo work: evidence-first-demo-design. It decides which specialist skills are needed; do not load every skill by default.
+- During implementation, use the current task's skills, not every skill mentioned by a workflow it links to. References to another workflow do not start a second execution/reporting loop. Reuse material already read in the current context.
 - Planning: topic-content-planner, plan-to-tasks, model-family-playbooks (Topics 6-11)
 - Data: forecast-data-integrity, notebook-to-demo, demo-correctness-review
 - UI: ui-layout-patterns, chart-design-for-teaching (which chart/annotations), recharts-zoom-chart (zoom mechanics), math-katex-text, visual-check

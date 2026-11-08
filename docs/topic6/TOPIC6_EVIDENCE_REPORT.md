@@ -1,10 +1,10 @@
 # Topic 6 Evidence Report: Generator Results & Gate 2 Verification
 
-**Date:** 2026-10-30  
-**Governing Plan:** `topic_6_ml_story_a4881878.plan.md` (Phase 2)  
-**Execution Phase:** Phase 2 Complete (Generator and Evidence Only; React files untouched)  
+**Date:** 2026-11-02  
+**Governing Plan:** `restructure_section_6.1_9dbe143b.plan.md` (Implementation Pass 1)  
+**Execution Phase:** Phase 3 UI & Storyboard Implementation (Section 6.1 Restructure)  
 **Generated Artifacts:**
-- `public/topic6_data.json` (Size: 223.5 KB, SHA256: `1b303838735d71c4eadeff5084bf3381a9e971225b2e13c908ca9dd73636bceb`)
+- `public/topic6_data.json` (Size: 256.5 KB, SHA256: `561ef47c2d79acdcf25ca65cd47f9a4a83deb9e4e7f72e037e43162d86ed9c65`)
 - `scripts/generators/generate_topic6_data.py` (Passed static honesty check via `validate_forecast.py`)
 
 ---
@@ -26,33 +26,39 @@
 ## 2. Integrity & Determinism Verification
 
 1. **Static Forecast Integrity Check:**
-   - Ran `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py scripts/generators/generate_topic6_data.py public/topic6_data.json`.
+   - Ran `python .agents/skills/forecast-data-integrity/scripts/validate_forecast.py ts-forecasting-demo/scripts/generators/generate_topic6_data.py ts-forecasting-demo/public/topic6_data.json`.
    - **Result:** `PASS` (0 warnings, 0 errors, no literal arrays, no actual+constant faking patterns, valid model fitting calls).
 2. **Determinism Verification (Two Consecutive Runs):**
-   - Run 1 SHA256: `1b303838735d71c4eadeff5084bf3381a9e971225b2e13c908ca9dd73636bceb`
-   - Run 2 SHA256: `1b303838735d71c4eadeff5084bf3381a9e971225b2e13c908ca9dd73636bceb`
+   - Run 1 SHA256: `561ef47c2d79acdcf25ca65cd47f9a4a83deb9e4e7f72e037e43162d86ed9c65`
+   - Run 2 SHA256: `561ef47c2d79acdcf25ca65cd47f9a4a83deb9e4e7f72e037e43162d86ed9c65`
    - **Result:** Bit-for-bit identical hashes confirmed.
 3. **JSON Health & Size Budget:**
-   - Total file size: **223.5 KB** (well within the 1024 KB limit).
+   - Total file size: **256.5 KB** (well within the 1024 KB limit).
    - Zero non-finite numbers (`NaN`, `Infinity`, `-Infinity`). All nulls represented as JSON `null`.
+   - Deep equality confirmed: tabs 2 through 6 preserved identical bit-for-bit to previous release.
 
 ---
 
 ## 3. Subsection-by-Subsection Empirical Evidence & Falsifier Reconciliation
 
 ### Subsection 6.1: From a Time Series to a Supervised-Learning Table
-- **Claim:** Converting history into tabular features enables standard regression, but unshifted rolling windows leak future information across the cutoff.
-- **Dataset:** German Daily Electricity Load (`de_electricity_load_daily.csv`, 2,100 days).
-- **Split:** Train (2018-10-01 to 2019-09-30, 365 days) | Origin: `2019-09-30` | Test Holdout (2019-10-01 to 2019-10-30, 30 days).
+- **Claim:** A standard regressor can forecast a time series only after each forecast origin and horizon is converted into a leakage-safe tabular row; autoregressive lags and renewables must be frozen at the forecast origin while forward calendar signals advance; training on target load causes artificial error collapse, while deployment yields severe error; and target-day calendar features are required to restore the weekly demand shape in pooled direct regression.
+- **Model Architecture & Protocol:** We fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set. Within a feature set, that one Ridge model is pooled across all 168 origins and 30 horizons (5,040 rows), conditioned on horizon step $h$ and forward calendar features. The model produces one scalar prediction per row; 30 individual scalar predictions are assembled into the 30-day forecast trajectory. It is not recursive, not one-step, not a 30-output vector, and not 30 separate horizon models.
+- **Dataset:** German Daily Electricity Load (`de_electricity_load_daily.csv`, 2,100 days, 2015-01-01 to 2020-09-30, MW). Price is present in the source but is not used as an input feature by this 6.1 Ridge model.
+- **Split:** Fit: 168 origins, stride 2, 2018-10-01 through 2019-08-31; origin: `2019-09-30` | Test Holdout (2019-10-01 to 2019-10-30, 30 days).
 - **Empirical Results:**
-  - **Seasonal Naive Baseline:** Test MAE = **1,870.53 MW** (Test RMSE = 2,282.05 MW).
-  - **Safe Ridge (`safe_full`, 16 features):** Train MAE = **2,604.24 MW** | Test MAE = **1,690.57 MW** (Test RMSE = 3,336.66 MW).
-  - **Lags-Only Ridge (`lags_only`, 9 features):** Train MAE = 5,402.53 MW | Test MAE = **5,507.83 MW** (Test RMSE = 5,819.88 MW).
-  - **Leaky Rolling Ridge (`leaky_rolling`, 7 features):** Train MAE = **1,739.81 MW** (33.2% artificial reduction in train MAE!) | Test MAE = 1,722.56 MW.
-- **Falsifier Check:**
-  - *Condition 1:* Safe Ridge must beat Seasonal Naive on the 30-day holdout $\to$ **PASS** (1,690.57 MW vs 1,870.53 MW; 9.6% lower error).
-  - *Condition 2:* Lags alone fail without calendar features $\to$ **PASS** (5,507.83 MW; proving ML does not understand time without calendar encoding).
-  - *Condition 3:* Leaky rolling produces artificial training error collapse $\to$ **PASS** (Train MAE drops from 2,604 MW to 1,739 MW).
+  - **Seasonal Naive Benchmark (Honest):** Test MAE = **1,870.53 MW** | Honest Test RMSE = **2,941.57 MW** | Honest Train MAE = **3,131.22 MW** | Honest Train RMSE = **5,080.55 MW**. (Unfitted 7-day persistence heuristic, not a Ridge feature representation).
+  - **Safe Ridge (`safe_full`, 16 features):** Train MAE = **2,604.24 MW** | Test MAE = **1,690.57 MW** | Test RMSE = **3,336.66 MW**. Safe Ridge is closer on **19 of 30** October days. Largest miss occurs on `2019-10-03` (German Unity Day: actual 46,054.08 MW vs forecast 60,649.67 MW, absolute error 14,595.59 MW).
+  - **History + Horizon Ridge (`history_horizon` / `lags_only`, 9 features):** Train MAE = 5,402.53 MW | Test MAE = **5,507.83 MW** | Test RMSE = 5,819.88 MW. (Nearly flat path; lags without calendar cannot shape week).
+  - **+ Origin-Window Rolling Ridge (`history_rolling` / `lags_rolling`, 11 features):** Train MAE = 5,341.57 MW | Test MAE = **5,487.11 MW** | Test RMSE = 5,812.51 MW. (Nearly flat path; window averages ending at origin $T$ without calendar cannot shape week; known and frozen across all horizons and safe relative to $y(T+h)$).
+  - **Leaky Diagnostic Model (`target_load, h, h_sin, h_cos`, 4 features):**
+    - Train MAE = **10.91 MW** (Train RMSE = 13.34 MW)
+    - Invalid Test MAE = **9.86 MW** (Invalid Test RMSE = 11.57 MW)
+    - Production Test MAE = **4,506.22 MW** (Production Test RMSE = 6,223.66 MW)
+    - (Intentionally invalid diagnostic; production replaces unobserved future load with origin load, yielding severe failure).
+- **Locked Falsifier Check:**
+  - *Condition 1:* Leaky `train_mae < 400 MW` (10.91 MW) AND `invalid_test_mae < 400 MW` (9.86 MW) $\to$ **PASS** (extreme collapse versus safe train MAE near 2,600 MW).
+  - *Condition 2:* `production_test_mae >= 1.5 * safe_full test MAE` (4,506.22 MW $\ge$ 2,535.86 MW) $\to$ **PASS** (1.78x failure penalty).
 - **Gate 2 Verdict:** **PASS (Confirmed)**.
 
 ---

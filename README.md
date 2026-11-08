@@ -1,3 +1,4 @@
+<!-- agy smoke ok -->
 # Time Series Forecasting Interactive Course Dashboard
 
 This repository contains the interactive frontend dashboard for our comprehensive Time Series Forecasting course. Built with React, Vite, Recharts, and KaTeX, this application brings complex statistical models and machine learning pipelines to life through dynamic, slider-driven visualizations, honest backtesting, and interactive case studies.
@@ -11,7 +12,7 @@ This dashboard is designed to walk students through the entire landscape of Time
 3. **Metrics & Validation** (Loss landscapes, CV splits, data leakage) — *Completed*
 4. **Volatility: GARCH** (Conditional heteroskedasticity, VaR, ARIMA-GARCH) — *Completed*
 5. **VARIMA** (Multivariate feedback, Granger causality, CUSUM stability, VECM) — *Completed*
-6. **Traditional ML** (Feature engineering, Tree ensembles, XGBoost vs RF, multi-step) — *In Progress (Subtabs 6.1–6.2 implemented)*
+6. **Traditional ML** (Linear regression, SVR, tree ensembles, forecast strategies, extrapolation and prediction ranges)
 7. **Facebook Prophet** — *Upcoming*
 8. **Traditional DL** (RNNs, LSTMs, CNNs) — *Upcoming*
 9. **Modern DL** (Transformers) — *Upcoming*
@@ -72,14 +73,22 @@ Multivariate econometric modeling and cross-series feedback across 8 subtabs:
 7. **Coefficient Stability & Resilience:** Parameter drift tracking across historical regimes (pre-1984 Volcker disinflation vs Great Moderation) with automated CUSUM boundary breach diagnostics ($\pm 0.948$).
 8. **Cointegration & VECM:** Johansen cointegration tests and Vector Error Correction Models (VECM) for non-stationary series bound by long-run equilibrium.
 
-### Topic 6: Traditional Machine Learning (In Progress)
-Supervised machine learning applied to time-series forecasting using German electricity load data:
-1. **Supervised Learning Table (Completed):** Transforming raw chronological series into tabular lag matrices and rolling window features; illustrating lookahead leakage caused by unshifted rolling statistics.
-2. **Tree Ensembles & Boosting (Completed):** Comparing Random Forest against XGBoost / LightGBM split mechanics, non-linear feature interactions, and the step-function nature of decision trees.
-3. **The Forecast Arena (Upcoming):** Multi-model tournament benchmarking Linear Ridge, Random Forest, XGBoost, and Seasonal Naive baselines across multiple rolling folds.
-4. **Multi-Step Forecasting (Upcoming):** Direct vs Recursive vs Multi-Output multi-step forecasting horizons.
-5. **Extrapolation & Drift (Upcoming):** Out-of-distribution trend failures in tree models and hybrid detrending solutions.
-6. **Probabilistic ML (Upcoming):** Conformal prediction and quantile regression forests for calibrated uncertainty bands.
+### Topic 6: Traditional Machine Learning
+Paired controlled and real hourly rental forecasts, with a complete next-day horizon issued from each daily origin:
+1. **From Time Series to ML:** Ordinary linear regression, complete training records and weights, forecast-time information leakage, and feature engineering against a seasonal-naive baseline.
+2. **Support Vector Regression:** A nonlinear learner on the identical training records, fitted support-vector contributions, training tolerance and full-horizon forecasts.
+3. **Trees & Classical Comparison:** Follow a fitted decision tree, average genuine forest constituents, inspect XGBoost corrections, compare controlled/real results, and use the dedicated **ML versus classical** tab for Holt-Winters, seasonal ARIMA, seasonal VAR and a matched-predictor regression-plus-ARIMA comparator.
+4. **Direct & Recursive Forecasting:** Complete input records and provenance, strategy tradeoffs, full-rollout model selection, and a historically learned recursive point-error correction without new post-origin observations.
+5. **Trend & Extrapolation:** A continuing synthetic trend, fitted boundary routing, trend/remainder reconstruction and an honest comparison with linear trend plus weekday indicators.
+6. **Prediction Ranges & Calibration:** Preserve the same fixed-origin point path, fit quantile boundaries, widen using reconstructed historical forecast errors, and evaluate coverage, width, misses and interval score. Empirical rolling-origin calibration is not presented as a split-conformal guarantee.
+
+Sections 6.1–6.4 and 6.6 share a 24-hour task and the same Dataset/origin selectors. The real source is UCI Capital Bikeshare; the controlled simulation has declared working-day/hour/weather interactions and fixed seed 42. Twenty-one earlier development days select settings. All 366 daily origins in 2012 evaluate point forecasts, including every observed target hour. Four predefined quarterly origins provide fitted teaching illustrations. Section 6.5 explicitly switches to its separate seeded rising-load experiment. Recursive correction and uncertainty are evaluated on the illustrated days, with their narrower scope stated.
+
+Forest mean daily MAE improves over last-week repetition by 21.2% in the controlled case and 21.0% in the real case. The four-week average remains competitive. Full-year losses, model-ranking changes, an inspected real-data rebound and interval-width costs remain visible. These results support this task, not universal ML superiority.
+
+Regenerate with `python scripts/generators/regenerate_topic6_pairs.py` (or `npm run data:topic6`). This refits the complete evaluation and teaching evidence. For isolated case refits, run `--evaluate-case controlled` and `--evaluate-case real`; then `--check --reuse-canonical` independently rebuilds the teaching evidence and compares the saved output, excluding timing diagnostics. Frozen grids, development results and selected settings are in `scripts/generators/topic6_pair_selection.json`. The former partial/regression regenerators refuse to overwrite the paired schema. The active components are `Topic6PairedIntro.jsx`, `Topic6Pairs.jsx` and the shared/extrapolation helpers in `Topic6Sections.jsx`.
+
+See [the paired redesign and verification report](docs/topic6/CHAPTER_6_PAIRED_REDESIGN_2026-11-07.md). The earlier [German-load implementation report](docs/topic6/CHAPTER_6_IMPLEMENTATION_2026-11-07.md) is retained as a historical record.
 
 ---
 

@@ -263,28 +263,11 @@ export default function App() {
           </div>
           {activeTopic === 6 && (
             <div style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-              <div className={`nav-item ${activeSubTopic === 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
-                <span>6.1 Supervised Learning Table</span>
-              </div>
-              <div className={`nav-item ${activeSubTopic === 2 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(2); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
-                <span>6.2 Tree Ensembles & Boosting</span>
-              </div>
-              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
-                <Lock size={14} />
-                <span>6.3 The Forecast Arena</span>
-              </div>
-              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
-                <Lock size={14} />
-                <span>6.4 Multi-Step Forecasting</span>
-              </div>
-              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
-                <Lock size={14} />
-                <span>6.5 Extrapolation & Drift</span>
-              </div>
-              <div className="nav-item locked" style={{ fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
-                <Lock size={14} />
-                <span>6.6 Probabilistic ML</span>
-              </div>
+              {['From Time Series to ML', 'Support Vector Regression', 'Trees & Classical Comparison', 'Direct & Recursive Forecasting', 'Extrapolation', 'Prediction Ranges & Calibration'].map((title, index) => (
+                <div key={title} className={`nav-item ${activeSubTopic === index + 1 ? 'active' : ''}`} onClick={() => { setActiveSubTopic(index + 1); setIsMobileMenuOpen(false); }} style={{ cursor: 'pointer', fontSize: '0.9rem', padding: '0.4rem 0.75rem' }}>
+                  <span>6.{index + 1} {title}</span>
+                </div>
+              ))}
             </div>
           )}
           <div className="nav-item locked">
@@ -311,11 +294,11 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="app-container">
+      <main className="app-container" style={activeTopic === 6 ? { minWidth: 0 } : undefined}>
         <header>
           <div>
             <h1>{activeTopic === 1 ? 'Topic 1: Exponential Smoothing' : activeTopic === 2 ? 'Topic 2: ARIMA and Model Selection' : activeTopic === 3 ? 'Topic 3: Metrics & Validation' : activeTopic === 4 ? 'Topic 4: Volatility & GARCH' : activeTopic === 5 ? 'Topic 5: VARIMA — Forecasting Connected Series' : activeTopic === 6 ? 'Topic 6: Traditional Machine Learning' : ''}</h1>
-            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : activeTopic === 6 ? 'Supervised Feature Engineering, Tree Ensembles, Extrapolation Limits, and Calibrated Uncertainty' : ''}</div>
+            <div className="subtitle">{activeTopic === 1 ? 'Understanding Level, Trend, and Seasonality' : activeTopic === 2 ? 'Autoregressive, Moving Average, and Exogenous variables' : activeTopic === 3 ? 'Understanding Errors, Evaluation, and Robustness' : activeTopic === 4 ? 'Modeling Dynamic Risk and Market Shocks' : activeTopic === 5 ? 'Using Cross-Series Feedback to Improve Forecasts, Model Selection, and Long-Run Equilibrium' : activeTopic === 6 ? 'Controlled and Real Rental Forecasts, Classical Comparisons, and Uncertainty' : ''}</div>
           </div>
           <button
             className="theme-toggle"

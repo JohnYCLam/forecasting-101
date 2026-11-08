@@ -228,3 +228,11 @@ Maintain continuity with a repeated question at each transition:
 - The default view in every subsection visibly supports its stated claim.
 - At least one honest case favors an earlier-topic model or Random Forest over boosting, preventing a predetermined “XGBoost wins” narrative.
 - The final decision guide compares Sections 1–6 by evidence needs and operational constraints, not by a single global ranking.
+
+## Changelog
+
+- 2026-11-03: Simplified 6.1 tab 4 at the user's request: removed the seasonal-naive source-date mapping and expandable original-week table, and explained the repeat-last-week rule briefly in commentary. Forecasts, feature controls and MAE/RMSE comparison are unchanged.
+
+- 2026-11-03: User approved recombining 6.1/6.2 into four tabs: linear regression; complete training records and learned weights; complete forecast records and leakage; forecast shape and a strong weekly baseline. The introduction now displays genuine ordinary linear regression throughout, with Ridge retained only in legacy evidence/later comparisons. Later routes return to 6.2–6.6. See `SECTION_6_1_CONSOLIDATION_2026-11-03.md` for the approved storyboard, expected results and falsifiers.
+
+- 2026-11-03: At the user's request, promoted the reviewed Method B introduction from `experiments/section6_methods_2026-11-03/method_b/ts-forecasting-demo` into the main application. Section 6.1 now covers inputs, training examples and linear regression/Ridge; section 6.2 covers issuing forecasts, information cutoffs and feature engineering. Later sections move to 6.3–6.7. The existing experiment brief and evidence were reused; no additional teaching changes were included. Stored tab2–tab6 results and unrelated working changes are preserved. See `METHOD_B_PROMOTION_VERIFICATION_2026-11-03.md` for transfer and verification evidence.

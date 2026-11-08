@@ -13,5 +13,5 @@ description: Process the user's questions, doubts, recommendations, updates or c
 6. Assess recommendations honestly (agree or disagree with reasons).
 7. Apply an explicitly requested scoped update without asking again. For an unsolicited recommendation or a substantive design the user has not specified,
    present the concept ledger/impact list and STOP for approval.
-8. After approval, run `/implement-plan` on a short task list, then the follow-through checklist and `/ship-check`.
+8. After approval, run `/implement-plan` using the existing brief or a short task list. That workflow owns follow-through and the single final `/ship-check`; do not invoke them a second time when it returns.
 9. Use the reply format from the skill.

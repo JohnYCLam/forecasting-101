@@ -40,13 +40,13 @@ If the tab already has 3 or more edits since its last restructure, or the shape 
 Words follow `plain-language-guard` (gloss jargon, registered names from `.agents/TERMS.md`).
 
 ## 3. Follow-through after each applied change
-Wording-only: changelog line, `npm run lint`, `visual-check` of that tab. Anything touching data, numbers, claims or controls: all of these.
+Record a changelog line and check affected cross-references. Apply the relevant data/content criteria below during implementation. `/ship-check` owns the final applicable commands and browser check once per completed change set; if `/implement-plan` already ran it, reuse that report.
 - Data changed: regenerate the JSON, validator, `demo-correctness-review` Phase B.
 - Numbers in commentary still interpolated from JSON and still true (search the topic file for related text).
 - Other tabs using the same data/control, and later topics or README that refer to this one, still consistent.
 - Dated line in `topicN_plan.md` `## Changelog` (create the section if missing).
 - `demo-explainability` re-run for the tab; `.agents/LESSONS.md` lesson if a mistake was found.
-- `visual-check`, then `/ship-check`.
+- One final `/ship-check`, including the applicable `visual-check`; do not run a second browser/check suite from this checklist.
 Several approved items: make a short task list (`plan-to-tasks` format) and run them one at a time.
 
 ## 4. Reply format

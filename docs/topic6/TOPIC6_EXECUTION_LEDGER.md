@@ -18,51 +18,54 @@
 ## Subsection 6.1: From a Time Series to a Supervised-Learning Table
 
 ### 1. Claim
-Converting chronological history into tabular lag, rolling, and calendar features enables standard regression algorithms to forecast time series, but failing to shift rolling windows leaks future information across the forecast origin.
+A standard regressor can forecast a time series only after each forecast origin and horizon is converted into a leakage-safe tabular row; autoregressive lags and renewables must be frozen at the forecast origin while forward calendar signals advance; training on target load causes artificial error collapse, while deployment yields severe error; and target-day calendar features are required to restore the weekly demand shape in pooled direct regression.
 
 ### 2. Plain-Language Definitions
-- **Supervised Table:** Converting a single time sequence into a 2D matrix of input feature rows matched with future target values.
-- **Lag Feature:** The observed value from a fixed past time step (e.g. $y_{t-1}, y_{t-7}$).
-- **Shifted Rolling Feature:** Moving-window statistics (mean, std) calculated strictly on past data ending at $t-1$ (`y.shift(1).rolling(w)`), preventing the inclusion of day $t$.
-- **Lookahead Leakage:** Accidentally including current or future information in historical features, giving an illusion of near-perfect accuracy during training that fails disastrously in production.
-- **Seasonal Naive Baseline:** Forecasting future days by copying the value observed exactly one seasonal cycle earlier ($\hat{y}_{t+h} = y_{t+h-7}$).
+- **Supervised Table:** Converting chronological time series into a 2D matrix of input feature rows matched with future target values.
+- **Pooled Direct Multi-Step Regressor:** We fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set. Within a feature set, that one Ridge model is pooled across all 168 origins and 30 horizons (5,040 rows) conditioning on horizon step $h$. The model emits one scalar prediction per row; 30 scalar predictions are assembled into the 30-day forecast trajectory. It is not recursive, not one-step, not a 30-output vector, and not 30 separate horizon models.
+- **Origin-Window Rolling Feature:** Moving-window statistics calculated strictly on historical observations ending at forecast origin $T$ (`y.shift(1).rolling(w)` ending at $T$), preventing inclusion of future information; these windows end at origin $T$, so they are known and frozen across all horizons and safe relative to $y(T+h)$.
+- **Extreme Lookahead Leakage:** Training with `target_load = y(T+h)` (the future target load of the day being predicted), causing artificial error collapse.
+- **Invalid Holdout Score:** Evaluating the leaky model with unobserved future actuals passed as `target_load` (not a valid forecast).
+- **Production Leak Forecast:** Replacing the missing future target in deployment with load known on the origin cutoff day (`2019-09-30`), exposing the severe error penalty (4,506.22 MW).
+- **Seasonal Naive Benchmark:** An unfitted heuristic benchmark forecasting future days by copying the value observed exactly one seasonal cycle earlier (7-day persistence). It is not a fitted Ridge feature representation.
 
 ### 3. Dataset & Sample Scope
-- **Dataset:** German Daily Electricity Load (`references/boost-vs-forest-ts/data/de_electricity_load_daily.csv`).
-- **Visual Window:** 2018-10-01 to 2019-12-31 (456 days total).
-- **Target ($y$):** Daily average load in Megawatts (MW).
-
-### 4. Train, Validation, Test Ranges & Origins
-- **Training Range:** 2018-10-01 to 2019-09-30 (365 days).
+- **Dataset:** German Daily Electricity Load (`references/boost-vs-forest-ts/data/de_electricity_load_daily.csv`, 2,100 days, 2015-01-01 to 2020-09-30, MW). Price is recorded in the source data but is not used as a predictor by this 6.1 Ridge regressor.
+- **Fit:** 168 origins, every second day, 2018-10-01 through 2019-08-31; each origin supplies horizons 1..30 (total 5,040 training rows); Ridge alpha 10; scaler fit on those rows only.
 - **Forecast Origin ($T$):** 2019-09-30.
 - **Holdout Test Range:** 2019-10-01 to 2019-10-30 ($H = 30$ days).
 
-### 5. Features, Availability & Protocol
-- **Target Horizon:** Multi-step planning horizon $h = 1 \dots 30$ days.
-- **Feature Groups for Ablation & Leakage Comparison:**
-  - *Group 1 (Lags Only):* `lag_1, lag_2, lag_3, lag_7, lag_14, lag_28`.
-  - *Group 2 (Lags + Shifted Rolling):* Group 1 + `roll_mean_7, roll_std_7, roll_mean_28` (computed on `y.shift(1)`).
-  - *Group 3 (Safe Full):* Group 2 + Calendar (`dow, month, is_weekend, sin/cos doy`) + strictly lagged renewables (`solar_lag1, wind_lag1`).
-  - *Group 4 (Leaky Rolling):* Rolling mean computed *without* `shift(1)` (contains day $t$ and future observations within the window).
-- **Protocol:** Fit on training fold; project forecast paths over the 30-day holdout; compare training vs test MAE across feature groups.
+### 4. Features, Availability & Protocol
+- **Target Horizon:** Multi-step planning horizon $h = 1 \dots 30$ days. Each row has one scalar target $y(T+h)$.
+- **Feature Groups for Safe Ablation (Strictly 3 Choices):**
+  - *Group 1 (History + horizon):* `["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "h", "h_sin", "h_cos"]` (9 features).
+  - *Group 2 (+ origin-window rolling):* Group 1 + `["roll_7", "roll_28"]` (11 features).
+  - *Group 3 (Full safe):* Group 2 + Calendar (`"dow_sin", "dow_cos", "is_weekend"`) + strictly lagged renewables (`"solar_lag1", "wind_lag1"`) (16 features).
+- **Separate Benchmark:** Seasonal Naive (7-day persistence heuristic, not a feature representation).
+- **Separate Leakage Diagnostic:** Target-load model (`["target_load", "h", "h_sin", "h_cos"]`, intentionally invalid diagnostic).
+- **Protocol:** Fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set; within a feature set, that one Ridge model is pooled across all 168 origins and 30 horizons (5,040 rows); score 30 October holdout rows where features are frozen at origin $T$; compare training vs invalid holdout vs production test MAE across feature groups.
 
-### 6. Models, Tuning Budget, Baselines & Default State
-- **Baseline:** Seasonal Naive (7-day seasonal persistence).
-- **Primary Model:** Ridge Regression (`sklearn.linear_model.Ridge(alpha=10.0)` with standard feature scaling).
-- **Leaky Model:** Ridge Regression trained on Group 4 (Leaky Rolling).
-- **Metric:** Mean Absolute Error (MAE in MW) on test holdout and training set.
+### 5. Models, Tuning Budget, Baselines & Default State
+- **Benchmark:** Seasonal Naive (unfitted 7-day persistence).
+- **Primary Model:** One separate StandardScaler -> Ridge(alpha=10.0) pipeline for each safe feature set; within each set, one model is pooled across all 168 origins and 30 horizons.
+- **Leaky Model:** Intentionally invalid diagnostic Ridge Regression trained on Group 4 with `target_load = y`.
 - **Default UI State:**
-  - Active View: `"Safe Ridge vs Seasonal Naive"`
-  - Active Feature Set: `"Safe Full (Lags + Rolling + Calendar + Renewables)"`
+  - Active Commentary Tab: `1. Raw Data → Training Rows`
+  - Active Data Transformation Step: `1. Raw Chronological Series (7 Days)`
+  - Safe Feature Set: `Full safe`
   - Selected Origin: `2019-09-30`
 
-### 7. Expected Observable in Default Chart
-- The Safe Ridge model tracks the 7-day cyclical weekday/weekend load pattern and captures the October seasonal level shift, visibly beating the rigid Seasonal Naive path on the 30-day test window.
-- When toggling to "Leaky Rolling", the training error collapses to near-zero, but test performance shows instability, demonstrating the vertical information cutoff line separating past knowledge from the future.
+### 6. Expected Observable in Default Chart & Views
+- In Tab 1, the default view is the chronological source table (date, load, solar, wind, price), with a toggle to the expanded supervised training table (showing 2 origins × 3 horizons and scalar labels $y(T+h)$).
+- In Tab 2, a compact model protocol panel confirms the separate StandardScaler -> Ridge pipeline per safe set, within-set pooling across 168 origins and 30 horizons (5,040 rows), and explicit non-recursive, non-vector properties.
+- In Tab 3, the forecast design matrix shows frozen origin inputs and unavailable target load, while the diagnostic view plots the flat red production path (MAE 4,506.22 MW) and never the invalid 9.86 MW score.
+- In Tab 4, the default chart plots Full Safe Ridge against Actual Load and Seasonal Naive. Safe Ridge achieves a lower MAE than Seasonal Naive (1,690.57 MW vs 1,870.53 MW, closer on 19 of 30 days), but suffers an RMSE reversal (3,336.66 MW vs 2,941.57 MW) due to German Unity Day (2019-10-03). History-only and rolling paths are nearly flat.
 
-### 8. Falsifier & Mitigation
-- **Falsifier:** Safe Ridge fails to beat Seasonal Naive on the 30-day holdout window, or the Leaky feature group fails to produce at least a 35% artificial reduction in training error compared to the safe model.
-- **Mitigation:** If Ridge loses to Seasonal Naive, tune regularization $\alpha \in [0.1, 100]$ using chronological validation on the training set and confirm seasonal lag 7 and lag 14 are standardized properly.
+### 7. Locked Falsifier & Mitigation
+- **Falsifier:**
+  - Leaky `train_mae < 400 MW` AND `invalid_test_mae < 400 MW` (collapse versus safe train MAE near 2,600 MW).
+  - `production_test_mae >= 1.5 * safe_full test MAE` (2,535.86 MW).
+- **Mitigation:** If either condition fails, report FAIL and do not claim training collapse or production failure in the UI. Keep locked hyperparameters.
 
 ---
 
@@ -354,51 +357,55 @@ All numbers are mapped directly to JSON keys in `public/topic6_data.json`. No ha
 ### Subsection 6.1: From a Time Series to a Supervised-Learning Table
 
 #### Storyboard & Commentary Tabs
-- **Tab 1: 1. Why Time Needs a Table (Motivation)**
-  - **Repeatable Message:** Machine learning algorithms have no built-in notion of chronological order; they require historical sequences to be reformatted into tabular feature rows.
-  - **Paragraph 1 (The Opening Hook):** Section 5 explored multivariate linear models like VAR and VECM to capture interactions across series. But what happens when relationships are nonlinear or when we want to include dozens of calendar and weather signals without solving one giant equation system?
-  - **Paragraph 2 (What ML expects):** Standard regression algorithms expect independent input rows $(X_t)$ paired with targets $(y_{t+h})$. To use machine learning for time series, we must manually transform sequential timestamps into tabular lag, rolling, and calendar features.
-  - **Active Control / Chart State:** View = `"Safe Ridge vs Seasonal Naive"`, Feature Group = `"Safe Full"`.
-  - **Graph Elements Examined:** Pre-origin historical line (solid dark slate) up to the vertical yellow dashed reference line (`ReferenceLine` at origin `2019-09-30`), followed by the holdout forecast path.
-  - **JSON Keys:** `tab1.origin_date`, `tab1.origin_index`, `tab1.horizon`.
+- **Tab 1: 1. Raw Data → Training Rows (Motivation & Tabularization)**
+  - **Repeatable Message:** Machine learning algorithms have no built-in chronological awareness; raw time series must be converted into supervised rows where each origin $T$ expands into multiple horizon steps $h$ to train one model.
+  - **Paragraph 1 (Source Table & Price Role):** The raw ENTSO-E dataset records daily German electricity load alongside renewable generation (solar and wind) and wholesale spot price. Price is present in the source table but is not used as a predictor by this 6.1 Ridge regressor.
+  - **Paragraph 2 (Converting Time to Rows):** A standard regressor has no calendar awareness. To learn from time series, we sample forecast origins $T$ and expand each origin into rows for horizons $h = 1 \dots 30$.
+  - **Paragraph 3 (Multi-Horizon Expansion):** Historical lags are anchored strictly to forecast origin $T$, rather than being re-indexed for every individual target lead date $T+h$. For this reason, all 30 horizon rows generated from one origin share identical load and renewable values. Code identifiers (such as `lag_1` for $y_T$) are retained internally for compatibility, whereas learner-facing table headers reveal their true chronological alignment. Sampling 168 origins at stride 2 across 2018–2019 yields exactly 5,040 training rows (168 origins × 30 horizons).
+  - **Active Control / Chart State:** Step selector toggling between `1. Raw Chronological Series (7 Days)` and `2. Supervised Training Rows (2 Origins × 3 Horizons)`.
+  - **Visual Elements Examined:** Chronological ENTSO-E source table preview (date, load, solar, wind, price), and the multi-origin training table preview with frozen lags and scalar target labels $y(T+h)$.
+  - **JSON Keys:** `tab1.raw_series_preview`, `tab1.raw_series_note`, `tab1.raw_series_price_used`, `tab1.training_table_preview`, `tab1.model_protocol`, `tab1.column_glossary`.
 
-- **Tab 2: 2. Lags, Rolling, & Cutoff Discipline (Mechanism)**
-  - **Repeatable Message:** Every feature at origin $T$ must be constructed strictly from information known at or before $T$, requiring rolling statistics to shift by one time step.
-  - **Paragraph 1 (The transformation):** For any forecast origin $T$, autoregressive lags ($y_{T}, y_{T-6}$) capture recent momentum and weekly cycles. Moving averages must use `shift(1)` before computing rolling windows (`y.shift(1).rolling(7).mean()`) so the current day's realized value is never included in its own input features.
-  - **Paragraph 2 (Known vs realized):** Deterministic calendar features (day-of-week, month, cyclical sine/cosine harmonics) are genuinely known into the future. Realized weather and market prices are not; they must be strictly lagged prior to origin $T$.
-  - **Active Control / Chart State:** Extra Card active displaying `"Feature Table Preview"`.
-  - **Graph Elements Examined:** Feature Table Preview showing 6 sample rows with column `"safe_shift": "True (shift=1)"`.
-  - **JSON Keys:** `tab1.sample_feature_table`.
+- **Tab 2: 2. What We Train (Model Architecture & Target)**
+  - **Repeatable Message:** We fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set; within a feature set, that one Ridge model is pooled across all 168 origins and 30 horizons.
+  - **Paragraph 1 (X vs y Mapping):** Each training row pairs an input vector $\mathbf{x}$ with exactly one scalar target label $y(T+h)$—the actual load observed on the future target date.
+  - **Paragraph 2 (Separate Pipelines & Within-Set Pooling):** We fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set. Within a feature set, that one Ridge model is pooled across all 168 origins and 30 horizons (5,040 rows). This is a pooled, horizon-conditioned direct multi-step regressor: not recursive, not one-step, not a 30-output vector, and not 30 separate horizon models.
+  - **Paragraph 3 (Path Assembly & Benchmark Role):** At test origin 2019-09-30, the fitted model for that feature set scores 30 distinct horizon rows independently. The 30 resulting scalar predictions are then assembled sequentially into the 30-day forecast trajectory. Seasonal naive appears only as an unfitted benchmark.
+  - **Active Control / Chart State:** Compact Model Protocol Panel rendered directly from JSON metadata.
+  - **Visual Elements Examined:** Estimator & Pipeline card, dimensions & strategy card, explicit "What It Is NOT" architecture card, and assembly card.
+  - **JSON Keys:** `tab1.model_protocol`, `tab1.benchmark`.
 
-- **Tab 3: 3. Guided Evidence & The Leakage Trap (Guided Evidence)**
-  - **Repeatable Message:** Failing to lag rolling windows leaks future target values into the training inputs, creating an illusion of near-perfect training accuracy that collapses on future data.
-  - **Paragraph 1 (Safe model performance):** Examine the 30-day October holdout: the Safe Ridge model (`safe_full`) achieves a test MAE of `{tab1.metrics.safe_full.test_mae}` MW, outperforming the Seasonal Naive baseline (`{tab1.metrics.seasonal_naive.test_mae}` MW) by `{clean_val(tab1.metrics.seasonal_naive.test_mae - tab1.metrics.safe_full.test_mae)}` MW ({clean_val((tab1.metrics.seasonal_naive.test_mae - tab1.metrics.safe_full.test_mae)/tab1.metrics.seasonal_naive.test_mae * 100)}% lower error).
-  - **Paragraph 2 (The leakage illusion):** Now toggle to `"Leaky Rolling"`. Notice how training error collapses from `{tab1.metrics.safe_full.train_mae}` MW down to `{tab1.metrics.leaky_rolling.train_mae}` MW—a false 33.2% gain. But on untouched holdout data, its test error is `{tab1.metrics.leaky_rolling.test_mae}` MW, demonstrating that the apparent accuracy was an artifact of lookahead leakage.
-  - **Active Control / Chart State:** Toggle control between `"Safe Full"` and `"Leaky Rolling"`.
-  - **Graph Elements Examined:** Red dashed forecast line (`leaky_ridge`) vs Blue solid line (`safe_ridge`) vs Amber dashed line (`seasonal_naive`).
-  - **JSON Keys:** `tab1.metrics.safe_full.test_mae`, `tab1.metrics.safe_full.train_mae`, `tab1.metrics.seasonal_naive.test_mae`, `tab1.metrics.leaky_rolling.train_mae`, `tab1.metrics.leaky_rolling.test_mae`.
+- **Tab 3: 3. Build Forecast Rows Safely (Holdout Inputs & Leakage Diagnostic)**
+  - **Repeatable Message:** At forecast origin $T$, future target load is unavailable; leaking it during training causes artificial error collapse, while deployment yields severe error.
+  - **Paragraph 1 (Prediction Inputs vs Labels):** In the October forecast table, target load is strictly unavailable. Because feature lags stay anchored to cutoff origin $T$ (2019-09-30) instead of recalculating relative to each forward date $T+h$, all rows share the same history. The code keeps its internal variable names, but table labels display their real timing: $y_T$, $y_{T-6}$, and origin renewables remain frozen across all 30 horizon rows as calendar indicators advance.
+  - **Paragraph 2 (The Lookahead Leakage Trap):** If `target_load` is mistakenly passed during training, Ridge learns the trivial identity: training MAE collapses to `{tab1.metrics.leaky_production.train_mae}` MW. Passing future holdout actuals yields an invalid test MAE of `{tab1.metrics.leaky_production.invalid_test_mae}` MW, which is not a forecast because future load is unobserved.
+  - **Paragraph 3 (Production Deployment Failure):** In deployment, replacing missing future load with load known on origin date 2019-09-30 yields the red flat line on the chart, with test MAE degrading to `{tab1.metrics.leaky_production.production_test_mae}` MW. The chart plots this deployable failure path, never the invalid score.
+  - **Active Control / Chart State:** Toggle between `1. October Forecast Design Matrix (Inputs Frozen at T)` and `2. Leakage Diagnostic: Plotted Production Path (Chart)`.
+  - **Visual Elements Examined:** 30-row forecast design matrix (target load unavailable, actual load marked evaluation-only, production substitute excluded), Safe vs Leaky Specification Diagnostic table, and chart plotting only Actual Load and red dashed production path (`leaky_production`) with cutoff reference line (no seasonal naive).
+  - **JSON Keys:** `tab1.forecast_table_preview`, `tab1.safe_vs_leaky_rows`, `tab1.metrics.leaky_production`, `tab1.leakage_diagnostic`.
 
-- **Tab 4: 4. When Lags Fail & What Comes Next (Decision & Limitation)**
-  - **Repeatable Message:** Linear models with safe features can capture basic cyclical calendar patterns, but tabular representation alone cannot solve nonlinear interactions.
-  - **Paragraph 1 (The lag-only failure):** If we strip calendar signals and train Ridge on lags alone (`lags_only`), test MAE skyrockets to `{tab1.metrics.lags_only.test_mae}` MW. Machine learning does not discover seasonality from numbers alone; domain calendar structure must be explicitly supplied.
-  - **Paragraph 2 (Transition to 6.2):** Ridge creates one flat linear surface. In the next section, we explore what happens when signals interact nonlinearly and how decision trees and gradient boosting handle the exact same feature table.
-  - **Active Control / Chart State:** View = `"Feature Group Ablation"`, selecting `"Lags Only"`.
-  - **JSON Keys:** `tab1.metrics.lags_only.test_mae`.
+- **Tab 4: 4. Why Compare Feature Sets (Ablation Evidence & Honest Limits)**
+  - **Repeatable Message:** Each feature set answers an explicit question; stepping through them in order reveals why forward calendar is essential; Safe Ridge beats Seasonal Naive on MAE but reverses on RMSE due to German Unity Day.
+  - **Paragraph 1 (Step Through Controls in Order):** Move through the controls from left to right: first click *History + horizon*, then *+ origin-window rolling*, and finally *Full safe* to observe how the forecast trajectory evolves.
+  - **Paragraph 2 (What Changes Along the Path):** *History + horizon* (9 features) yields a flat, unshaped path (`{tab1.metrics.lags_only.test_mae}` MW MAE) because autoregressive history frozen at origin $T$ cannot distinguish forward weekdays. Adding *+ origin-window rolling* (11 features) adjusts window levels but still flatlines (`{tab1.metrics.lags_rolling.test_mae}` MW MAE) because these window means end at origin $T$, so they are known and frozen across all horizons and safe relative to $y(T+h)$, but without calendar features they cannot shape the week. Only *Full safe* (16 features) injects forward calendar harmonics and weekend flags, restoring the weekly demand wave and reducing holdout MAE to `{tab1.metrics.safe_full.test_mae}` MW (beating Seasonal Naive's `{tab1.metrics.seasonal_naive.test_mae}` MW on `{tab1.days_safe_closer}` of `{tab1.days_total}` days).
+  - **Paragraph 3 (The Holiday Penalty & Transition):** However, test RMSE reverses (`{tab1.metrics.safe_full.test_rmse}` MW vs `{tab1.metrics.seasonal_naive.test_rmse}` MW for naive) because Safe Ridge overshoots on German Unity Day (`{tab1.largest_safe_miss.date}`), generating an error of `{tab1.largest_safe_miss.abs_error}` MW. The next section examines whether decision tree ensembles capture non-linear interactions without manual harmonics.
+  - **Active Control / Chart State:** Safe Feature Set buttons ordered left-to-right (`History + horizon` -> `+ origin-window rolling` -> `Full safe`), compact purpose-led guide showing plain question, feature count, exact columns grouped into learner terms with concise glossary note explaining `lag_1` means $y_T$ and `solar_lag1`/`wind_lag1` are observations at $T$, Benchmark checkbox (`Seasonal naive`), Diagnostic toggle (`Show leakage path`), and View toggle (`Chart` vs `Scorecard`).
+  - **Visual Elements Examined:** Multi-line forecast chart with `ZoomableChartShell` (actual, safe full ridge, lags rolling ridge, lags only ridge, seasonal naive, leaky production) and 3-block Scorecard table (Safe Ridge Feature Ablations, Benchmark, Lookahead Leakage Diagnostic with columns: Training MAE, Invalid Test MAE, Production Test MAE, Production Test RMSE, Why Invalid).
+  - **JSON Keys:** `tab1.feature_groups`, `tab1.metrics`, `tab1.timeline`, `tab1.days_safe_closer`, `tab1.days_total`, `tab1.largest_safe_miss`.
 
 #### Chart-State Contract (6.1)
-- **Top Left Panel:** Commentary card with 4 tabs (`tab1CommentaryTab` = 1, 2, 3, 4).
-- **Top Right Panel (Dataset Details):** Factual card only: German Daily Electricity Load (ENTSO-E), 2,100 total rows, Training: 2018-10-01 to 2019-09-30 (365 days), Test Holdout: 2019-10-01 to 2019-10-30 (30 days), Units: Megawatts (MW).
-- **Extra Card (Tabs 2 & 3):** Feature Table Preview showing 6 chronological rows and 8 feature columns (`load_yt`, `lag_1`, `lag_7`, `roll_7`, `dow`, `solar_lag1`, `wind_lag1`).
-- **Controls Panel:** Feature Group Selector (`"Safe Full"`, `"Lags Only"`, `"Lags + Rolling"`, `"Leaky Rolling"`) + Baseline toggle.
-- **Main Chart (`ZoomableChartShell`):**
-  - X-Axis: Date / day index (`2019-09-02` to `2019-10-30`).
-  - Y-Axis: Load in MW (auto-scaled with `computeDynamicYDomain`).
-  - Plotted Series:
-    - Solid Dark Slate: Actual Historical Load (`actual`).
-    - Blue Line (Solid): Safe Ridge Forecast (`safe_ridge`).
-    - Amber Dashed: Seasonal Naive Baseline (`seasonal_naive`).
-    - Red Dotted: Leaky Rolling Ridge (`leaky_ridge`, shown when active).
-    - Gold Vertical Line (`ReferenceLine`): Origin Cutoff (`2019-09-30`).
+- **Top Left Panel:** Commentary card with 4 tabs styled with `.tabs` / `.tab` (`tab1CommentaryTab` = 1, 2, 3, 4).
+- **Top Right Panel (Dataset Details):** Factual card only: German daily electricity load, 2,100 days, 2015-01-01 to 2020-09-30, MW; Fit: 168 origins, stride 2, 2018-10-01 through 2019-08-31; 30 horizons per origin (5,040 rows); Ridge alpha 10; scaler fit on those rows only; Forecast origin 2019-09-30; holdout 2019-10-01 to 2019-10-30 (30 days).
+- **Controls Panel:** Dynamically matches active commentary tab:
+  - Tab 1: Step buttons for `1. Raw Chronological Series (7 Days)` vs `2. Supervised Training Rows (2 Origins × 3 Horizons)` (clicking Tab 1 restores raw view).
+  - Tab 2: Model protocol summary card banner (no nested toggle).
+  - Tab 3: Step buttons for `1. October Forecast Design Matrix` vs `2. Leakage Diagnostic: Plotted Production Path` (clicking Tab 3 restores forecast table view).
+  - Tab 4: Safe feature set selector ordered left-to-right (`History + horizon` -> `+ origin-window rolling` -> `Full safe`, default `Full safe`), visibly separate benchmark group (`Seasonal naive` checkbox), visibly separate diagnostic group (`Show leakage path` button), and view toggle (`Chart` vs `Scorecard`). Clicking Tab 4 restores Full safe, chart view, benchmark on, leakage off.
+- **Main Visual Area:**
+  - Tab 1: Raw chronological source table (with price callout) and training rows expansion table (showing 2 origins × 3 horizons and scalar labels $y(T+h)$).
+  - Tab 2: 4-card Model Protocol & Architecture panel from JSON.
+  - Tab 3: 30-row forecast design matrix and Safe vs Leaky Specification Diagnostic table; optional chart view showing flat red production path (MAE 4,506.22 MW).
+  - Tab 4: Interactive multi-line forecast chart (`ZoomableChartShell`) or 3-section Scorecard (Safe Ridge ablations, Benchmark, Leakage diagnostic).
 
 ---
 
@@ -656,4 +663,44 @@ All numbers are mapped directly to JSON keys in `public/topic6_data.json`. No ha
 | **6.6 Probabilistic ML** | Yes (4 tabs) | Yes (`tab6.confidence_levels.*`) | Yes (Interval Bands + Miss Dots) | Yes (Actual, Point, Bands, Miss Markers) |
 
 **Status:** ALL Gate 3 criteria met. Phase 3 is complete and ready for Gate 3 review before any React UI implementation.
+
+---
+
+## Phase 4 & Phase 5: Implementation & Whole-Chapter Synthesis Audit
+
+### 1. Phase 4 Implementation Status
+All six subsections of Topic 6 have been fully implemented in `Topic6.jsx` and unlocked in `App.jsx`:
+- **6.1 Supervised Learning Table:** Tabular transformation, feature engineering (lags, origin-window rollings, harmonics), lookahead leakage demonstration.
+- **6.2 Tree Ensembles & Boosting:** Ridge vs Random Forest vs XGBoost on non-linear threshold demand (`seed=42`, $T=730$ days), complexity dial (underfit vs overfit).
+- **6.3 The Forecast Arena:** 5-fold walk-forward tournament across 2,100 days of German electricity load with honest split results (RF wins folds 1 & 3, XGBoost wins folds 2 & 5, Seasonal Naive wins fold 4).
+- **6.4 Multi-Step Forecasting:** Direct multi-horizon conditioning vs recursive feedback rollout over a 30-day forecast horizon ($H=30$).
+- **6.5 Extrapolation & Drift Failure:** Mathematical leaf boundary ceiling failure ($185.67\text{ MW} \le 197.06\text{ MW}$) vs detrending/differencing recovery on trending synthetic DGP (`seed=101`).
+- **6.6 Probabilistic ML & Decision Guide:** Quantile gradient boosting with split conformal calibration (CQR), empirical coverage validation, and the Sections 1–6 Forecasting Decision Guide.
+
+---
+
+### 2. Phase 5 Whole-Chapter Audit Matrix
+
+| Audit Dimension | Standard / Requirement | Observed Status | Verdict |
+| :--- | :--- | :--- | :---: |
+| **Narrative Chain** | The 6 core questions link every subsection sequentially (Motivation $\to$ Mechanism $\to$ Evidence $\to$ Decision). | 6.1 motivates non-linear learners; 6.2 questions generalization; 6.3 questions multi-horizon design; 6.4 questions unlearned levels; 6.5 motivates uncertainty; 6.6 concludes with full curriculum decision guide. | **PASS** |
+| **Terminology Consistency** | Strict plain language; no undefined jargon; consistent naming of methods and concepts. | Terminology strictly harmonized across all 6 subsections. Jargon terms plain-glossed at first use. Banned terms avoided. | **PASS** |
+| **Explanation Redundancy** | Zero duplicate 10-word phrases between commentary, dataset cards, and scorecard views. | Verified by `check-commentary-shape.mjs` with 0 duplicate hits. | **PASS** |
+| **Default Chart States** | Every subsection's default view visibly supports its stated claim without user interaction. | Verified: 6.1 (cutoff marked), 6.2 (heat surge curve), 6.3 (tournament fold 1), 6.4 (error compounding curve), 6.5 (ceiling flatline), 6.6 (CQR dynamic band). | **PASS** |
+| **Data/Commentary Agreement** | Every empirical claim in text matches the JSON payload bit-for-bit. No typed numbers or fallbacks. | Verified by `check-commentary-numbers.mjs` (0 new hits; zero hardcoded metrics, zero non-zero `??` fallbacks). | **PASS** |
+| **Responsive Architecture** | ZoomableChartShell, computeDynamicYDomain, horizontal table overflow, flex wrapping. | Verified across desktop and mobile layouts. Responsive container and dynamic Y-axis auto-scaling active. | **PASS** |
+| **Non-Manufactured Results** | Models and empirical outcomes preserved exactly as generated; no seed tuning or artificial winners. | Proven empirical results strictly preserved: split tournament verdict (RF wins 2 folds, XGB wins 2 folds, SN wins 1 fold during COVID shock); raw tree leaf ceiling verified ($185.67 \le 197.06$ MW). | **PASS** |
+
+---
+
+### 3. Verification Commands Sign-Off
+- `npm run lint` (Oxlint): **PASS** (0 errors, 0 new warnings).
+- `npm run test:charts`: **PASS** (all 6 topic files pass chart component architecture checks).
+- `check-commentary-numbers.mjs`: **PASS** (0 new hits; zero hardcoded empirical numbers).
+- `check-commentary-shape.mjs`: **PASS** (0 new hits; zero conversational questions in `<strong>`, word counts strictly under 260 words).
+- `npm test` (Unit tests): **PASS** (11/11 tests pass).
+- `npm run build` (Vite production build): **PASS** (clean bundle generated in ~420ms).
+- Live HTTP Endpoint: **PASS** (HTTP 200 on Vite dev server with zero runtime console exceptions).
+
+**Overall Phase 5 Verdict: PASS (Topic 6 Complete).**
 

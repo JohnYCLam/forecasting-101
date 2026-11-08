@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import RandomForestRegressor
@@ -22,6 +22,13 @@ from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 import xgboost as xgb
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.api import Holt
+
+if __package__:
+    from .topic6_linear_intro import build_linear_intro
+    from . import topic6_sections as section_evidence
+else:
+    from topic6_linear_intro import build_linear_intro
+    import topic6_sections as section_evidence
 
 warnings.filterwarnings("ignore")
 
@@ -96,6 +103,7 @@ def gen_tab1(df: pd.DataFrame) -> dict:
         i for i, dt in enumerate(df["datetime"])
         if dt >= train_start_dt and dt <= (origin_dt - pd.Timedelta(days=horizon))
     ]
+    train_origins_used = train_origins[::2]  # Sample every 2 days for speed & compact size
     
     def build_tab1_rows(origins: list[int]):
         rows = []
@@ -123,9 +131,6 @@ def gen_tab1(df: pd.DataFrame) -> dict:
                 fut_dt = df.loc[fut_idx, "datetime"]
                 y_fut = float(df.loc[fut_idx, "y"])
                 
-                # Leaky feature: centered unshifted rolling average using future observations up to fut_idx
-                leaky_r7 = float(df.loc[max(0, fut_idx - 6):fut_idx, "y"].mean())
-                
                 rows.append({
                     "origin_dt": dt,
                     "target_dt": fut_dt,
@@ -147,28 +152,31 @@ def gen_tab1(df: pd.DataFrame) -> dict:
                     "roll_28": f_r28,
                     "solar_lag1": f_sol,
                     "wind_lag1": f_wnd,
-                    "leaky_roll_7": leaky_r7,
+                    "target_load": y_fut,
                     "y": y_fut,
                 })
         return pd.DataFrame(rows)
 
-    train_df = build_tab1_rows(train_origins[::2])  # Sample every 2 days for speed & compact size
+    train_df = build_tab1_rows(train_origins_used)
     test_df = build_tab1_rows([origin_idx])
     
-    # Feature group definitions
+    # Feature group definitions for safe Ridge models
     feature_tiers = {
         "lags_only": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "h", "h_sin", "h_cos"],
         "lags_rolling": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "roll_7", "roll_28", "h", "h_sin", "h_cos"],
+        "history_calendar": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "roll_7", "roll_28", "dow_sin", "dow_cos", "is_weekend", "h", "h_sin", "h_cos"],
         "safe_full": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "roll_7", "roll_28", "dow_sin", "dow_cos", "is_weekend", "solar_lag1", "wind_lag1", "h", "h_sin", "h_cos"],
-        "leaky_rolling": ["lag_1", "lag_7", "leaky_roll_7", "dow_sin", "dow_cos", "is_weekend", "h"],
     }
     
     tier_results = {}
     test_predictions = {}
+    test_predictions_raw = {}
+    fitted_pipelines = {}
     
     for name, cols in feature_tiers.items():
         pipe = make_pipeline(StandardScaler(), Ridge(alpha=10.0))
         pipe.fit(train_df[cols], train_df["y"])
+        fitted_pipelines[name] = pipe
         train_pred = pipe.predict(train_df[cols])
         test_pred = pipe.predict(test_df[cols])
         
@@ -177,6 +185,8 @@ def gen_tab1(df: pd.DataFrame) -> dict:
         tr_rmse = root_mean_squared_error(train_df["y"], train_pred)
         te_rmse = root_mean_squared_error(test_df["y"], test_pred)
         
+        status_text = "Fitted Ridge; compare generated MAE and RMSE for this holdout"
+        
         tier_results[name] = {
             "name": name,
             "train_mae": clean_val(tr_mae),
@@ -184,23 +194,83 @@ def gen_tab1(df: pd.DataFrame) -> dict:
             "train_rmse": clean_val(tr_rmse),
             "test_rmse": clean_val(te_rmse),
             "feature_count": len(cols),
+            "status": status_text,
         }
         test_predictions[name] = [clean_val(v) for v in test_pred]
+        test_predictions_raw[name] = test_pred
 
-    # Seasonal Naive path for 30 days
+    # Leaky Model fit (locked leak design)
+    leaky_cols = ["target_load", "h", "h_sin", "h_cos"]
+    pipe_leaky = make_pipeline(StandardScaler(), Ridge(alpha=10.0))
+    pipe_leaky.fit(train_df[leaky_cols], train_df["y"])
+    
+    leaky_train_pred = pipe_leaky.predict(train_df[leaky_cols])
+    leaky_train_mae = mean_absolute_error(train_df["y"], leaky_train_pred)
+    leaky_train_rmse = root_mean_squared_error(train_df["y"], leaky_train_pred)
+    
+    # Invalid score: on October rows, target_load = actual future load
+    invalid_test_pred = pipe_leaky.predict(test_df[leaky_cols])
+    invalid_test_mae = mean_absolute_error(test_df["y"], invalid_test_pred)
+    invalid_test_rmse = root_mean_squared_error(test_df["y"], invalid_test_pred)
+    
+    # Production forecast: on October rows, target_load = load on origin day 2019-09-30
+    origin_load = float(df.loc[origin_idx, "y"])
+    test_prod_df = test_df.copy()
+    test_prod_df["target_load"] = origin_load
+    prod_test_pred = pipe_leaky.predict(test_prod_df[leaky_cols])
+    prod_test_mae = mean_absolute_error(test_df["y"], prod_test_pred)
+    prod_test_rmse = root_mean_squared_error(test_df["y"], prod_test_pred)
+    
+    # Evaluate locked falsifier
+    falsifier_cond1 = (leaky_train_mae < 400.0) and (invalid_test_mae < 400.0)
+    falsifier_cond2 = (prod_test_mae >= 1.5 * tier_results["safe_full"]["test_mae"])
+    falsifier_passed = falsifier_cond1 and falsifier_cond2
+    falsifier_verdict = "PASS" if falsifier_passed else "FAIL"
+
+    tier_results["leaky_production"] = {
+        "name": "leaky_production",
+        "train_mae": clean_val(leaky_train_mae),
+        "train_rmse": clean_val(leaky_train_rmse),
+        "invalid_test_mae": clean_val(invalid_test_mae),
+        "invalid_test_rmse": clean_val(invalid_test_rmse),
+        "production_test_mae": clean_val(prod_test_mae),
+        "production_test_rmse": clean_val(prod_test_rmse),
+        "test_mae": clean_val(prod_test_mae),
+        "test_rmse": clean_val(prod_test_rmse),
+        "feature_count": len(leaky_cols),
+        "falsifier_verdict": falsifier_verdict,
+        "status": "Invalid future-input diagnostic and separate origin-load fallback; inspect generated metrics",
+    }
+    tier_results["leaky_model"] = tier_results["leaky_production"]
+    tier_results["leaky_rolling"] = tier_results["leaky_production"]
+
+    # Honest Seasonal Naive evaluation
+    # Test path: copy of last 7 observed days
     last_7_known = df.loc[origin_idx - 6:origin_idx, "y"].values
-    sn_preds = [clean_val(last_7_known[(h - 1) % 7]) for h in range(1, horizon + 1)]
-    sn_mae = mean_absolute_error(test_df["y"], [last_7_known[(h - 1) % 7] for h in range(1, horizon + 1)])
+    sn_test_preds = [float(last_7_known[(h - 1) % 7]) for h in range(1, horizon + 1)]
+    sn_test_mae = mean_absolute_error(test_df["y"], sn_test_preds)
+    sn_test_rmse = root_mean_squared_error(test_df["y"], sn_test_preds)
+    
+    # Training path: exact same rule on the same training rows as Ridge
+    sn_train_preds = []
+    for t in train_origins_used:
+        for h in range(1, horizon + 1):
+            if t + h < len(df):
+                sn_train_preds.append(float(df.loc[t - 6 + ((h - 1) % 7), "y"]))
+    sn_train_mae = mean_absolute_error(train_df["y"], sn_train_preds)
+    sn_train_rmse = root_mean_squared_error(train_df["y"], sn_train_preds)
+    
     tier_results["seasonal_naive"] = {
         "name": "seasonal_naive",
-        "train_mae": clean_val(sn_mae * 1.05),  # representative baseline
-        "test_mae": clean_val(sn_mae),
-        "train_rmse": clean_val(sn_mae * 1.25),
-        "test_rmse": clean_val(sn_mae * 1.22),
+        "train_mae": clean_val(sn_train_mae),
+        "test_mae": clean_val(sn_test_mae),
+        "train_rmse": clean_val(sn_train_rmse),
+        "test_rmse": clean_val(sn_test_rmse),
         "feature_count": 1,
+        "status": "Unfitted repeat-last-week baseline; compare generated MAE and RMSE",
     }
 
-    # Timeline payload: 30 days of pre-origin context + 30 days of test
+    # Timeline payload: 28 days pre-origin + 30 days test
     context_start = origin_idx - 28
     timeline = []
     for idx in range(context_start, origin_idx + horizon + 1):
@@ -218,872 +288,489 @@ def gen_tab1(df: pd.DataFrame) -> dict:
         }
         if is_holdout and h_idx and h_idx <= horizon:
             item["safe_ridge"] = test_predictions["safe_full"][h_idx - 1]
-            item["leaky_ridge"] = test_predictions["leaky_rolling"][h_idx - 1]
+            item["calendar_ridge"] = test_predictions["history_calendar"][h_idx - 1]
+            item["invalid_future_input"] = clean_val(invalid_test_pred[h_idx - 1])
             item["lags_only_ridge"] = test_predictions["lags_only"][h_idx - 1]
-            item["seasonal_naive"] = sn_preds[h_idx - 1]
+            item["lags_rolling_ridge"] = test_predictions["lags_rolling"][h_idx - 1]
+            item["leaky_production"] = clean_val(prod_test_pred[h_idx - 1])
+            item["leaky_ridge"] = clean_val(prod_test_pred[h_idx - 1])
+            item["seasonal_naive"] = clean_val(sn_test_preds[h_idx - 1])
         timeline.append(item)
 
-    # Feature table preview (6 sample rows showing origin conversion)
+    # 30-row forecast design matrix
+    dow_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     sample_rows = []
-    for r in range(origin_idx - 5, origin_idx + 1):
+    for idx, r in test_df.iterrows():
         sample_rows.append({
-            "date": df.loc[r, "datetime"].strftime("%Y-%m-%d"),
-            "load_yt": clean_val(df.loc[r, "y"]),
-            "lag_1": clean_val(df.loc[r, "lag_1"]),
-            "lag_7": clean_val(df.loc[r, "lag_7"]),
-            "roll_7": clean_val(df.loc[r, "roll_mean_7"]),
-            "dow": int(df.loc[r, "dow"]),
-            "solar_lag1": clean_val(df.loc[r, "solar_lag1"]),
-            "wind_lag1": clean_val(df.loc[r, "wind_lag1"]),
-            "safe_shift": "True (shift=1)",
+            "target_date": r["target_dt"].strftime("%Y-%m-%d"),
+            "h": int(r["h"]),
+            "horizon": int(r["h"]),
+            "lag_1": clean_val(r["lag_1"]),
+            "lag_7": clean_val(r["lag_7"]),
+            "roll_7": clean_val(r["roll_7"]),
+            "dow": int(r["dow"]),
+            "target_dow": dow_names[int(r["dow"])],
+            "solar": clean_val(r["solar_lag1"]),
+            "solar_lag1": clean_val(r["solar_lag1"]),
+            "wind": clean_val(r["wind_lag1"]),
+            "wind_lag1": clean_val(r["wind_lag1"]),
+            "load_on_target_date_used": False,
+            "production_target_load": clean_val(origin_load),
+            "actual_later": clean_val(r["y"]),
+        })
+
+    # Assertions
+    assert len(sample_rows) == 30
+    assert sample_rows[0]["lag_1"] == clean_val(test_df.loc[0, "lag_1"])
+    assert sample_rows[0]["lag_1"] == clean_val(df.loc[origin_idx, "y"])
+
+    # Safe Ridge vs Naive comparison metrics
+    safe_actuals = test_df["y"].values
+    safe_pred_vals = np.array(test_predictions_raw["safe_full"])
+    sn_pred_vals = np.array(sn_test_preds)
+
+    safe_abs_err = np.abs(safe_pred_vals - safe_actuals)
+    sn_abs_err = np.abs(sn_pred_vals - safe_actuals)
+    days_safe_closer = int(np.sum(safe_abs_err < sn_abs_err))
+    
+    largest_idx = int(np.argmax(safe_abs_err))
+    largest_safe_miss = {
+        "date": test_df.loc[largest_idx, "target_dt"].strftime("%Y-%m-%d"),
+        "actual": clean_val(safe_actuals[largest_idx]),
+        "safe_forecast": clean_val(safe_pred_vals[largest_idx]),
+        "abs_error": clean_val(safe_abs_err[largest_idx]),
+    }
+
+    safe_test_rmse = clean_val(root_mean_squared_error(safe_actuals, safe_pred_vals))
+    naive_test_rmse = clean_val(sn_test_rmse)
+    mae_gap_vs_naive = clean_val(sn_test_mae - tier_results["safe_full"]["test_mae"])
+    mae_gap_pct_vs_naive = clean_val((sn_test_mae - tier_results["safe_full"]["test_mae"]) / sn_test_mae * 100)
+
+    # 1. Raw series preview (7 chronological source rows around training origin 2018-10-01)
+    raw_series_preview = []
+    idx_origin_0 = train_origins_used[0]
+    for r_idx in range(idx_origin_0, idx_origin_0 + 7):
+        r_dt = df.loc[r_idx, "datetime"]
+        raw_series_preview.append({
+            "date": r_dt.strftime("%Y-%m-%d"),
+            "load": clean_val(df.loc[r_idx, "y"]),
+            "solar": clean_val(df.loc[r_idx, "solar"]),
+            "wind": clean_val(df.loc[r_idx, "wind"]),
+            "price": clean_val(df.loc[r_idx, "price"]),
+        })
+
+    # 2. Training table preview: 2 distinct origins and horizons h=1, 7, 30
+    preview_origin_dts = [df.loc[train_origins_used[0], "datetime"], df.loc[train_origins_used[7], "datetime"]]
+    preview_df = train_df[(train_df["origin_dt"].isin(preview_origin_dts)) & (train_df["h"].isin([1, 7, 30]))]
+    training_table_preview = []
+    for _, r in preview_df.iterrows():
+        training_table_preview.append({
+            "origin_date": r["origin_dt"].strftime("%Y-%m-%d"),
+            "target_date": r["target_dt"].strftime("%Y-%m-%d"),
+            "h": int(r["h"]),
+            "target_dow": dow_names[int(r["dow"])],
+            "lag_1": clean_val(r["lag_1"]),
+            "lag_7": clean_val(r["lag_7"]),
+            "roll_7": clean_val(r["roll_7"]),
+            "solar_lag1": clean_val(r["solar_lag1"]),
+            "wind_lag1": clean_val(r["wind_lag1"]),
+            "target_y": clean_val(r["y"]),
+        })
+
+    # 3. Forecast table preview: 30 October rows structured as prediction inputs
+    forecast_table_preview = []
+    for idx, r in test_df.iterrows():
+        forecast_table_preview.append({
+            "origin_date": origin_dt.strftime("%Y-%m-%d"),
+            "target_date": r["target_dt"].strftime("%Y-%m-%d"),
+            "h": int(r["h"]),
+            "target_dow": dow_names[int(r["dow"])],
+            "lag_1": clean_val(r["lag_1"]),
+            "lag_7": clean_val(r["lag_7"]),
+            "roll_7": clean_val(r["roll_7"]),
+            "solar_lag1": clean_val(r["solar_lag1"]),
+            "wind_lag1": clean_val(r["wind_lag1"]),
+            "target_y_input": None,
+            "target_y_available": False,
+            "actual_later": clean_val(r["y"]),
+            "actual_later_status": "Evaluation holdout only (unobserved at T)",
+        })
+
+    # 4. Model protocol metadata
+    model_protocol = {
+        "pipeline": "StandardScaler -> Ridge(alpha=10.0)",
+        "model_name": "Ridge Regression",
+        "alpha": 10.0,
+        "training_origin_count": len(train_origins_used),
+        "horizons_per_origin": horizon,
+        "total_training_rows": len(train_df),
+        "origin_stride": 2,
+        "target_name": "y(T+h)",
+        "target_type": "scalar future load, MW",
+        "strategy_name": "Pooled, horizon-conditioned direct multi-step regressor",
+        "strategy_description": (
+            f"We fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set. "
+            f"Within a feature set, that one Ridge model is pooled across all {len(train_origins_used)} origins "
+            f"and {horizon} horizons ({len(train_df)} rows). Horizon step h and forward calendar features are inputs. "
+            f"The model produces one scalar prediction per row; {horizon} individual scalar predictions are assembled into the {horizon}-day forecast path."
+        ),
+        "model_count_note": (
+            f"We fit one separate StandardScaler -> Ridge(alpha=10) pipeline for each safe feature set. "
+            f"Within a feature set, that one Ridge model is pooled across all {len(train_origins_used)} origins and {horizon} horizons."
+        ),
+        "recursive": False,
+        "models_per_horizon": False,
+        "output_per_row": "scalar",
+        "forecast_path_length": 30,
+    }
+
+    # 5. Feature groups metadata
+    feature_groups = {
+        "history_horizon": {
+            "key": "history_horizon",
+            "metric_key": "lags_only",
+            "label": "History + horizon",
+            "columns": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "h", "h_sin", "h_cos"],
+            "feature_count": 9,
+            "grouped_columns": [
+                {"group": "History lags", "columns": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28"]},
+                {"group": "Horizon", "columns": ["h", "h_sin", "h_cos"]},
+            ],
+            "purpose": "History + horizon asks whether frozen history alone carries the weekly shape when conditioned on horizon step h.",
+            "question": "Can frozen autoregressive history alone carry the weekly demand cycle?",
+        },
+        "history_rolling": {
+            "key": "history_rolling",
+            "metric_key": "lags_rolling",
+            "label": "+ origin-window rolling",
+            "columns": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "roll_7", "roll_28", "h", "h_sin", "h_cos"],
+            "feature_count": 11,
+            "grouped_columns": [
+                {"group": "History lags", "columns": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28"]},
+                {"group": "Origin-window rolling", "columns": ["roll_7", "roll_28"]},
+                {"group": "Horizon", "columns": ["h", "h_sin", "h_cos"]},
+            ],
+            "purpose": "+ origin-window rolling asks whether summaries of the same history add useful level information beyond raw lags; these windows end at origin T, so they are known and frozen for all horizons and are safe relative to y(T+h).",
+            "question": "Do summary statistics of the same history add useful information?",
+        },
+        "safe_full": {
+            "key": "safe_full",
+            "metric_key": "safe_full",
+            "label": "Full safe: + target calendar + origin-known renewables",
+            "columns": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28", "roll_7", "roll_28", "dow_sin", "dow_cos", "is_weekend", "solar_lag1", "wind_lag1", "h", "h_sin", "h_cos"],
+            "feature_count": 16,
+            "grouped_columns": [
+                {"group": "History lags", "columns": ["lag_1", "lag_2", "lag_3", "lag_7", "lag_14", "lag_28"]},
+                {"group": "Origin-window rolling", "columns": ["roll_7", "roll_28"]},
+                {"group": "Horizon", "columns": ["h", "h_sin", "h_cos"]},
+                {"group": "Target-day calendar", "columns": ["dow_sin", "dow_cos", "is_weekend"]},
+                {"group": "Origin-known renewables", "columns": ["solar_lag1", "wind_lag1"]},
+            ],
+            "purpose": "Full safe adds target-day calendar and origin-known renewables and asks whether known timing restores the weekly pattern.",
+            "question": "Does knowing the target day's calendar position restore the weekly wave?",
+        },
+    }
+
+    # 6. Benchmark metadata & Leakage diagnostic metadata
+    benchmark_meta = {
+        "name": "seasonal_naive",
+        "label": "Seasonal Naive (7-day persistence)",
+        "type": "heuristic benchmark",
+        "why_separate": "Seasonal naive is an unfitted heuristic benchmark repeating the most recent observed day of the same weekday, not a fitted Ridge feature representation.",
+        "rule": "y_hat(T+h) = y(T - 6 + ((h - 1) % 7))",
+        "train_mae": clean_val(sn_train_mae),
+        "test_mae": clean_val(sn_test_mae),
+        "test_rmse": clean_val(sn_test_rmse),
+    }
+
+    leakage_diagnostic_meta = {
+        "name": "target_load",
+        "label": "Target-Load Leakage Diagnostic",
+        "type": "intentionally invalid diagnostic",
+        "why_separate": "The target_load model is an intentionally invalid educational diagnostic showing the fatal trap of lookahead leakage, not a valid feature representation.",
+        "columns": ["target_load", "h", "h_sin", "h_cos"],
+        "train_mae": clean_val(leaky_train_mae),
+        "invalid_test_mae": clean_val(invalid_test_mae),
+        "production_test_mae": clean_val(prod_test_mae),
+        "production_test_rmse": clean_val(prod_test_rmse),
+        "explanation": (
+            f"target_load is a forbidden copy of the answer. The invalid test score "
+            f"({clean_val(invalid_test_mae):.2f} MW) is not a forecast because future load is unknown at forecast time; "
+            f"replacing it with origin load in deployment produces the flat red failure path "
+            f"(MAE {clean_val(prod_test_mae):,.2f} MW)."
+        ),
+    }
+
+    # 7. Safe vs leaky row comparison examples
+    safe_vs_leaky_rows = [
+        {
+            "horizon": 1,
+            "target_date": test_df.loc[0, "target_dt"].strftime("%Y-%m-%d"),
+            "feature_set": "Safe Full",
+            "input_target_load": "None (unobserved at T)",
+            "calendar_used": f"dow={test_df.loc[0, 'dow']} ({dow_names[test_df.loc[0, 'dow']]})",
+            "lag_1": clean_val(test_df.loc[0, "lag_1"]),
+            "actual_outcome": clean_val(test_df.loc[0, "y"]),
+            "status": "Safe: inputs strictly known at T",
+        },
+        {
+            "horizon": 1,
+            "target_date": test_df.loc[0, "target_dt"].strftime("%Y-%m-%d"),
+            "feature_set": "Leaky Diagnostic (Train)",
+            "input_target_load": clean_val(test_df.loc[0, "y"]),
+            "calendar_used": "None",
+            "lag_1": "None",
+            "actual_outcome": clean_val(test_df.loc[0, "y"]),
+            "status": "Invalid leak: feeds target load as feature",
+        },
+        {
+            "horizon": 1,
+            "target_date": test_df.loc[0, "target_dt"].strftime("%Y-%m-%d"),
+            "feature_set": "Leaky Diagnostic (Production)",
+            "input_target_load": clean_val(origin_load),
+            "calendar_used": "None",
+            "lag_1": "None",
+            "actual_outcome": clean_val(test_df.loc[0, "y"]),
+            "status": "Production fallback: substitutes origin load",
+        },
+    ]
+
+    # 8. Column glossary / display metadata for exact time alignment and truthful labeling
+    column_glossary = {
+        "lag_1": {
+            "internal_name": "lag_1",
+            "plain_label": "Last observed load at origin (y_T)",
+            "time_alignment": "y_T (observation at origin T)",
+            "description": "Last observed load at origin (y_T); note internal column name lag_1 retained for numerical compatibility.",
+        },
+        "lag_2": {
+            "internal_name": "lag_2",
+            "plain_label": "Load one day before origin (y_{T-1})",
+            "time_alignment": "y_{T-1}",
+            "description": "Load one day before origin (y_{T-1}).",
+        },
+        "lag_3": {
+            "internal_name": "lag_3",
+            "plain_label": "Load two days before origin (y_{T-2})",
+            "time_alignment": "y_{T-2}",
+            "description": "Load two days before origin (y_{T-2}).",
+        },
+        "lag_7": {
+            "internal_name": "lag_7",
+            "plain_label": "Weekly reference at origin (y_{T-6})",
+            "time_alignment": "y_{T-6}",
+            "description": "Weekly reference at origin (y_{T-6}); seventh observation counting back including T.",
+        },
+        "lag_14": {
+            "internal_name": "lag_14",
+            "plain_label": "14th observed value counting back through T (y_{T-13})",
+            "time_alignment": "y_{T-13}",
+            "description": "14th observed value counting back through T (y_{T-13}).",
+        },
+        "lag_28": {
+            "internal_name": "lag_28",
+            "plain_label": "28th observed value counting back through T (y_{T-27})",
+            "time_alignment": "y_{T-27}",
+            "description": "28th observed value counting back through T (y_{T-27}).",
+        },
+        "roll_7": {
+            "internal_name": "roll_7",
+            "plain_label": "7-day mean ending at T",
+            "time_alignment": "Mean of 7 observations ending at T (y_{T-6}..y_T)",
+            "description": "7-day window mean ending at origin T; all values are known at T.",
+        },
+        "roll_28": {
+            "internal_name": "roll_28",
+            "plain_label": "28-day mean ending at T",
+            "time_alignment": "Mean of 28 observations ending at T (y_{T-27}..y_T)",
+            "description": "28-day window mean ending at origin T; all values are known at T.",
+        },
+        "solar_lag1": {
+            "internal_name": "solar_lag1",
+            "plain_label": "Solar observed at T",
+            "time_alignment": "s_T (solar generation observed at origin T)",
+            "description": "Solar observed at origin T; internal name solar_lag1 retained for numerical compatibility.",
+        },
+        "wind_lag1": {
+            "internal_name": "wind_lag1",
+            "plain_label": "Wind observed at T",
+            "time_alignment": "w_T (wind generation observed at origin T)",
+            "description": "Wind observed at origin T; internal name wind_lag1 retained for numerical compatibility.",
+        },
+        "h": {
+            "internal_name": "h",
+            "plain_label": "Forecast horizon step h",
+            "time_alignment": "Lead time offset (h = 1..30)",
+            "description": "Known horizon lead time step h.",
+        },
+        "h_sin": {
+            "internal_name": "h_sin",
+            "plain_label": "Horizon harmonic sine",
+            "time_alignment": "sin(2*pi*h/H)",
+            "description": "Known horizon harmonic sine encoding lead time.",
+        },
+        "h_cos": {
+            "internal_name": "h_cos",
+            "plain_label": "Horizon harmonic cosine",
+            "time_alignment": "cos(2*pi*h/H)",
+            "description": "Known horizon harmonic cosine encoding lead time.",
+        },
+        "dow": {
+            "internal_name": "dow",
+            "plain_label": "Target-day weekday index",
+            "time_alignment": "Target date T+h calendar weekday",
+            "description": "Known target-day day of week (0=Mon..6=Sun).",
+        },
+        "dow_sin": {
+            "internal_name": "dow_sin",
+            "plain_label": "Target-day weekday sine",
+            "time_alignment": "sin(2*pi*dow/7)",
+            "description": "Known target-day calendar weekday harmonic sine.",
+        },
+        "dow_cos": {
+            "internal_name": "dow_cos",
+            "plain_label": "Target-day weekday cosine",
+            "time_alignment": "cos(2*pi*dow/7)",
+            "description": "Known target-day calendar weekday harmonic cosine.",
+        },
+        "is_weekend": {
+            "internal_name": "is_weekend",
+            "plain_label": "Target-day weekend flag",
+            "time_alignment": "Target date T+h calendar flag",
+            "description": "Known target-day binary indicator (1 if Saturday or Sunday, 0 otherwise).",
+        },
+        "month": {
+            "internal_name": "month",
+            "plain_label": "Target-day month",
+            "time_alignment": "Target date T+h calendar month",
+            "description": "Known target-day calendar month (1..12).",
+        },
+    }
+
+    # Evidence for the split introduction: same rows, features and cutoffs.
+    assert train_df["target_dt"].max() <= origin_dt
+    assert train_df["origin_dt"].max() < origin_dt
+    full_columns = feature_tiers["safe_full"]
+    ordinary = make_pipeline(StandardScaler(), LinearRegression())
+    ordinary.fit(train_df[full_columns], train_df["y"])
+    ordinary_test = ordinary.predict(test_df[full_columns])
+    regression_comparison = {
+        "ordinary": {
+            "train_mae": clean_val(mean_absolute_error(train_df["y"], ordinary.predict(train_df[full_columns]))),
+            "test_mae": clean_val(mean_absolute_error(test_df["y"], ordinary_test)),
+            "test_rmse": clean_val(root_mean_squared_error(test_df["y"], ordinary_test)),
+        },
+        "ridge": tier_results["safe_full"],
+    }
+    groups = {
+        "History": full_columns[:6],
+        "Recent averages": ["roll_7", "roll_28"],
+        "Calendar": ["dow_sin", "dow_cos", "is_weekend"],
+        "Renewable observations": ["solar_lag1", "wind_lag1"],
+        "Days ahead": ["h", "h_sin", "h_cos"],
+    }
+    full_pipe = fitted_pipelines["safe_full"]
+    scaler, ridge_model = full_pipe.steps[0][1], full_pipe.steps[1][1]
+    scaled_rows = scaler.transform(test_df[full_columns])
+    contributions = scaled_rows * ridge_model.coef_
+    prediction_traces = []
+    for row_idx, row in test_df.iterrows():
+        grouped = [{"group": label, "contribution_mw": clean_val(sum(contributions[row_idx, full_columns.index(col)] for col in cols), 4)}
+                   for label, cols in groups.items()]
+        reconstructed = float(ridge_model.intercept_) + sum(item["contribution_mw"] for item in grouped)
+        assert abs(reconstructed - test_predictions_raw["safe_full"][row_idx]) < 0.001
+        prediction_traces.append({
+            "h": int(row["h"]), "target_date": row["target_dt"].strftime("%Y-%m-%d"),
+            "intercept_mw": clean_val(ridge_model.intercept_, 4),
+            "contributions": grouped,
+            "prediction_mw": clean_val(test_predictions_raw["safe_full"][row_idx], 4),
+        })
+    linked_examples = []
+    for row in training_table_preview:
+        t = int(df.index[df["datetime"] == pd.Timestamp(row["origin_date"])][0])
+        linked_examples.append({
+            **row,
+            "weekly_reference_date": df.loc[t - 6, "datetime"].strftime("%Y-%m-%d"),
+            "average_source": [{"date": df.loc[j, "datetime"].strftime("%Y-%m-%d"), "load": clean_val(df.loc[j, "y"])} for j in range(t - 6, t + 1)],
+            "source_rows": [{"date": df.loc[j, "datetime"].strftime("%Y-%m-%d"),
+                             "load": clean_val(df.loc[j, "y"]),
+                             "role": "Training answer (observed later)" if j == t + row["h"] else "History available at origin"}
+                            for j in [t - 6, t, t + row["h"]]],
         })
 
     return {
         "origin_date": origin_dt.strftime("%Y-%m-%d"),
         "origin_index": 28,  # timeline position corresponding to cutoff
         "horizon": horizon,
+        "training_origin_start": df.loc[train_origins[0], "datetime"].strftime("%Y-%m-%d"),
+        "training_origin_end": df.loc[train_origins[-1], "datetime"].strftime("%Y-%m-%d"),
+        "training_origins_full": len(train_origins),
+        "training_origins_used": len(train_origins_used),
+        "origin_stride": 2,
+        "days_safe_closer": days_safe_closer,
+        "days_total": 30,
+        "largest_safe_miss": largest_safe_miss,
+        "safe_test_rmse": safe_test_rmse,
+        "naive_test_rmse": naive_test_rmse,
+        "mae_gap_vs_naive": mae_gap_vs_naive,
+        "mae_gap_pct_vs_naive": mae_gap_pct_vs_naive,
+        "dataset_rows": len(df),
+        "dataset_start": df["datetime"].min().strftime("%Y-%m-%d"),
+        "dataset_end": df["datetime"].max().strftime("%Y-%m-%d"),
+        "holdout_start": test_df["target_dt"].min().strftime("%Y-%m-%d"),
+        "holdout_end": test_df["target_dt"].max().strftime("%Y-%m-%d"),
+        "ridge_alpha": 10.0,
         "metrics": tier_results,
         "timeline": timeline,
         "sample_feature_table": sample_rows,
         "default_view": "Safe Ridge vs Seasonal Naive",
+        "raw_series_preview": raw_series_preview,
+        "raw_series_note": "Wholesale spot price exists in the raw source rows but is not used as a feature by this 6.1 Ridge model.",
+        "raw_series_price_used": False,
+        "training_table_preview": training_table_preview,
+        "forecast_table_preview": forecast_table_preview,
+        "model_protocol": model_protocol,
+        "feature_groups": feature_groups,
+        "benchmark": benchmark_meta,
+        "leakage_diagnostic": leakage_diagnostic_meta,
+        "safe_vs_leaky_rows": safe_vs_leaky_rows,
+        "column_glossary": column_glossary,
+        "linear_intro": build_linear_intro(df, train_df, test_df, feature_tiers, origin_idx),
+        "intro_evidence": {
+            "regression_comparison": regression_comparison,
+            "prediction_traces": prediction_traces,
+            "linked_examples": linked_examples,
+            "feature_tiers": [{"key": key, "columns": cols, "feature_count": len(cols)} for key, cols in feature_tiers.items()],
+            "sampled_origin_end": train_df["origin_dt"].max().strftime("%Y-%m-%d"),
+            "label_start": train_df["target_dt"].min().strftime("%Y-%m-%d"),
+            "label_end": train_df["target_dt"].max().strftime("%Y-%m-%d"),
+            "history_lookback_days": 28,
+            "average_windows_days": [7, 28],
+            "load_units": "daily average MW",
+            "renewable_units": "daily energy MWh (sum of hourly MW readings over one-hour intervals)",
+            "availability_assumption": "Origin-day actuals treated as available after that day is observed; publication delays are not modelled.",
+        },
     }
 
 
 def gen_tab2() -> dict:
-    """Subsection 6.2: One table, three ways to learn: Ridge, Random Forest, XGBoost.
-    Evaluates nonlinear interaction modeling on a locked synthetic DGP.
-    """
-    np.random.seed(42)
-    T = 730
-    t = np.arange(T)
-    temp = 16.0 + 10.0 * np.sin(2 * np.pi * t / 365.0) + np.random.normal(0, 1.5, T)
-    dow = t % 7
-    weekend = (dow >= 5).astype(int)
-
-    base_load = 50.0 + 12.0 * (1 - weekend)
-    heating = 0.6 * np.maximum(0, 18.0 - temp)
-    cooling_surge = 3.5 * (np.maximum(0, temp - 24.0) ** 2) * (1.0 - 0.70 * weekend)
-    noise = np.random.normal(0, 1.8, T)
-
-    y = np.zeros(T)
-    y[0] = base_load[0] + heating[0] + cooling_surge[0] + noise[0]
-    for i in range(1, T):
-        ar = 0.25 * (y[i - 1] - 50.0)
-        y[i] = base_load[i] + heating[i] + cooling_surge[i] + ar + noise[i]
-
-    df_synth = pd.DataFrame({
-        "t": t,
-        "temp": temp,
-        "dow": dow,
-        "weekend": weekend,
-        "lag_1": np.roll(y, 1),
-        "lag_7": np.roll(y, 7),
-        "y": y,
-    }).iloc[7:].reset_index(drop=True)
-
-    # Train: Year 1 (days 1-365)
-    # Test: Year 2 summer heat surge (days 419-550, captures 42 hot weekday surge days)
-    train = df_synth[df_synth["t"] <= 365]
-    test = df_synth[(df_synth["t"] >= 419) & (df_synth["t"] <= 550)].copy()
-
-    features = ["temp", "weekend", "dow", "lag_1", "lag_7"]
-
-    # Model complexity states
-    complexity_models = {
-        "underfit": {
-            "ridge": Ridge(alpha=100.0),
-            "rf": RandomForestRegressor(n_estimators=30, max_depth=2, min_samples_leaf=15, random_state=42),
-            "xgb": xgb.XGBRegressor(n_estimators=30, max_depth=2, learning_rate=0.05, min_child_weight=10, random_state=42, tree_method="hist"),
-        },
-        "balanced": {
-            "ridge": Ridge(alpha=1.0),
-            "rf": RandomForestRegressor(n_estimators=100, max_depth=6, min_samples_leaf=3, random_state=42),
-            "xgb": xgb.XGBRegressor(n_estimators=100, max_depth=4, learning_rate=0.08, min_child_weight=3, subsample=0.85, colsample_bytree=0.85, random_state=42, tree_method="hist"),
-        },
-        "overfit": {
-            "ridge": Ridge(alpha=0.001),
-            "rf": RandomForestRegressor(n_estimators=150, max_depth=16, min_samples_leaf=1, random_state=42),
-            "xgb": xgb.XGBRegressor(n_estimators=250, max_depth=12, learning_rate=0.30, min_child_weight=1, random_state=42, tree_method="hist"),
-        },
-    }
-
-    metrics = {}
-    preds_by_complexity = {}
-
-    heat_mask = (test["temp"] > 24.0) & (test["weekend"] == 0)
-
-    for state, model_dict in complexity_models.items():
-        state_preds = {}
-        state_metrics = {}
-        for mname, m in model_dict.items():
-            m.fit(train[features], train["y"])
-            pred = m.predict(test[features])
-            state_preds[mname] = [clean_val(p) for p in pred]
-            
-            mae_all = mean_absolute_error(test["y"], pred)
-            mae_heat = mean_absolute_error(test.loc[heat_mask, "y"], pred[heat_mask.values])
-            rmse_all = root_mean_squared_error(test["y"], pred)
-            rmse_heat = root_mean_squared_error(test.loc[heat_mask, "y"], pred[heat_mask.values])
-            
-            state_metrics[mname] = {
-                "mae_overall": clean_val(mae_all),
-                "mae_heat_surge": clean_val(mae_heat),
-                "rmse_overall": clean_val(rmse_all),
-                "rmse_heat_surge": clean_val(rmse_heat),
-            }
-        metrics[state] = state_metrics
-        preds_by_complexity[state] = state_preds
-
-    # Balanced predictions for timeline
-    b_preds = preds_by_complexity["balanced"]
-
-    timeline = []
-    for i, (_, row) in enumerate(test.iterrows()):
-        t_val = int(row["t"])
-        act = clean_val(row["y"])
-        temp_val = clean_val(row["temp"])
-        wknd = int(row["weekend"])
-        is_heat = bool(row["temp"] > 24.0 and wknd == 0)
-
-        timeline.append({
-            "day": t_val,
-            "index": i,
-            "temp": temp_val,
-            "weekend": wknd,
-            "is_heat_surge": is_heat,
-            "actual": act,
-            "ridge_pred": b_preds["ridge"][i],
-            "rf_pred": b_preds["rf"][i],
-            "xgb_pred": b_preds["xgb"][i],
-            "ridge_residual": clean_val(act - b_preds["ridge"][i]),
-            "rf_residual": clean_val(act - b_preds["rf"][i]),
-            "xgb_residual": clean_val(act - b_preds["xgb"][i]),
-        })
-
-    # Temperature-ordered curve to visualize the nonlinear bend & residual curvature
-    sorted_test = test.sort_values("temp").reset_index(drop=True)
-    sorted_ridge = Ridge(alpha=1.0).fit(train[features], train["y"]).predict(sorted_test[features])
-    sorted_rf = RandomForestRegressor(n_estimators=100, max_depth=6, min_samples_leaf=3, random_state=42).fit(train[features], train["y"]).predict(sorted_test[features])
-    sorted_xgb = xgb.XGBRegressor(n_estimators=100, max_depth=4, learning_rate=0.08, min_child_weight=3, random_state=42, tree_method="hist").fit(train[features], train["y"]).predict(sorted_test[features])
-
-    temp_curve = []
-    # Subsample 40 points across temperature spectrum for clean charting
-    step = max(1, len(sorted_test) // 40)
-    for idx in range(0, len(sorted_test), step):
-        row = sorted_test.iloc[idx]
-        temp_curve.append({
-            "temp": clean_val(row["temp"]),
-            "weekend": int(row["weekend"]),
-            "actual": clean_val(row["y"]),
-            "ridge_fitted": clean_val(sorted_ridge[idx]),
-            "rf_fitted": clean_val(sorted_rf[idx]),
-            "xgb_fitted": clean_val(sorted_xgb[idx]),
-        })
-
-    return {
-        "metrics": metrics,
-        "timeline": timeline,
-        "temp_curve": temp_curve,
-        "heat_surge_threshold": 24.0,
-        "heat_surge_days": int(heat_mask.sum()),
-        "test_days": len(test),
-        "dgp_params": {
-            "seed": 42,
-            "formula": "y = base(dow) + heating(T<18) + cooling_surge(T>=24, dow) + AR(1) + noise",
-            "cooling_equation": "3.5 * max(0, T - 24)^2 * (1 - 0.70 * weekend)",
-        },
-    }
+    return section_evidence.packed(section_evidence.tree_lesson())
 
 
 def gen_tab3(df: pd.DataFrame) -> dict:
-    """Subsection 6.3: The forecast arena: fair comparison with Sections 1–5.
-    Evaluates 5 walk-forward expanding origins across Seasonal Naive, SARIMA, Ridge, RF, XGBoost.
-    """
-    np.random.seed(42)
-    horizon = 30
-    origins = [
-        pd.Timestamp("2019-10-01"),
-        pd.Timestamp("2019-12-15"),
-        pd.Timestamp("2020-03-01"),
-        pd.Timestamp("2020-05-15"),
-        pd.Timestamp("2020-08-01"),
-    ]
-    fold_names = [
-        "Fold 1 (Autumn Transition)",
-        "Fold 2 (Winter Holiday Dip)",
-        "Fold 3 (Lockdown Onset)",
-        "Fold 4 (Spring Solar Surge)",
-        "Fold 5 (Summer Calm)",
-    ]
-
-    def get_features(df_sub, t_idx, h):
-        fut_idx = t_idx + h
-        fut_dt = df_sub.loc[fut_idx, "datetime"]
-        y_hist = df_sub.loc[:t_idx, "y"]
-        solar_hist = df_sub.loc[:t_idx, "solar"]
-        wind_hist = df_sub.loc[:t_idx, "wind"]
-        return {
-            "h": h,
-            "h_sin": np.sin(2 * np.pi * h / horizon),
-            "h_cos": np.cos(2 * np.pi * h / horizon),
-            "dow": fut_dt.dayofweek,
-            "dow_sin": np.sin(2 * np.pi * fut_dt.dayofweek / 7.0),
-            "dow_cos": np.cos(2 * np.pi * fut_dt.dayofweek / 7.0),
-            "month": fut_dt.month,
-            "month_sin": np.sin(2 * np.pi * fut_dt.month / 12.0),
-            "month_cos": np.cos(2 * np.pi * fut_dt.month / 12.0),
-            "is_weekend": int(fut_dt.dayofweek >= 5),
-            "lag_1": float(y_hist.iloc[-1]),
-            "lag_2": float(y_hist.iloc[-2]),
-            "lag_3": float(y_hist.iloc[-3]),
-            "lag_7": float(y_hist.iloc[-7]),
-            "lag_14": float(y_hist.iloc[-14]),
-            "lag_28": float(y_hist.iloc[-28]),
-            "roll_7": float(y_hist.iloc[-7:].mean()),
-            "roll_28": float(y_hist.iloc[-28:].mean()),
-            "solar_lag1": float(solar_hist.iloc[-1]),
-            "solar_lag7": float(solar_hist.iloc[-7]),
-            "wind_lag1": float(wind_hist.iloc[-1]),
-            "wind_lag7": float(wind_hist.iloc[-7]),
-            "y": float(df_sub.loc[fut_idx, "y"]),
-        }
-
-    fold_results = []
-    fold_paths = {}
-
-    for fold_num, (orig_dt, label) in enumerate(zip(origins, fold_names), 1):
-        t_idx = df[df["datetime"] == orig_dt].index[0]
-        # Expanding train origins sampled every 2 days
-        train_origins = [i for i in range(120, t_idx - 30, 2)]
-        train_rows = [get_features(df, o, h) for o in train_origins for h in range(1, horizon + 1)]
-        train_df = pd.DataFrame(train_rows)
-
-        test_rows = [get_features(df, t_idx, h) for h in range(1, horizon + 1)]
-        test_df = pd.DataFrame(test_rows)
-
-        feat_cols = [c for c in train_df.columns if c != "y"]
-        actuals = test_df["y"].values
-
-        # 1. Seasonal Naive
-        last_7 = df.loc[t_idx - 6:t_idx, "y"].values
-        sn_preds = np.array([last_7[(h - 1) % 7] for h in range(1, horizon + 1)])
-
-        # 2. SARIMA(1,0,0)x(1,1,0)7 fitted on past 180 days
-        hist_window = df.loc[max(0, t_idx - 180):t_idx, "y"].values
-        try:
-            sar_fit = SARIMAX(hist_window, order=(1, 0, 0), seasonal_order=(1, 1, 0, 7)).fit(disp=False)
-            sar_preds = sar_fit.forecast(horizon)
-        except Exception:
-            sar_preds = sn_preds.copy()
-
-        # 3. Ridge Regression
-        pipe_ridge = make_pipeline(StandardScaler(), Ridge(alpha=10.0))
-        pipe_ridge.fit(train_df[feat_cols], train_df["y"])
-        ridge_preds = pipe_ridge.predict(test_df[feat_cols])
-
-        # 4. Random Forest
-        rf = RandomForestRegressor(n_estimators=100, max_depth=10, min_samples_leaf=3, random_state=42, n_jobs=-1)
-        rf.fit(train_df[feat_cols], train_df["y"])
-        rf_preds = rf.predict(test_df[feat_cols])
-
-        # 5. XGBoost
-        xg = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, min_child_weight=3, subsample=0.85, random_state=42, tree_method="hist")
-        xg.fit(train_df[feat_cols], train_df["y"])
-        xg_preds = xg.predict(test_df[feat_cols])
-
-        # Metrics for fold
-        models_eval = {
-            "seasonal_naive": sn_preds,
-            "sarima": sar_preds,
-            "ridge": ridge_preds,
-            "random_forest": rf_preds,
-            "xgboost": xg_preds,
-        }
-
-        fold_maes = {m: clean_val(mean_absolute_error(actuals, preds)) for m, preds in models_eval.items()}
-        fold_rmses = {m: clean_val(root_mean_squared_error(actuals, preds)) for m, preds in models_eval.items()}
-
-        # Identify winner for this fold
-        winner = min(fold_maes.keys(), key=lambda k: fold_maes[k])
-
-        fold_results.append({
-            "fold": fold_num,
-            "origin_date": orig_dt.strftime("%Y-%m-%d"),
-            "label": label,
-            "maes": fold_maes,
-            "rmses": fold_rmses,
-            "winner": winner,
-            "winner_gain_vs_sn": clean_val(float((fold_maes["seasonal_naive"] - fold_maes[winner]) / fold_maes["seasonal_naive"] * 100.0)),
-        })
-
-        # Timeline path for fold: 14 days context + 30 days test
-        context_start = t_idx - 14
-        path_timeline = []
-        for i_pos in range(context_start, t_idx + horizon + 1):
-            dt = df.loc[i_pos, "datetime"]
-            is_fcst = i_pos > t_idx
-            h_val = i_pos - t_idx if is_fcst else None
-            row_pt = {
-                "date": dt.strftime("%Y-%m-%d"),
-                "time": i_pos - context_start,
-                "actual": clean_val(df.loc[i_pos, "y"]),
-                "is_forecast": is_fcst,
-            }
-            if is_fcst and h_val and h_val <= horizon:
-                row_pt["seasonal_naive"] = clean_val(sn_preds[h_val - 1])
-                row_pt["sarima"] = clean_val(sar_preds[h_val - 1])
-                row_pt["ridge"] = clean_val(ridge_preds[h_val - 1])
-                row_pt["random_forest"] = clean_val(rf_preds[h_val - 1])
-                row_pt["xgboost"] = clean_val(xg_preds[h_val - 1])
-            path_timeline.append(row_pt)
-        fold_paths[f"fold_{fold_num}"] = path_timeline
-
-    # Aggregate summaries across all 5 folds
-    agg_maes = {}
-    win_counts = {m: 0 for m in ["seasonal_naive", "sarima", "ridge", "random_forest", "xgboost"]}
-    gain_sizes = []
-
-    for m in win_counts.keys():
-        m_list = [f["maes"][m] for f in fold_results]
-        agg_maes[m] = {
-            "mean_mae": clean_val(float(np.mean(m_list))),
-            "median_mae": clean_val(float(np.median(m_list))),
-        }
-
-    for f in fold_results:
-        win_counts[f["winner"]] += 1
-        gain_sizes.append(f["winner_gain_vs_sn"])
-
-    # Permutation importance computed on Fold 1 validation
-    t_f1 = df[df["datetime"] == origins[0]].index[0]
-    val_origins = [t_f1 - 25, t_f1 - 20, t_f1 - 15]
-    val_rows = [get_features(df, o, h) for o in val_origins for h in range(1, horizon + 1)]
-    val_df = pd.DataFrame(val_rows)
-    f_cols = [c for c in val_df.columns if c != "y"]
-    
-    m_eval = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, min_child_weight=3, random_state=42, tree_method="hist")
-    m_eval.fit(val_df[f_cols], val_df["y"])
-    base_mae = mean_absolute_error(val_df["y"], m_eval.predict(val_df[f_cols]))
-    
-    importance = []
-    # Test key feature categories
-    check_feats = ["dow", "month", "lag_7", "lag_1", "roll_7", "solar_lag1", "wind_lag1", "h"]
-    for feat in check_feats:
-        if feat in f_cols:
-            shuffled = val_df[f_cols].copy()
-            shuffled[feat] = np.random.permutation(shuffled[feat].values)
-            shuff_mae = mean_absolute_error(val_df["y"], m_eval.predict(shuffled))
-            importance.append({
-                "feature": feat,
-                "importance_mae_delta": clean_val(float(shuff_mae - base_mae)),
-                "pct_increase": clean_val(float((shuff_mae - base_mae) / base_mae * 100.0)),
-            })
-    importance.sort(key=lambda x: x["importance_mae_delta"], reverse=True)
-
-    return {
-        "fold_results": fold_results,
-        "aggregate_metrics": agg_maes,
-        "win_counts": win_counts,
-        "median_gain_size": clean_val(float(np.median(gain_sizes))),
-        "mean_gain_size": clean_val(float(np.mean(gain_sizes))),
-        "fold_paths": fold_paths,
-        "permutation_importance": importance,
-        "default_fold": "fold_1",
-    }
+    return section_evidence.packed(section_evidence.arena(df))
 
 
 def gen_tab4(df: pd.DataFrame) -> dict:
-    """Subsection 6.4: Multi-step forecasting: recursive or direct?
-    Compares direct multi-horizon and recursive one-step autoregressive rollouts.
-    """
-    np.random.seed(42)
-    horizon = 30
-    origin_dt = pd.Timestamp("2020-01-01")
-    origin_idx = df[df["datetime"] == origin_dt].index[0]
-
-    train_origins = [i for i in range(120, origin_idx - 30, 2)]
-
-    # Direct multi-horizon setup
-    def get_direct_row(df_sub, t_idx, h):
-        fut_idx = t_idx + h
-        fut_dt = df_sub.loc[fut_idx, "datetime"]
-        y_hist = df_sub.loc[:t_idx, "y"]
-        return {
-            "h": h,
-            "h_sin": np.sin(2 * np.pi * h / horizon),
-            "h_cos": np.cos(2 * np.pi * h / horizon),
-            "dow": fut_dt.dayofweek,
-            "month": fut_dt.month,
-            "is_weekend": int(fut_dt.dayofweek >= 5),
-            "lag_1": float(y_hist.iloc[-1]),
-            "lag_2": float(y_hist.iloc[-2]),
-            "lag_3": float(y_hist.iloc[-3]),
-            "lag_7": float(y_hist.iloc[-7]),
-            "lag_14": float(y_hist.iloc[-14]),
-            "roll_7": float(y_hist.iloc[-7:].mean()),
-            "y": float(df_sub.loc[fut_idx, "y"]),
-        }
-
-    train_rows_direct = [get_direct_row(df, o, h) for o in train_origins for h in range(1, horizon + 1)]
-    train_df_direct = pd.DataFrame(train_rows_direct)
-    cols_direct = [c for c in train_df_direct.columns if c != "y"]
-
-    test_rows_direct = [get_direct_row(df, origin_idx, h) for h in range(1, horizon + 1)]
-    test_df_direct = pd.DataFrame(test_rows_direct)
-
-    # Fit direct models
-    xgb_dir = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, min_child_weight=3, random_state=42, tree_method="hist")
-    xgb_dir.fit(train_df_direct[cols_direct], train_df_direct["y"])
-    xgb_dir_preds = xgb_dir.predict(test_df_direct[cols_direct])
-
-    rf_dir = RandomForestRegressor(n_estimators=80, max_depth=10, min_samples_leaf=3, random_state=42, n_jobs=-1)
-    rf_dir.fit(train_df_direct[cols_direct], train_df_direct["y"])
-    rf_dir_preds = rf_dir.predict(test_df_direct[cols_direct])
-
-    # Recursive 1-step setup
-    def get_1step_row(df_sub, t_idx):
-        target_idx = t_idx + 1
-        target_dt = df_sub.loc[target_idx, "datetime"]
-        y_hist = df_sub.loc[:t_idx, "y"]
-        return {
-            "dow": target_dt.dayofweek,
-            "month": target_dt.month,
-            "is_weekend": int(target_dt.dayofweek >= 5),
-            "lag_1": float(y_hist.iloc[-1]),
-            "lag_2": float(y_hist.iloc[-2]),
-            "lag_3": float(y_hist.iloc[-3]),
-            "lag_7": float(y_hist.iloc[-7]),
-            "lag_14": float(y_hist.iloc[-14]),
-            "roll_7": float(y_hist.iloc[-7:].mean()),
-            "y": float(df_sub.loc[target_idx, "y"]),
-        }
-
-    train_rows_rec = [get_1step_row(df, o) for o in range(120, origin_idx - 1)]
-    train_df_rec = pd.DataFrame(train_rows_rec)
-    cols_rec = [c for c in train_df_rec.columns if c != "y"]
-
-    xgb_rec = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, min_child_weight=3, random_state=42, tree_method="hist")
-    xgb_rec.fit(train_df_rec[cols_rec], train_df_rec["y"])
-
-    rf_rec = RandomForestRegressor(n_estimators=80, max_depth=10, min_samples_leaf=3, random_state=42, n_jobs=-1)
-    rf_rec.fit(train_df_rec[cols_rec], train_df_rec["y"])
-
-    # Roll out recursive predictions
-    xgb_rec_preds = []
-    rf_rec_preds = []
-    xgb_hist = list(df.loc[:origin_idx, "y"].values)
-    rf_hist = list(df.loc[:origin_idx, "y"].values)
-
-    for h in range(1, horizon + 1):
-        fut_idx = origin_idx + h
-        fut_dt = df.loc[fut_idx, "datetime"]
-        
-        row_xgb = {
-            "dow": fut_dt.dayofweek,
-            "month": fut_dt.month,
-            "is_weekend": int(fut_dt.dayofweek >= 5),
-            "lag_1": float(xgb_hist[-1]),
-            "lag_2": float(xgb_hist[-2]),
-            "lag_3": float(xgb_hist[-3]),
-            "lag_7": float(xgb_hist[-7]),
-            "lag_14": float(xgb_hist[-14]),
-            "roll_7": float(np.mean(xgb_hist[-7:])),
-        }
-        p_xgb = float(xgb_rec.predict(pd.DataFrame([row_xgb]))[0])
-        xgb_rec_preds.append(p_xgb)
-        xgb_hist.append(p_xgb)
-
-        row_rf = {
-            "dow": fut_dt.dayofweek,
-            "month": fut_dt.month,
-            "is_weekend": int(fut_dt.dayofweek >= 5),
-            "lag_1": float(rf_hist[-1]),
-            "lag_2": float(rf_hist[-2]),
-            "lag_3": float(rf_hist[-3]),
-            "lag_7": float(rf_hist[-7]),
-            "lag_14": float(rf_hist[-14]),
-            "roll_7": float(np.mean(rf_hist[-7:])),
-        }
-        p_rf = float(rf_rec.predict(pd.DataFrame([row_rf]))[0])
-        rf_rec_preds.append(p_rf)
-        rf_hist.append(p_rf)
-
-    # Seasonal Naive
-    last_7 = df.loc[origin_idx - 6:origin_idx, "y"].values
-    sn_preds = np.array([last_7[(h - 1) % 7] for h in range(1, horizon + 1)])
-    actuals = test_df_direct["y"].values
-
-    # Lead-by-lead error curve
-    lead_curve = []
-    for h in range(1, horizon + 1):
-        act_h = actuals[h - 1]
-        lead_curve.append({
-            "lead": h,
-            "actual": clean_val(act_h),
-            "direct_xgb_error": clean_val(float(abs(act_h - xgb_dir_preds[h - 1]))),
-            "recursive_xgb_error": clean_val(float(abs(act_h - xgb_rec_preds[h - 1]))),
-            "direct_rf_error": clean_val(float(abs(act_h - rf_dir_preds[h - 1]))),
-            "recursive_rf_error": clean_val(float(abs(act_h - rf_rec_preds[h - 1]))),
-            "seasonal_naive_error": clean_val(float(abs(act_h - sn_preds[h - 1]))),
-        })
-
-    # Summary metrics
-    metrics = {
-        "direct_xgb": {
-            "mae_30d": clean_val(mean_absolute_error(actuals, xgb_dir_preds)),
-            "rmse_30d": clean_val(root_mean_squared_error(actuals, xgb_dir_preds)),
-            "lead_1_mae": clean_val(float(abs(actuals[0] - xgb_dir_preds[0]))),
-            "lead_30_mae": clean_val(float(abs(actuals[-1] - xgb_dir_preds[-1]))),
-        },
-        "recursive_xgb": {
-            "mae_30d": clean_val(mean_absolute_error(actuals, xgb_rec_preds)),
-            "rmse_30d": clean_val(root_mean_squared_error(actuals, xgb_rec_preds)),
-            "lead_1_mae": clean_val(float(abs(actuals[0] - xgb_rec_preds[0]))),
-            "lead_30_mae": clean_val(float(abs(actuals[-1] - xgb_rec_preds[-1]))),
-        },
-        "direct_rf": {
-            "mae_30d": clean_val(mean_absolute_error(actuals, rf_dir_preds)),
-            "rmse_30d": clean_val(root_mean_squared_error(actuals, rf_dir_preds)),
-            "lead_1_mae": clean_val(float(abs(actuals[0] - rf_dir_preds[0]))),
-            "lead_30_mae": clean_val(float(abs(actuals[-1] - rf_dir_preds[-1]))),
-        },
-        "recursive_rf": {
-            "mae_30d": clean_val(mean_absolute_error(actuals, rf_rec_preds)),
-            "rmse_30d": clean_val(root_mean_squared_error(actuals, rf_rec_preds)),
-            "lead_1_mae": clean_val(float(abs(actuals[0] - rf_rec_preds[0]))),
-            "lead_30_mae": clean_val(float(abs(actuals[-1] - rf_rec_preds[-1]))),
-        },
-        "seasonal_naive": {
-            "mae_30d": clean_val(mean_absolute_error(actuals, sn_preds)),
-            "rmse_30d": clean_val(root_mean_squared_error(actuals, sn_preds)),
-            "lead_1_mae": clean_val(float(abs(actuals[0] - sn_preds[0]))),
-            "lead_30_mae": clean_val(float(abs(actuals[-1] - sn_preds[-1]))),
-        },
-    }
-
-    # Timeline path payload: 14 days context + 30 days forecast
-    context_start = origin_idx - 14
-    timeline = []
-    for i_idx in range(context_start, origin_idx + horizon + 1):
-        dt = df.loc[i_idx, "datetime"]
-        is_hold = i_idx > origin_idx
-        h_pos = i_idx - origin_idx if is_hold else None
-        item = {
-            "date": dt.strftime("%Y-%m-%d"),
-            "time": i_idx - context_start,
-            "actual": clean_val(df.loc[i_idx, "y"]),
-            "is_holdout": is_hold,
-        }
-        if is_hold and h_pos and h_pos <= horizon:
-            item["direct_xgb"] = clean_val(xgb_dir_preds[h_pos - 1])
-            item["recursive_xgb"] = clean_val(xgb_rec_preds[h_pos - 1])
-            item["direct_rf"] = clean_val(rf_dir_preds[h_pos - 1])
-            item["recursive_rf"] = clean_val(rf_rec_preds[h_pos - 1])
-            item["seasonal_naive"] = clean_val(sn_preds[h_pos - 1])
-        timeline.append(item)
-
-    return {
-        "origin_date": origin_dt.strftime("%Y-%m-%d"),
-        "origin_index": 14,
-        "horizon": horizon,
-        "metrics": metrics,
-        "lead_curve": lead_curve,
-        "timeline": timeline,
-    }
+    return section_evidence.packed(section_evidence.multistep(df))
 
 
 def gen_tab5() -> dict:
-    """Subsection 6.5: Where tree models fail: trend, extrapolation, and drift.
-    Demonstrates the leaf boundary ceiling on a synthetic non-stationary linear series.
-    """
-    np.random.seed(101)
-    T = 500
-    t = np.arange(T)
-    trend = 100.0 + 0.25 * t
-    season = 10.0 * np.sin(2 * np.pi * t / 7.0)
-    noise = np.random.normal(0, 2.0, T)
-    y = trend + season + noise
-
-    df_synth = pd.DataFrame({
-        "t": t,
-        "dow": t % 7,
-        "lag_1": np.roll(y, 1),
-        "lag_7": np.roll(y, 7),
-        "y": y,
-    }).iloc[7:].reset_index(drop=True)
-
-    train = df_synth[df_synth["t"] <= 350]
-    test = df_synth[df_synth["t"] > 350].copy()
-
-    train_max_y = float(train["y"].max())
-    test_max_y = float(test["y"].max())
-
-    # 1. Raw Level XGBoost
-    feat_cols = ["t", "dow", "lag_1", "lag_7"]
-    m_raw = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, tree_method="hist")
-    m_raw.fit(train[feat_cols], train["y"])
-
-    raw_preds = []
-    curr_history = list(train["y"].values)
-    for _, row in test.iterrows():
-        row_feat = pd.DataFrame([{
-            "t": row["t"],
-            "dow": row["dow"],
-            "lag_1": curr_history[-1],
-            "lag_7": curr_history[-7],
-        }])
-        p = float(m_raw.predict(row_feat)[0])
-        raw_preds.append(p)
-        curr_history.append(p)
-
-    # 2. Detrended XGBoost (remove linear trend, fit tree to residuals)
-    slope, intercept = np.polyfit(train["t"], train["y"], 1)
-    y_train_res = train["y"] - (intercept + slope * train["t"])
-    train_detrend = train.copy()
-    train_detrend["lag_1_res"] = np.roll(y_train_res, 1)
-    train_detrend["lag_7_res"] = np.roll(y_train_res, 7)
-
-    m_detrend = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, tree_method="hist")
-    m_detrend.fit(train_detrend[["dow", "lag_1_res", "lag_7_res"]], y_train_res)
-
-    detrend_preds = []
-    res_history = list(y_train_res.values)
-    for _, row in test.iterrows():
-        row_feat = pd.DataFrame([{
-            "dow": row["dow"],
-            "lag_1_res": res_history[-1],
-            "lag_7_res": res_history[-7],
-        }])
-        p_res = float(m_detrend.predict(row_feat)[0])
-        p_level = p_res + (intercept + slope * row["t"])
-        detrend_preds.append(p_level)
-        res_history.append(p_res)
-
-    # 3. Differenced XGBoost (fit tree to delta y)
-    train_diff = train.copy()
-    diff_train = np.diff(train["y"].values)
-    train_diff_feat = pd.DataFrame({
-        "dow": train["dow"].values[1:],
-        "diff_lag1": np.roll(diff_train, 1),
-    }).iloc[1:]
-    diff_y = diff_train[1:]
-
-    m_diff = xgb.XGBRegressor(n_estimators=100, max_depth=4, learning_rate=0.08, random_state=42, tree_method="hist")
-    m_diff.fit(train_diff_feat, diff_y)
-
-    diff_preds = []
-    last_level = float(train["y"].iloc[-1])
-    last_diff = float(diff_train[-1])
-    for _, row in test.iterrows():
-        d_row = pd.DataFrame([{"dow": row["dow"], "diff_lag1": last_diff}])
-        pred_delta = float(m_diff.predict(d_row)[0])
-        pred_lvl = last_level + pred_delta
-        diff_preds.append(pred_lvl)
-        last_level = pred_lvl
-        last_diff = pred_delta
-
-    # 4. Holt's Linear Exponential Smoothing
-    holt_fit = Holt(train["y"]).fit()
-    holt_preds = holt_fit.forecast(len(test)).values
-
-    test_actuals = test["y"].values
-
-    # Rolling 14-day tracking MAE
-    rolling_errors = []
-    w = 14
-    for idx in range(w, len(test)):
-        sub_act = test_actuals[idx - w:idx]
-        sub_raw = raw_preds[idx - w:idx]
-        sub_det = detrend_preds[idx - w:idx]
-        sub_dif = diff_preds[idx - w:idx]
-        sub_hlt = holt_preds[idx - w:idx]
-        rolling_errors.append({
-            "t": int(test.iloc[idx]["t"]),
-            "raw_tree_mae": clean_val(mean_absolute_error(sub_act, sub_raw)),
-            "detrended_tree_mae": clean_val(mean_absolute_error(sub_act, sub_det)),
-            "differenced_tree_mae": clean_val(mean_absolute_error(sub_act, sub_dif)),
-            "holt_mae": clean_val(mean_absolute_error(sub_act, sub_hlt)),
-        })
-
-    # Timeline: Display window t=250 to 500 (context + test)
-    display_df = df_synth[df_synth["t"] >= 250].copy()
-    timeline = []
-    for _, row in display_df.iterrows():
-        t_val = int(row["t"])
-        is_test = t_val > 350
-        item = {
-            "t": t_val,
-            "actual": clean_val(row["y"]),
-            "is_test": is_test,
-            "training_max_boundary": clean_val(train_max_y),
-        }
-        if is_test:
-            test_pos = t_val - 351
-            if test_pos < len(raw_preds):
-                item["raw_level_tree"] = clean_val(raw_preds[test_pos])
-                item["detrended_tree"] = clean_val(detrend_preds[test_pos])
-                item["differenced_tree"] = clean_val(diff_preds[test_pos])
-                item["holt_linear"] = clean_val(holt_preds[test_pos])
-        timeline.append(item)
-
-    metrics = {
-        "raw_level_tree": {
-            "test_mae": clean_val(mean_absolute_error(test_actuals, raw_preds)),
-            "max_predicted": clean_val(max(raw_preds)),
-            "ceiling_deficit": clean_val(test_max_y - max(raw_preds)),
-        },
-        "detrended_tree": {
-            "test_mae": clean_val(mean_absolute_error(test_actuals, detrend_preds)),
-            "max_predicted": clean_val(max(detrend_preds)),
-            "error_reduction_pct": clean_val(float((mean_absolute_error(test_actuals, raw_preds) - mean_absolute_error(test_actuals, detrend_preds)) / mean_absolute_error(test_actuals, raw_preds) * 100.0)),
-        },
-        "differenced_tree": {
-            "test_mae": clean_val(mean_absolute_error(test_actuals, diff_preds)),
-            "max_predicted": clean_val(max(diff_preds)),
-        },
-        "holt_linear": {
-            "test_mae": clean_val(mean_absolute_error(test_actuals, holt_preds)),
-            "max_predicted": clean_val(max(holt_preds)),
-        },
-        "train_max_y": clean_val(train_max_y),
-        "test_max_y": clean_val(test_max_y),
-    }
-
-    return {
-        "metrics": metrics,
-        "timeline": timeline,
-        "rolling_errors": rolling_errors,
-        "split_cutoff_t": 350,
-        "training_ceiling": clean_val(train_max_y),
-    }
+    return section_evidence.packed(section_evidence.trend_lesson())
 
 
 def gen_tab6(df: pd.DataFrame) -> dict:
-    """Subsection 6.6: Advanced extension: probabilistic ML with quantiles and conformal calibration.
-    German daily load evaluated with split conformalized quantile regression.
-    """
-    np.random.seed(42)
-    feat_cols = ["dow", "month", "is_weekend", "lag_1", "lag_7", "roll_mean_7", "wind_lag1", "solar_lag1"]
-    df_clean = df.dropna(subset=feat_cols + ["y"]).reset_index(drop=True)
-
-    train = df_clean[(df_clean["datetime"] >= "2017-01-01") & (df_clean["datetime"] <= "2019-06-30")]
-    cal = df_clean[(df_clean["datetime"] >= "2019-07-01") & (df_clean["datetime"] <= "2019-12-31")]
-    test = df_clean[(df_clean["datetime"] >= "2020-01-01") & (df_clean["datetime"] <= "2020-09-30")]
-
-    # Point forecast model
-    m_point = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, tree_method="hist")
-    m_point.fit(train[feat_cols], train["y"])
-
-    train_res = train["y"].values - m_point.predict(train[feat_cols])
-    sigma_train = float(np.std(train_res))
-
-    # Evaluate at 80% and 90% confidence levels
-    confidence_levels = [0.80, 0.90]
-    conf_payload = {}
-
-    test_y = test["y"].values
-    test_dates = test["datetime"].dt.strftime("%Y-%m-%d").values
-    test_point = m_point.predict(test[feat_cols])
-
-    for conf in confidence_levels:
-        alpha = round(1.0 - conf, 2)
-        q_lo_val = round(alpha / 2.0, 3)
-        q_hi_val = round(1.0 - alpha / 2.0, 3)
-
-        # 1. Raw Quantile XGBoost models
-        q_low_m = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, tree_method="hist", objective="reg:quantileerror", quantile_alpha=q_lo_val)
-        q_high_m = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.08, random_state=42, tree_method="hist", objective="reg:quantileerror", quantile_alpha=q_hi_val)
-        q_low_m.fit(train[feat_cols], train["y"])
-        q_high_m.fit(train[feat_cols], train["y"])
-
-        # Calibration nonconformity scores
-        cal_low = q_low_m.predict(cal[feat_cols])
-        cal_high = q_high_m.predict(cal[feat_cols])
-        cal_y = cal["y"].values
-        E_cal = np.maximum(cal_low - cal_y, cal_y - cal_high)
-
-        n_cal = len(E_cal)
-        k_idx = int(np.ceil((n_cal + 1) * conf))
-        k_idx = min(k_idx, n_cal)
-        q_conformal = float(np.sort(E_cal)[k_idx - 1])
-
-        # Test evaluation
-        test_q_low = q_low_m.predict(test[feat_cols])
-        test_q_high = q_high_m.predict(test[feat_cols])
-
-        # A. Naive Gaussian Interval
-        z = 1.2816 if conf == 0.80 else 1.6449
-        naive_lo = test_point - z * sigma_train
-        naive_hi = test_point + z * sigma_train
-
-        # B. Raw Quantile Interval
-        raw_lo = test_q_low
-        raw_hi = test_q_high
-
-        # C. Conformalized Quantile Interval (CQR)
-        conf_lo = test_q_low - q_conformal
-        conf_hi = test_q_high + q_conformal
-
-        # D. Split Conformal Residual Interval
-        cal_res = np.abs(cal_y - m_point.predict(cal[feat_cols]))
-        q_res = float(np.sort(cal_res)[min(int(np.ceil((n_cal + 1) * conf)), n_cal) - 1])
-        res_lo = test_point - q_res
-        res_hi = test_point + q_res
-
-        # Coverage and widths
-        def eval_interval(lo, hi):
-            inside = (test_y >= lo) & (test_y <= hi)
-            return {
-                "coverage_pct": clean_val(float(np.mean(inside) * 100.0)),
-                "mean_width": clean_val(float(np.mean(hi - lo))),
-                "miss_count": int(np.sum(~inside)),
-            }
-
-        methods_summary = {
-            "naive_gaussian": eval_interval(naive_lo, naive_hi),
-            "raw_quantile_xgb": eval_interval(raw_lo, raw_hi),
-            "conformalized_cqr": eval_interval(conf_lo, conf_hi),
-            "split_conformal_residual": eval_interval(res_lo, res_hi),
-            "conformal_offset": clean_val(q_conformal),
-        }
-
-        # Timeline path payload (sample every 2 days for compact size: ~137 points)
-        sample_timeline = []
-        for idx in range(0, len(test), 2):
-            act = clean_val(test_y[idx])
-            c_lo = clean_val(conf_lo[idx])
-            c_hi = clean_val(conf_hi[idx])
-            is_miss = bool(act < c_lo or act > c_hi)
-
-            sample_timeline.append({
-                "date": test_dates[idx],
-                "index": idx,
-                "actual": act,
-                "point_forecast": clean_val(test_point[idx]),
-                "naive_lo": clean_val(naive_lo[idx]),
-                "naive_hi": clean_val(naive_hi[idx]),
-                "raw_q_lo": clean_val(raw_lo[idx]),
-                "raw_q_hi": clean_val(raw_hi[idx]),
-                "conf_lo": c_lo,
-                "conf_hi": c_hi,
-                "res_conf_lo": clean_val(res_lo[idx]),
-                "res_conf_hi": clean_val(res_hi[idx]),
-                "is_conformal_miss": is_miss,
-            })
-
-        conf_payload[f"conf_{int(conf*100)}"] = {
-            "nominal_confidence": conf,
-            "methods": methods_summary,
-            "timeline": sample_timeline,
-        }
-
-    return {
-        "confidence_levels": conf_payload,
-        "test_range": {"start": "2020-01-01", "end": "2020-09-30", "days": len(test)},
-        "calibration_range": {"start": "2019-07-01", "end": "2019-12-31", "days": len(cal)},
-        "train_range": {"start": "2017-01-01", "end": "2019-06-30", "days": len(train)},
-        "default_confidence": "conf_80",
-    }
+    return section_evidence.packed(section_evidence.uncertainty(df))
 
 
 def json_default(o):
@@ -1102,58 +789,11 @@ def json_default(o):
 
 
 def main():
-    print("[1/7] Loading German daily electricity load data...")
-    df = load_german_load()
-    print(f"      Rows: {len(df)}, Range: {df['datetime'].min().strftime('%Y-%m-%d')} to {df['datetime'].max().strftime('%Y-%m-%d')}")
-
-    print("[2/7] Generating Tab 1 (Supervised Learning Table & Leakage)...")
-    tab1 = gen_tab1(df)
-
-    print("[3/7] Generating Tab 2 (Ridge vs RF vs XGBoost on Synthetic Interaction)...")
-    tab2 = gen_tab2()
-
-    print("[4/7] Generating Tab 3 (Forecast Arena 5-Fold Real Walk-Forward)...")
-    tab3 = gen_tab3(df)
-
-    print("[5/7] Generating Tab 4 (Multi-Step Forecasting: Direct vs Recursive)...")
-    tab4 = gen_tab4(df)
-
-    print("[6/7] Generating Tab 5 (Tree Failures: Trend Extrapolation & Drift)...")
-    tab5 = gen_tab5()
-
-    print("[7/7] Generating Tab 6 (Probabilistic ML & Conformal Calibration)...")
-    tab6 = gen_tab6(df)
-
-    topic6_data = {
-        "metadata": {
-            "topic": 6,
-            "title": "Traditional Machine Learning in Time Series",
-            "python_version": "3.13.5",
-            "xgboost_version": xgb.__version__,
-            "primary_boosting_engine": "xgboost.XGBRegressor",
-            "dataset_source": "ENTSO-E transparency via Open Power System Data (German Daily Load 2015-2020)",
-            "row_count": len(df),
-            "random_seed": 42,
-        },
-        "tab1": tab1,
-        "tab2": tab2,
-        "tab3": tab3,
-        "tab4": tab4,
-        "tab5": tab5,
-        "tab6": tab6,
-    }
-
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(topic6_data, f, indent=None, default=json_default)
-
-    size_kb = OUTPUT_FILE.stat().st_size / 1024
-    print(f"[OK] Generated {OUTPUT_FILE} ({size_kb:.1f} KB).")
-
-    # Hash check
-    with open(OUTPUT_FILE, "rb") as f:
-        sha256 = hashlib.sha256(f.read()).hexdigest()
-    print(f"[OK] SHA256: {sha256}")
+    if __package__:
+        from .topic6_pairs import write
+    else:
+        from topic6_pairs import write
+    write()
 
 
 if __name__ == "__main__":
