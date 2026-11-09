@@ -99,9 +99,36 @@ I_t^{(n)}&:=\sum_{i=0}^{n-1}g_i\Delta W_i.
 &=m+(x_0-m)e^{-\theta t}.
 \end{aligned}\]
 <details class="read-more"><summary>The limiting step in the mean and second-moment calculations</summary><div>
-<p>For this fixed final time, write \(g(s)=e^{-\theta(t-s)}\). Let \(g_n(s)=g(s_i)\) on each interval \([s_i,s_{i+1})\), and let \(h\) be the longest interval. Since \(|g'(s)|=\theta e^{-\theta(t-s)}\leq\theta\), the weight error satisfies \(|g(s)-g_n(s)|\leq\theta h\).</p>
-<p>The ${link('ito','integral','Itô isometry from Section 5')} turns that deterministic weight error into the expected squared integral error:</p>
-\[\mathbb E[(I_t-I_t^{(n)})^2]=\int_0^t |g(s)-g_n(s)|^2\,\mathrm ds\leq\theta^2t h^2.\]
+<p>For this fixed final time, write \(g(s)=e^{-\theta(t-s)}\). Let \(g_n(s)=g(s_i)\) on each interval \([s_i,s_{i+1})\). The stochastic integral of a step function is defined by its finite weighted sum, so the approximation above can be written as:</p>
+\[\begin{aligned}
+I_t&=\int_0^t g(s)\,\mathrm dW_s,\\
+I_t^{(n)}&=\sum_i g(s_i)\Delta W_i\\
+&=\int_0^t g_n(s)\,\mathrm dW_s.
+\end{aligned}\]
+<p>By linearity, subtracting the two integrals gives one integral of the weight error:</p>
+\[I_t-I_t^{(n)}=\int_0^t\bigl(g(s)-g_n(s)\bigr)\,\mathrm dW_s.\]
+<p>Now apply the ${link('ito','integral','Itô isometry from Section 5')}. For a square-integrable integrand \(H_s\), it states:</p>
+\[\mathbb E\!\left[\left(\int_0^t H_s\,\mathrm dW_s\right)^2\right]
+=\mathbb E\!\left[\int_0^t H_s^2\,\mathrm ds\right].\]
+<p><strong>Here choose \(H_s=g(s)-g_n(s)\).</strong> Substituting this particular integrand shows each step:</p>
+\[\begin{aligned}
+\mathbb E[(I_t-I_t^{(n)})^2]
+&=\mathbb E\!\left[\left(\int_0^t(g(s)-g_n(s))\,\mathrm dW_s\right)^2\right]\\
+&=\mathbb E\!\left[\int_0^t|g(s)-g_n(s)|^2\,\mathrm ds\right]\\
+&=\int_0^t|g(s)-g_n(s)|^2\,\mathrm ds.
+\end{aligned}\]
+<p>The last expectation disappears because both weights are deterministic. The isometry has converted the expected squared error of a random integral into an ordinary integral of the squared weight error. We have used linearity and then the isometry; we have not exchanged a sum and an integral, or moved the square inside by algebra.</p>
+<p>It remains to bound that ordinary integral. Let \(h\) be the longest partition interval. For \(\theta\geq0\), the derivative satisfies \(|g'(s)|=\theta e^{-\theta(t-s)}\leq\theta\). Throughout each interval:</p>
+\[\begin{aligned}
+|g(s)-g_n(s)|&=|g(s)-g(s_i)|\\
+&\leq\theta|s-s_i|\leq\theta h.
+\end{aligned}\]
+<p>Substitute this bound into the ordinary integral:</p>
+\[\begin{aligned}
+\mathbb E[(I_t-I_t^{(n)})^2]
+&\leq\int_0^t\theta^2h^2\,\mathrm ds\\
+&=\theta^2t h^2\longrightarrow0.
+\end{aligned}\]
 <p>Its square root is at most \(\theta\sqrt t\,h\), which tends to zero as the grid is refined. This uses the established construction and isometry of the integral; it is a substantive step beyond calculating the expectation of one finite sum.</p>
 <p>Mean-square convergence also preserves second moments. Factor the difference of squares and apply Cauchy–Schwarz again:</p>
 \[\begin{aligned}
