@@ -27,3 +27,5 @@ Format: `- [date] symptom -> rule to follow`
 - [2026-11-08] A theme migration exposed a 100%-width chart plus content-box padding overflowing on phones. -> Apply border-box sizing to the shared forecasting shell, wrap chart headers, and verify page width and mobile topic navigation.
 
 - [2026-11-08] A shell replacement removed the nearby maxTime chart constant, which the bundler did not flag. -> Keep chart-domain declarations separate from shell state changes, inspect the complete diff, and verify a rendered chart after shell edits.
+
+- [2026-11-09] A scratch lesson snippet lost LaTeX backslashes through JavaScript string escaping, caught before applying it to the app. -> Use raw strings when transferring math source, preserve template interpolations explicitly, and inspect the written snippet before applying it.
