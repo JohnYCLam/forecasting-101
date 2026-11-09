@@ -1,4 +1,4 @@
-import { prose, h, check } from './helpers.js';
+import { prose, h, check, link } from './helpers.js';
 import { eulerDemo } from './sde-demos.js';
 
 export const sdes = demos => prose`
