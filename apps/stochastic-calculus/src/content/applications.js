@@ -1,73 +1,167 @@
 import { prose, h, check, link, note } from './helpers.js';
 
 export const stratonovich = demos => prose`
-${h('endpoint-choice','Why change the integral convention?')}
-<p>In the last chapter we read the noise coefficient at the start of each interval. Section 5 gives us a way to test that choice without solving another equation. Follow the same Brownian step from \(W_i\) to \(W_i+\Delta W_i\). What difference would it make to use the average of those two positions as the multiplier?</p>
+${h('endpoint-choice','From smooth forcing to symmetric accumulation')}
+<p>Section 6 chose the noise coefficient before each next Brownian increment. Now consider another starting point: an ordinary differential equation responding continuously to a smooth, rapidly varying driving signal. As the signal becomes rougher, which stochastic equation retains that response?</p>
+<p>Start with a smooth signal \(w(t)\). Ordinary calculus gives:</p>
+\[\int_0^T w(t)\,\mathrm dw(t)=\frac12\bigl(w(T)^2-w(0)^2\bigr).\]
+<p>Join successive Brownian readings \(W_i\) and \(W_{i+1}\) with a straight segment. Along that segment, the signal changes continuously, so its ordinary integral uses the average of the endpoint values:</p>
+\[\begin{aligned}
+\text{segment contribution}
+&=\frac{W_i+W_{i+1}}2\,(W_{i+1}-W_i)\\
+&=\left(W_i+\frac12\Delta W_i\right)\Delta W_i.
+\end{aligned}\]
+<p>This suggests <em>symmetric accumulation</em>: include the multiplier's change during the increment, rather than freeze it at the start. Its Brownian limit is the <em>Stratonovich integral</em>, written \(\circ\,\mathrm dW\). The evaluation rule changes the multiplier used for each contribution; the integration bounds remain \(0\) and \(T\).</p>
+<details class="read-more"><summary>From smooth driving signals to the Wong–Zakai limit</summary><div>
+<p>Let \(W^\varepsilon\) be standard piecewise-linear approximations to Brownian motion, and solve an ordinary equation before taking the limit:</p>
+\[\dot x^\varepsilon=\widetilde a(x^\varepsilon)+b(x^\varepsilon)\dot W^\varepsilon.\]
+<p>Under suitable coefficient regularity and convergence assumptions, the limiting equation is \(\mathrm dX=\widetilde a(X)\,\mathrm dt+b(X)\circ\mathrm dW\). This is the classical <em>Wong–Zakai</em> connection. It motivates a continuously responding system's equation without treating the noise coefficient as frozen over each segment.</p>
+<p>The approximation mechanism matters, especially with several driving signals. A physical noise source does not universally select one convention. <a href="https://arxiv.org/abs/1403.7281" target="_blank" rel="noopener noreferrer">Kelly and Melbourne, <cite>Smooth approximation of stochastic differential equations</cite></a>, discuss the assumptions and extensions.</p>
+</div></details>
+
+${h('integral-conversion','The Brownian correction survives')}
+<p>On the same step, compare Itô's left-value contribution with the symmetric contribution. Their difference is a squared increment:</p>
 \[\begin{aligned}
 \text{left contribution}&=W_i\Delta W_i,\\
-\text{midpoint contribution}&=(W_i+\tfrac12\Delta W_i)\Delta W_i,\\
-\text{difference}&=\tfrac12(\Delta W_i)^2 .
+\text{symmetric contribution}&=\left(W_i+\frac12\Delta W_i\right)\Delta W_i,\\
+\text{difference}&=\frac12(\Delta W_i)^2.
 \end{aligned}\]
-<p>For a move from 0.3 to 0.1, the contributions are −0.06 and −0.04. Even on a downward move, the difference is positive. On a finite grid these differences add to \(Q_n/2\); as the grid is refined, the limit is \(T/2\). We have found Section 5’s missing triangular pieces again.</p>
-<p>The left choice is Itô’s. The symmetric choice gives the Stratonovich integral, written with a small circle, \(\circ\,\mathrm dW\). It takes both ends of the step to compute that contribution. Slide a fraction \(\lambda\) of the way from the starting state to the ending state: zero selects the left end and one half selects the midpoint.</p>
-<p>The simplest calculation shows why the choice matters. Using the finite identity from Section 5:</p>
-\[\begin{aligned}I_{\lambda,n}&=\sum_i(W_{t_i}+\lambda\Delta W_i)\Delta W_i\\&=\frac12W_T^2+\left(\lambda-\frac12\right)Q_n\\&\xrightarrow{L^2}\frac12W_T^2+\left(\lambda-\frac12\right)T.\end{aligned}\]
-<p>The arrow marked \(L^2\) means that the average squared error tends to zero. Since \(\mathbb E[W_T^2]=T\), the limiting integral has expectation \(\lambda T\). At \(\lambda=0\), we recover Itô’s mean-zero integral. At \(\lambda=1/2\), we recover \(W_T^2/2\), the familiar chain-rule expression. At \(\lambda=1\), the result is \(W_T^2/2+T/2\), the right-endpoint or Hänggi–Klimontovich convention in this scalar family.</p>
-` + demos.lambda + prose`
-<h3>From the straight line to a curved multiplier</h3>
-<p>Itô’s integral evaluates a coefficient before the next random change. Suppose we instead interpolate between the endpoint states. For a scalar continuous diffusion and sufficiently smooth integrand \(g\), define the endpoint-interpolated family:</p>
-\[\int_0^T g(X_t)\diamond_\lambda\mathrm dW_t=\lim_{|\pi|\to0}\sum_i g(X_{t_i}+\lambda\Delta X_i)\,\Delta W_i,\qquad0\le\lambda\le1.\]
-<p>The parameter refers to interpolation between states, not evaluation at the physical time \(t_i+\lambda\Delta t_i\). For this smooth setting, \(\lambda=1/2\) gives the Stratonovich integral, equivalently defined by symmetric integrand-endpoint sums.</p>
+<p>For a smooth path, the sum of squared increments vanishes as the grid is refined. For Brownian motion, Section 5 showed that \(Q_n:=\sum_i(\Delta W_i)^2\to T\) in mean square. Thus the accumulated difference approaches \(T/2\), even though each step becomes tiny.</p>
+<p>With \(W_0=0\), the symmetric terms telescope to \(W_T^2/2\). The two limits are therefore:</p>
+\[\begin{aligned}
+\int_0^T W_t\,\mathrm dW_t&=\frac12(W_T^2-T),\\
+\int_0^T W_t\circ\mathrm dW_t&=\frac12W_T^2.
+\end{aligned}\]
+<p>The circle records a different accumulation rule on the same Brownian path. The symmetric rule retains the term that makes the ordinary chain rule work. It does not describe a trader choosing a holding with knowledge of the next price change.</p>
+` + demos.convention + prose`
+<p>In the first plot, inspect the Brownian driving path. In the second, teal accumulates the left-value contributions and coral the symmetric contributions. Their terminal gap is exactly \(Q_n/2\) on this finite grid; its Brownian limit is \(T/2\). New sample changes the driver while preserving that identity.</p>
+<details class="read-more"><summary>The symmetric definition and its chain rule</summary><div>
+<p>For continuous semimartingales and suitable integrability, the Stratonovich integral is the limit in probability of symmetric integrand-endpoint sums:</p>
+\[\int_0^T H_t\circ\mathrm dW_t
+=\lim_{|\pi|\to0}\sum_i\frac{H_{t_i}+H_{t_{i+1}}}{2}\Delta W_i.\]
+<p>For a smooth state-dependent integrand, evaluating it at the average of the endpoint states gives the same limit in the setting considered here. Neither expression says that the actual Brownian path follows the straight segment between its readings.</p>
+<p>For a smooth function \(f(t,x)\) of a continuous diffusion \(X_t\), the symmetric contribution absorbs Itô's curvature correction, giving:</p>
+\[\mathrm d[f(t,X_t)]=f_t(t,X_t)\,\mathrm dt+f_x(t,X_t)\circ\mathrm dX_t.\]
+<p>This is the ordinary chain rule in Stratonovich notation. The quadratic variation is still present; it is included in the symmetric integral rather than written as a separate second-derivative term.</p>
+</div></details>
 
-${h('integral-conversion','Derive the integral conversion')}
-<p>The slider changed the value of the integral on one fixed collection of paths. To translate an equation between conventions we need the size of that change for a general multiplier. Let \(X\) have diffusion coefficient \(b\). Expand the interpolated coefficient about the left state:</p>
-\[g(X_i+\lambda\Delta X_i)\Delta W_i=g(X_i)\Delta W_i+\lambda g'(X_i)\Delta X_i\Delta W_i+\text{remainder}.\]
-<p>Because \(\Delta X_i\approx a_i\Delta t_i+b_i\Delta W_i\), the mixed sum retains \(b_i(\Delta W_i)^2\). The other product, \(a_i\Delta t_i\Delta W_i\), vanishes in the sum. For smooth coefficients with bounded derivatives on the range considered, the next Taylor term is of typical size \(h^{3/2}\) per step; summing \(T/h\) such bounds leaves an error tending to zero. The surviving weighted squares give:</p>
-\[\int_0^Tg(X_t)\diamond_\lambda\mathrm dW_t=\int_0^Tg(X_t)\,\mathrm dW_t+\lambda\int_0^T g'(X_t)b(t,X_t)\,\mathrm dt.\]
-<p>Subtracting the formulas for two conventions gives:</p>
-\[\begin{aligned}&\int_0^Tg(X_t)\diamond_{\lambda_2}\mathrm dW_t-\int_0^Tg(X_t)\diamond_{\lambda_1}\mathrm dW_t\\&\qquad=(\lambda_2-\lambda_1)\int_0^Tg'(X_t)b(t,X_t)\,\mathrm dt.\end{aligned}\]
-${h('chain-rule','Derive the chain rule and drift conversion')}
-<p>Now change the integrator from \(W\) to \(X\). Its squared changes accumulate at rate \(b^2\): \(\mathrm d[X]_t=b^2\mathrm dt\). In the expansion of \(f_x\,\mathrm dX\), moving the evaluation point adds \(\lambda f_{xx}(\Delta X_i)^2\) on each interval to leading order. Changing the convention for \(f_x\,\mathrm dX\) absorbs \(\lambda b^2f_{xx}\mathrm dt\) of Itô’s correction:</p>
-\[\mathrm df(t,X_t)=\left(f_t+\left(\frac12-\lambda\right)b^2f_{xx}\right)\mathrm dt+f_x\diamond_\lambda\mathrm dX_t.\]
-<p>Thus the midpoint choice \(\lambda=1/2\) preserves the ordinary chain rule:</p>
-\[\mathrm df(t,X_t)=f_t\,\mathrm dt+f_x\circ\mathrm dX_t.\]
-<p>To describe the <em>same process</em> with a different convention, its drift must change. Apply the integral-conversion identity with \(g=b\):</p>
-\[\begin{aligned}a_{\mathrm{It\hat{o}}}&=a_\lambda+\lambda b\,\partial_xb,\\a_{\lambda_1}-a_{\lambda_2}&=(\lambda_2-\lambda_1)b\,\partial_xb,\\a_{\mathrm{It\hat{o}}}&=a_{\mathrm{Strat}}+\frac12b\,\partial_xb.\end{aligned}\]
-<p>For \(b=\sigma X\), the correction is \(\sigma^2X/2\). The Itô equation with drift \(\mu X\) is therefore equivalent to the Stratonovich equation with drift \((\mu-\sigma^2/2)X\). For additive noise, \(\partial_xb=0\), so the convention shift vanishes.</p>
+${h('chain-rule','Translate the equation, preserve the process')}
+<p>Different integral values do not prevent equivalent descriptions of one process. The drift must compensate for the change in accumulation. Return to Section 6's multiplicative model, with constants \(\mu,\sigma\) and the same positive starting value \(X_0\).</p>
+<div class="table-wrap"><table><thead><tr><th>Equation with the same written drift</th><th>Solution</th></tr></thead><tbody>
+<tr><td>Itô: \(\mathrm dX=\mu X\,\mathrm dt+\sigma X\,\mathrm dW\)</td><td>\(X_t=X_0e^{(\mu-\sigma^2/2)t+\sigma W_t}\)</td></tr>
+<tr><td>Stratonovich: \(\mathrm dX=\mu X\,\mathrm dt+\sigma X\circ\mathrm dW\)</td><td>\(X_t=X_0e^{\mu t+\sigma W_t}\)</td></tr>
+</tbody></table></div>
+<p>The second solution follows by applying the ordinary chain rule to \(\log X\), integrating, then exponentiating. It differs from the first solution. To preserve the first process, subtract \(\sigma^2X/2\) from the Stratonovich drift:</p>
+\[\begin{aligned}
+\mathrm dX&=\mu X\,\mathrm dt+\sigma X\,\mathrm dW
+&&\text{(Itô)},\\
+\mathrm dX&=\left(\mu-\frac{\sigma^2}{2}\right)X\,\mathrm dt+\sigma X\circ\mathrm dW
+&&\text{(Stratonovich)}.
+\end{aligned}\]
+<p>These descriptions produce the same path for the same Brownian driver. As with Newtonian, Lagrangian and Hamiltonian mechanics, equivalent formulations can expose different useful structures. Here, changing the integral convention requires translating the drift as well.</p>
 ` + demos.conversion + prose`
-${h('physical-applications','Applications: what the convention helps describe')}
-<p>The conversion demo superimposes two descriptions of one path. Which description is convenient depends on how the model arose. In the first example below, it comes from smoothing the driving signal; in the last, it comes from a measured law for concentration.</p>
-<h3>Smooth-noise limits and Wong–Zakai</h3>
-<p>Consider ordinary equations driven by suitable smooth approximations \(W^\varepsilon\) to Brownian motion:</p>
-\[\dot x^\varepsilon=\widetilde a(x^\varepsilon)+b(x^\varepsilon)\dot W^\varepsilon.\]
-<p>For standard piecewise-linear or mollified approximations and appropriate smoothness assumptions, the solutions converge to the Stratonovich equation \(\mathrm dX=\widetilde a\,\mathrm dt+b\circ\mathrm dW\). This is the classical Wong–Zakai connection. Other approximation mechanisms can produce other corrections; calling a noise source “physical” does not universally determine its convention. <a href="https://www.hairer.org/papers/WongZakai.pdf" target="_blank" rel="noreferrer">Hairer and Pardoux’s introduction</a> reviews the classical result.</p>
-<h3>Multiplicative growth or decay</h3>
-<p>For \(X_0>0\), consider \(\mathrm dX=-kX\,\mathrm dt+\sigma X\circ\mathrm dW\). The ordinary chain rule gives:</p>
-\[\mathrm d\log X=-k\,\mathrm dt+\sigma\,\mathrm dW,\qquad X_t=X_0e^{-kt+\sigma W_t}.\]
-<p>Its equivalent Itô drift is \((-k+\sigma^2/2)X\). Comparing it to an Itô equation with written drift \(-kX\) would compare different processes. This scalar first-order model describes multiplicative dynamics; an inertial oscillator requires position and velocity equations.</p>
-<h3>Coordinate changes and stochastic control</h3>
-<p>Under a smooth coordinate transformation, a Stratonovich equation transforms using the familiar chain rule. This makes vector-field descriptions on curved state spaces convenient. For a scalar controlled example:</p>
-\[\mathrm dX=(aX+u)\,\mathrm dt+\sigma X\circ\mathrm dW,\qquad\mathrm d(X^2)=(2aX^2+2Xu)\,\mathrm dt+2\sigma X^2\circ\mathrm dW.\]
-<p>The equivalent Itô equation has drift \((a+\sigma^2/2)X+u\); applying Itô’s formula there gives the same process and energy evolution. The choice of notation alone does not supply a stabilizing control law or remove noise-induced effects.</p>
-<h3>Biological diffusion in a heterogeneous medium</h3>
-<p>Suppose the intended concentration equation is Fick’s law with a positive position-dependent diffusivity \(D(x)\):</p>
-\[\partial_tp=\partial_x\!\left(D(x)\partial_xp\right).\]
-<p>Insert \(b=\sqrt{2D}\) into the ${link('diffusion','fokker-planck','density equation derived in Section 10')}. The product rule gives:</p>
-\[-\partial_x(ap)+\partial_{xx}(Dp)=\partial_x(D\,\partial_xp)+\partial_x\!\left[(D'-a)p\right].\]
-<p>To recover the intended law for arbitrary densities, set the extra drift term to zero: \(a=D'\). Since \(bb'=D'\), the equivalent scalar \(\lambda\)-convention drift is:</p>
-\[a_\lambda=(1-\lambda)D'.\]
-<p>Thus the same Fickian model has drift \(D'\) in Itô form, \(D'/2\) in Stratonovich form, and zero written drift in the right-endpoint convention. A microscopic model determines which macroscopic equation is appropriate; one should not select a convention merely because the system is biological.</p>
-${h('midpoint-methods','Numerical methods must match the convention')}
-<p>For a scalar Stratonovich equation, an implicit midpoint step is:</p>
-\[X_{n+1}=X_n+\widetilde a\!\left(\frac{X_n+X_{n+1}}2\right)\Delta t+b\!\left(\frac{X_n+X_{n+1}}2\right)\Delta W_n.\]
-<p>A common explicit Heun predictor–corrector uses the same noise increment in both stages:</p>
-\[\begin{aligned}\widehat X&=X_n+\widetilde a(X_n)\Delta t+b(X_n)\Delta W_n,\\X_{n+1}&=X_n+\frac{\widetilde a(X_n)+\widetilde a(\widehat X)}2\Delta t+\frac{b(X_n)+b(\widehat X)}2\Delta W_n.\end{aligned}\]
-<p>These are illustrative scalar schemes under suitable coefficient assumptions. A left-endpoint Euler–Maruyama step using the unconverted Stratonovich drift generally targets a different Itô model. Alternatively, convert the drift first, then use an appropriate Itô integrator. Neither midpoint evaluation nor a convention label guarantees stability for every stiff problem.</p>
-${h('comparison','Compare the conventions')}
-<div class="table-wrap"><table><thead><tr><th>Convention</th><th>Evaluation</th><th>\(\int_0^T W_t\diamond_\lambda\mathrm dW_t\)</th><th>Expected value</th></tr></thead><tbody><tr><td>Itô, \(\lambda=0\)</td><td>Left state</td><td>\(W_T^2/2-T/2\)</td><td>\(0\)</td></tr><tr><td>Stratonovich, \(\lambda=1/2\)</td><td>Symmetric / midpoint limit</td><td>\(W_T^2/2\)</td><td>\(T/2\)</td></tr><tr><td>Right endpoint, \(\lambda=1\)</td><td>Right state</td><td>\(W_T^2/2+T/2\)</td><td>\(T\)</td></tr></tbody></table></div>
-<p>For an Itô integral with finite mean-square size and weights chosen using only the past, the best prediction for its next change is zero. Such a running total is called a martingale. The other conventions do not generally have this property. The multidimensional drift correction involves diffusion vector fields and their derivatives; the scalar formula above cannot be copied unchanged into every matrix-valued problem.</p>
-<p>All these conventions started with the same noise: continuous Brownian paths with independent increments. Changing the evaluation point cannot turn a continuous path into one with a sudden jump. Section 8 asks when we need to change the noise itself.</p>
-` + check('When do all these conventions give the same drift coefficient?',String.raw`For additive noise \(b=b(t)\), the spatial derivative \(\partial_xb\) vanishes. The conversion correction is then zero.`);
+<p>Increase the noise amplitude. Teal is the Itô solution; dashed coral is its converted Stratonovich description, which stays on top of it. Blue keeps the original written drift while changing the convention, so it describes another process. At zero noise, all three coincide.</p>
+<details class="read-more"><summary>Derive the scalar drift correction</summary><div>
+<p>Write the scalar Stratonovich equation as \(\mathrm dX=a_{\mathrm S}(t,X)\,\mathrm dt+b(t,X)\circ\mathrm dW\). Across one interval, expand the symmetric noise multiplier about its left value. To leading order, its extra contribution is:</p>
+\[\frac12\,\partial_xb(t_i,X_i)\,\Delta X_i\,\Delta W_i.\]
+<p>The stochastic part of \(\Delta X_i\) is \(b(t_i,X_i)\Delta W_i\). Its product with \(\Delta W_i\) survives summation through Brownian squared increments; drift–noise products vanish. Under the usual smoothness and localization assumptions, the correction is \(\tfrac12\int b\,\partial_xb\,\mathrm dt\).</p>
+\[a_{\mathrm I}(t,x)=a_{\mathrm S}(t,x)+\frac12b(t,x)\partial_xb(t,x).\]
+<p>Here \(a_{\mathrm I}\) is the Itô drift and \(a_{\mathrm S}\) the Stratonovich drift. For \(b(t,x)=\sigma x\), their difference is \(\sigma^2x/2\). For additive noise \(b=b(t)\), the spatial derivative is zero. Several state variables or Brownian drivers require the appropriate vector-field correction, not a copied scalar formula. See <a href="https://www.math.uh.edu/~sanders/Math3338/LawrenceEvans-SDE-course.pdf" target="_blank" rel="noopener noreferrer">Evans, pp. 111–115</a>.</p>
+</div></details>
+
+${h('physical-applications','Choose the form that fits the calculation')}
+<p>Once the model is specified, either convention can describe it after conversion. Itô form is convenient when the coefficient is chosen using current information: its Brownian integral has mean zero under square-integrability, and the isometry supports variance calculations. Those are the tools used for OU in Section 6.</p>
+<p>Stratonovich form is convenient when deriving a model from suitable smooth driving signals or changing coordinates: the usual chain rule keeps that structure visible. This does not remove noise-induced drift effects; conversion makes them explicit in Itô form.</p>
+<p>Section 6 already contains the distinction. OU has constant noise coefficient \(b=\sigma\), so changing convention leaves its drift unchanged. GBM has \(b=\sigma x\), so its equivalent descriptions differ by \(\sigma^2x/2\). The system's mechanism determines the model; the preferred form then depends on the calculation.</p>
+<details class="read-more"><summary>Optional applications: coordinates, control and varying diffusivity</summary><div>
+<p>A coordinate change can preserve a useful expression for a model. For a scalar controlled equation, with control input \(u_t\):</p>
+\[\begin{aligned}
+\mathrm dX&=(aX+u_t)\,\mathrm dt+\sigma X\circ\mathrm dW,\\
+\mathrm d(X^2)&=(2aX^2+2Xu_t)\,\mathrm dt+2\sigma X^2\circ\mathrm dW.
+\end{aligned}\]
+<p>The equivalent Itô drift is \((a+\sigma^2/2)X+u_t\); Itô's formula gives the same evolution of \(X^2\). A convenient expression does not itself supply a stabilizing control.</p>
+<p>For a second application, suppose a concentration density \(p(t,x)\) is intended to obey Fick's law with positive position-dependent diffusivity \(D(x)\):</p>
+\[\partial_tp=\partial_x(D\,\partial_xp).\]
+<p>The ${link('diffusion','fokker-planck','density equation in Section 10')} shows that its scalar Itô representation has \(b=\sqrt{2D}\) and drift \(a_{\mathrm I}=D'\). Since \(b\,b'=D'\), the same model has Stratonovich drift \(D'/2\). In the right-endpoint convention introduced next, its written drift is zero. The desired transport law is the premise here; not every heterogeneous medium must follow it.</p>
+</div></details>
+
+${h('lambda-family','Beyond two conventions: the λ-family')}
+<p>Itô and Stratonovich cover two important accumulation rules, but some effective models need intermediate corrections. In a noisy electrical circuit, researchers varied the relation between the noise's correlation time—how long a fluctuation remains related to its past—and the feedback delay—how long the circuit takes to respond. They observed a continuous transition from Stratonovich toward Itô behavior, passing through intermediate conventions. <a href="https://doi.org/10.1038/ncomms3733" target="_blank" rel="noopener noreferrer">Pesce and colleagues, <cite>Stratonovich-to-Itô transition in noisy systems with multiplicative feedback</cite> (2013)</a>.</p>
+<p>The <em>\(\lambda\)-family</em> provides one scalar notation for such rules. For our linear example, use \(W_i+\lambda\Delta W_i\) as the multiplier. Itô is \(\lambda=0\), Stratonovich is \(\lambda=1/2\), and the right-endpoint or Hänggi–Klimontovich convention is \(\lambda=1\).</p>
+\[\begin{aligned}
+I_{\lambda,n}
+&=\sum_i(W_i+\lambda\Delta W_i)\Delta W_i\\
+&=\frac12W_T^2+\left(\lambda-\frac12\right)Q_n,\\
+I_\lambda&=\frac12W_T^2+\left(\lambda-\frac12\right)T.
+\end{aligned}\]
+<p>The first identity is exact on the finite grid; the second expression is its mean-square limit. Since \(\mathbb E[W_T^2]=T\), its expectation is \(\mathbb E[I_\lambda]=\lambda T\). This family changes the integral on a fixed path. To preserve an SDE's process, compensate its drift.</p>
+` + demos.lambda + prose`
+<p>Start with the Itô and Stratonovich presets, then move the slider between them and toward the right endpoint. Teal is the finite sum; dashed coral is its limiting expression; the dotted blue reference is \(W_t^2/2\). The second plot compares the sample mean with the exact expectation \(\lambda T\). This is a mathematical illustration, not a simulation or fit of the circuit experiment.</p>
+<details class="read-more"><summary>General multipliers, conversion and the λ-chain rule</summary><div>
+<p>For a scalar diffusion \(X\) with smooth coefficients and a sufficiently smooth function \(g\), define the state-interpolated rule:</p>
+\[\begin{aligned}
+&\int_0^T g(X_t)\diamond_\lambda\mathrm dW_t\\
+&\quad=\lim_{|\pi|\to0}\sum_i g(X_i+\lambda\Delta X_i)\Delta W_i.
+\end{aligned}\]
+<p>The symbol \(\diamond_\lambda\) labels the convention. Here \(\lambda\) interpolates between endpoint states; it does not select the actual Brownian reading at physical time \(t_i+\lambda\Delta t_i\). For smooth \(g\), the midpoint-state rule has the same limit as the symmetric integrand-endpoint definition.</p>
+<p>If \(X\) has noise coefficient \(b(t,X_t)\), Taylor expansion about the left state gives:</p>
+\[\begin{aligned}
+g(X_i+\lambda\Delta X_i)\Delta W_i
+&=g(X_i)\Delta W_i\\
+&\quad+\lambda g'(X_i)\Delta X_i\Delta W_i+\text{remainder}.
+\end{aligned}\]
+<p>The surviving squared-increment sum comes from \(\Delta X_i\Delta W_i\approx b(t_i,X_i)(\Delta W_i)^2\). Under suitable smoothness, moment and localization assumptions, the remainder vanishes in probability, yielding:</p>
+\[\begin{aligned}
+\int_0^Tg(X_t)\diamond_\lambda\mathrm dW_t
+&=\int_0^Tg(X_t)\,\mathrm dW_t\\
+&\quad+\lambda\int_0^Tg'(X_t)b(t,X_t)\,\mathrm dt.
+\end{aligned}\]
+<p>Putting \(g=b\), with any time dependence evaluated at the same time, gives the equivalent scalar drift:</p>
+\[\begin{aligned}
+a_{\mathrm I}&=a_\lambda+\lambda b\,\partial_xb,\\
+a_{\lambda_1}-a_{\lambda_2}
+&=(\lambda_2-\lambda_1)b\,\partial_xb.
+\end{aligned}\]
+<p>For a smooth \(f(t,x)\), the matching chain rule is:</p>
+\[\begin{aligned}
+\mathrm d[f(t,X_t)]
+&=\left(f_t+\left(\frac12-\lambda\right)b^2f_{xx}\right)\mathrm dt\\
+&\quad+f_x\diamond_\lambda\mathrm dX_t.
+\end{aligned}\]
+<p>For a fixed process, changing \(\lambda\) and its drift together is a translation. Relative to a specified underlying drift, a parameter inferred from a microscopic limit can instead encode a noise-induced correction. An unconstrained drift and \(\lambda\) cannot be identified separately from this scalar effective equation alone.</p>
+</div></details>
+
+${h('midpoint-methods','Make the numerical method match the model')}
+<p>Section 6 used Euler–Maruyama, which evaluates coefficients at the beginning of each step and targets the Itô equation. Giving it an unconverted Stratonovich drift generally simulates a different model.</p>
+<p>For the equivalent multiplicative equations above, use the Itô drift \(\mu X\) with Euler–Maruyama. A suitable Stratonovich method instead uses the drift \((\mu-\sigma^2/2)X\). The convention, coefficients and numerical method must describe the same equation.</p>
+<details class="read-more"><summary>Scalar midpoint and Heun steps</summary><div>
+<p>For a scalar Stratonovich equation with drift \(\widetilde a\) and noise coefficient \(b\), an implicit midpoint step uses the average of the starting and ending states:</p>
+\[\begin{aligned}
+X_{n+1}&=X_n+\widetilde a\!\left(\frac{X_n+X_{n+1}}2\right)\Delta t\\
+&\quad+b\!\left(\frac{X_n+X_{n+1}}2\right)\Delta W_n.
+\end{aligned}\]
+<p>It is implicit because the unknown endpoint appears on both sides. A common explicit Heun predictor–corrector first predicts an endpoint, then averages coefficients using that prediction. Both stages use the same noise increment:</p>
+\[\begin{aligned}
+\widehat X&=X_n+\widetilde a(X_n)\Delta t+b(X_n)\Delta W_n,\\
+X_{n+1}&=X_n+\frac{\widetilde a(X_n)+\widetilde a(\widehat X)}2\Delta t\\
+&\quad+\frac{b(X_n)+b(\widehat X)}2\Delta W_n.
+\end{aligned}\]
+<p>These illustrative scalar schemes require suitable coefficient assumptions. A midpoint label does not guarantee stability for every stiff problem. Converting the equation to Itô form before using an appropriate Itô method is another valid route.</p>
+</div></details>
+
+${h('comparison','One model, several descriptions')}
+<p>The symmetric rule arises naturally from suitable smooth-driver limits. Brownian squared increments explain its difference from left accumulation. Adjusting the drift lets both conventions describe the same process; the general family extends that translation when other effective corrections are useful.</p>
+<details class="read-more"><summary>Compare the three named conventions</summary><div>
+<div class="table-wrap"><table><thead><tr><th>Convention</th><th>\(\lambda\)</th><th>\(\int_0^T W_t\diamond_\lambda\mathrm dW_t\)</th><th>Expected value</th></tr></thead><tbody>
+<tr><td>Itô</td><td>\(0\)</td><td>\((W_T^2-T)/2\)</td><td>\(0\)</td></tr>
+<tr><td>Stratonovich</td><td>\(1/2\)</td><td>\(W_T^2/2\)</td><td>\(T/2\)</td></tr>
+<tr><td>Right endpoint</td><td>\(1\)</td><td>\((W_T^2+T)/2\)</td><td>\(T\)</td></tr>
+</tbody></table></div>
+<p>For an adapted, square-integrable integrand, the Itô integral's future increment has conditional mean zero. Its running total is a <em>martingale</em>: given current information, its best prediction is its current value. The other conventions do not generally share that property.</p>
+</div></details>
+<p>Throughout this chapter the noise itself remained Brownian. Changing how we accumulate it cannot create a sudden jump or correlated future increments. Section 8 asks when the driving noise must change.</p>
+` + check('Does changing the circle symbol preserve the process?',String.raw`Only after the drift is converted too. For scalar smooth coefficients, \(a_{\mathrm I}=a_{\mathrm S}+\tfrac12b\,\partial_xb\). Additive noise has \(\partial_xb=0\), so this correction vanishes.`);
+
 
 export const beyond = demos => prose`
 ${h('continuous-noise','What is special about Brownian noise?')}

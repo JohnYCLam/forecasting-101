@@ -29,3 +29,5 @@ Format: `- [date] symptom -> rule to follow`
 - [2026-11-08] A shell replacement removed the nearby maxTime chart constant, which the bundler did not flag. -> Keep chart-domain declarations separate from shell state changes, inspect the complete diff, and verify a rendered chart after shell edits.
 
 - [2026-11-09] A scratch lesson snippet lost LaTeX backslashes through JavaScript string escaping, caught before applying it to the app. -> Use raw strings when transferring math source, preserve template interpolations explicitly, and inspect the written snippet before applying it.
+
+- [2026-11-10] Section 7 scratch tooling failed on nested template delimiters and a Windows absolute ESM import, before app validation. -> Preserve source templates through explicit placeholders, and use file URLs or pathToFileURL for Windows ESM imports.

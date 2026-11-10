@@ -1,6 +1,6 @@
 # Stochastic Calculus — interactive introduction
 
-This branch contains Sections 1–12. One Vite app contains the full teaching progression, 21 guided experiments, detailed derivations, applications, notation, companion code, primary references, and explicit source attribution. Plain JavaScript, CSS, and Canvas; no React or backend required.
+This branch contains Sections 1–12. One Vite app contains the full teaching progression, 22 guided experiments, detailed derivations, applications, notation, companion code, primary references, and explicit source attribution. Plain JavaScript, CSS, and Canvas; no React or backend required.
 
 Based on and adapted from **[Introduction to Stochastic Calculus by Ji-Ha Kim](https://jiha-kim.github.io/posts/introduction-to-stochastic-calculus/)**, licensed by the author under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**. This project rewrites and reorganizes the explanations, expands or corrects derivations and example code, rebuilds illustrations as interactive experiments, and adds numerical and ML examples. See [ATTRIBUTION.md](ATTRIBUTION.md) for the source credit, license, and description of changes.
 

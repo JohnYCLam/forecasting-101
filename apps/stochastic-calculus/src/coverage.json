@@ -248,14 +248,14 @@
     "sourceSection": "6",
     "sourceTitle": "The \\(\\lambda\\)-Parameterized Family of Stochastic Integrals",
     "chapter": "stratonovich",
-    "section": "endpoint-choice",
+    "section": "lambda-family",
     "status": "Retained, checked, and rewritten"
   },
   {
     "sourceSection": "6",
     "sourceTitle": "Universal Transformation Formulas Across the \\(\\lambda\\)-Family",
     "chapter": "stratonovich",
-    "section": "integral-conversion",
+    "section": "lambda-family",
     "status": "Retained, checked, and rewritten"
   },
   {

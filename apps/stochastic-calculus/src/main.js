@@ -274,6 +274,16 @@ gbm(){const mu=value('gbm-mu'),sigma=value('gbm-sigma');slider('gbm-mu');slider(
   const c=chart('gbm-path',[0,10],lim,'Time t','Value S · log scale',{yTicks:ticks,yFormat:y=>{const v=Math.exp(y);return v>=10000?v.toExponential(0):v<1?Number(v.toPrecision(2)).toString():Math.round(v).toLocaleString('en');}});
   logs.forEach(p=>c?.line(series(p,10),C.gray,1,[],.7));c?.line(series(mean,10),C.coral,2.6);c?.line(series(median,10),C.teal,2.6,[6,3]);
   out('gbm-mean',fmt(100*Math.exp(mu*10),2));out('gbm-median',fmt(100*Math.exp(rate*10),2));out('gbm-rate',fmt(rate,4));out('gbm-below',fmt(w.filter(p=>rate*10+sigma*p[200]<0).length/10,1)+'%');},
+convention(){
+  const w=cached('convention','w',()=>M.brownian(512,1,seed('convention'))[0]);
+  const left=M.lambdaIntegral(w,0),symmetric=M.lambdaIntegral(w,.5);
+  let q=0;for(let i=1;i<w.length;i++)q+=(w[i]-w[i-1])**2;
+  lines('convention-driver',[w],1);
+  const c=chart('convention-integrals',[0,1],limits([left,symmetric]),'Time t','Accumulated contribution');
+  c?.line(series(left),C.teal,2.2);c?.line(series(symmetric),C.coral,2.2);
+  out('convention-gap',fmt(symmetric.at(-1)-left.at(-1),4));
+  out('convention-squares',fmt(q/2,4));out('convention-limit',fmt(.5,4));
+},
 lambda(){const lambda=value('lambda-value');slider('lambda-value');const w=cached('lambda','w',()=>M.brownian(512,1,seed('lambda'),2000)),first=w[0],finite=M.lambdaIntegral(first,lambda),limit=Array.from(first,(x,i)=>.5*x*x+(lambda-.5)*i/512),classical=Array.from(first,x=>.5*x*x);
   const c=chart('lambda-path',[0,1],limits([finite,limit,classical]),'Time t','Integral');c?.line(series(classical),C.blue,1.5,[2,3]);c?.line(series(limit),C.coral,2.3,[5,4]);c?.line(series(finite),C.teal,1.8);
   const summaries=cached('lambda','summaries',()=>w.map(p=>{let q=0;for(let i=1;i<p.length;i++)q+=(p[i]-p[i-1])**2;return [.5*p[512]**2,q];}));let avgEnd=0,avgQ=0;for(const [a,q] of summaries){avgEnd+=a/w.length;avgQ+=q/w.length;}const average=avgEnd+(lambda-.5)*avgQ;
