@@ -168,34 +168,42 @@ ${h('comparison','One model, several descriptions')}
 
 export const beyond = demos => prose`
 ${h('continuous-noise','From continuous motion to sudden events')}
-<p>Chapter 6 used Brownian motion to model continuous fluctuations. Chapter 7 changed how we accumulate those fluctuations. A signal can also change abruptly, as when a valve opens and the pressure drops. We can model that event by adding a jump to the continuous path.</p>
+<p>Chapter 6 used Brownian motion to model continuous fluctuations. Chapter 7 compared two ways of accumulating those fluctuations. Here we keep the continuous motion and ask what happens when an event also changes the state abruptly.</p>
+<p>Imagine a pressure reading that fluctuates slightly while a valve is closed. When the valve opens, the pressure drops much faster than it usually moves. A jump model treats that drop as instantaneous. The pressure just before the event and the pressure just after it can differ at the same event time.</p>
 <details class="read-more"><summary>The assumptions behind Brownian noise</summary><div>
 <p>A continuous process starting at zero with stationary, independent increments is a drifted, scaled Brownian motion, including the deterministic case. With positive variance rate, subtracting its drift and rescaling its variance rate to one gives standard Brownian motion.</p>
 <p>Lévy’s characterization uses different assumptions. A continuous local martingale starting at zero with quadratic variation \(t\) is standard Brownian motion.</p>
 </div></details>
 
 ${h('jumps','Add sudden events')}
-<p>Start with a continuous Brownian path and let an event move its position up or down instantly. A model that combines continuous diffusion with these sudden changes is called a <em>jump diffusion</em>. The <em>event rate</em> \(\lambda\) is the expected number of events per unit time. The <em>jump size</em> sets how far the state moves at each event.</p>
+<p>Start with a continuous baseline \(Y_t=X_0+\mu t+\sigma W_t\). It starts at \(X_0\), drifts at rate \(\mu\), and fluctuates with Brownian noise of scale \(\sigma\). Now let \(N_t\) count the events up to and including time \(t\), and let \(J_j\) be the signed change caused by event \(j\). The model combines the baseline and all jumps that have happened so far.</p>
+\[X_t=Y_t+\sum_{j=1}^{N_t}J_j.\]
+<p>This combination is a <em>jump diffusion</em>. Before the first event, the sum is zero and \(X_t=Y_t\). Suppose the baseline is \(1.0\) when the first event occurs and the jump size is \(-0.6\). The state drops immediately to \(1.0-0.6=0.4\). If the baseline later rises to \(1.2\) and no new event has happened, the state is \(1.2-0.6=0.6\). The path still moves continuously between events, with the accumulated jump sizes carried forward.</p>
+<p>In the demo, events arrive according to a Poisson process with constant <em>rate</em> \(\lambda\). A rate of \(3\) means an average of \(3\) events per unit time, or \(6\) across the two time units shown, when you repeat the experiment. The exact times and count vary across samples. The jump size control sets the magnitude of each vertical move. Each event independently takes an upward or downward sign with equal probability.</p>
 ` + demos.jumps + prose`
-<p>Jia and Benson used neural networks to learn how a hidden state affects the rate of future events and how each event changes that state. Their model evolves continuously between events. They tested it on recorded event sequences, including Stack Overflow awards. <a href="https://proceedings.neurips.cc/paper_files/paper/2019/hash/59b1deff341edb0b76ace57820cef237-Abstract.html" target="_blank" rel="noopener noreferrer">Neural Jump Stochastic Differential Equations</a></p>
+<p>At any time, the signed gap from the baseline to the path with jumps equals the sum of the jumps so far. An upward move and a downward move of the same size cancel, so the lines can meet again even after several events.</p>
 <details class="read-more"><summary>Poisson event counts over a short interval</summary><div>
-<p>A Poisson process \(N_t\) counts events arriving at a constant rate \(\lambda\). Its count \(\Delta N\) over an interval of length \(h\) has a Poisson distribution with mean \(\lambda h\). Use the Poisson formula for one event, then subtract the probabilities of zero and one event from one to find the probability of two or more.</p>
+<p>Over an interval of length \(h\), the event count \(\Delta N\) has a Poisson distribution with mean \(\lambda h\). The probabilities of zero and one event come from that distribution. Subtract both from one to get the probability of two or more.</p>
 \[\begin{aligned}
+\mathbb P(\Delta N=0)&=e^{-\lambda h},\\
 \mathbb P(\Delta N=1)&=e^{-\lambda h}\lambda h,\\
 \mathbb P(\Delta N\geq2)&=1-e^{-\lambda h}(1+\lambda h).
 \end{aligned}\]
-<p>For positive \(\lambda\), the probability of one event is \(\lambda h+O(h^2)\) as \(h\) shrinks. The probability of two or more events is \(O(h^2)\), so it shrinks faster. Multiple events are possible over a finite interval.</p>
+<p>For \(\lambda=3\) and \(h=0.1\), the mean count is \(0.3\). The probabilities of zero, one, and at least two events are about \(74.1\%\), \(22.2\%\), and \(3.7\%\), respectively. As \(h\) shrinks, the probability of one event is \(\lambda h+O(h^2)\) and the probability of at least two is \(O(h^2)\).</p>
+<p>The chance that the next event is more than \(h\) time units away is the chance of zero events during those \(h\) units, \(e^{-\lambda h}\). This is the tail probability of an exponential waiting time. The simulator samples successive waiting times this way to place the jumps along the path.</p>
 </div></details>
 <details class="read-more"><summary data-section="semimartingales">Itô calculus for a path with jumps</summary><div>
-<p>A compound-Poisson jump diffusion adds the sizes \(J_j\) of all events up to time \(t\) to a Brownian motion with drift.</p>
-\[X_t=\mu t+\sigma W_t+\sum_{j=1}^{N_t}J_j.\]
-<p>Write \(X_-\) for the value just before a jump of size \(J\). The change in a function \(f\) across the event is the full difference \(f(X_-+J)-f(X_-)\). For the square function, this difference expands into two terms.</p>
+<p>Between events, the continuous part follows the same Itô rule as in Chapter 6. At an event, let \(X_-\) be the state immediately before the jump and \(J\) its signed size. A function \(f\) changes by the full difference \(f(X_-+J)-f(X_-)\). For the square function this gives</p>
 \[(X_-+J)^2-X_-^2=2X_-J+J^2.\]
-<p>The linear term accounts for \(2X_-J\). The jump correction adds \(J^2\), which stays finite as we narrow the interval containing the event. For isolated unit jumps in a count \(N_t\), the shorthand \((\mathrm dN)^2=\mathrm dN\) records the squared jump size of one.</p>
+<p>In the pressure example, the squared state changes from \(1.0^2\) to \(0.4^2\), a change of \(-0.84\). The linear term \(2X_-J\) gives \(-1.20\), and the jump correction \(J^2=0.36\) makes up the difference. The jump size stays finite even when we zoom in on the event time. For isolated unit jumps of the count \(N_t\), the shorthand \((\mathrm dN)^2=\mathrm dN\) records that each jump contributes \(1^2=1\).</p>
 <p>The drift and finite sum of jumps have finite variation on a bounded time interval. The Brownian part is a martingale. A process made of a finite-variation part and a local martingale is called a <em>semimartingale</em>. Itô calculus can handle this jump model by accounting for the continuous quadratic variation and the individual jumps.</p>
 </div></details>
 
-${h('choose-model','From specifying dynamics to learning them')}
-<p>Chapter 9 starts with observations and asks what dynamics a learner can infer and check on held-out paths. In its ${link('learning','crossing-between-readings','between-readings experiment')}, the fitted model uses continuous Brownian paths to estimate the chance of crossing a threshold between two observations. If a sudden event can carry the state across the threshold, a jump model can give a different crossing probability for the same readings.</p>
-` + check('What happens when you increase jump size while keeping the event rate fixed?', 'Each event moves the state farther. The expected number of events stays the same.');
+${h('learn-event-dynamics','Learn from recorded events')}
+<p>In the demo you choose the rate and jump size before drawing a path. In an event forecasting problem, you start with the event history and learn how it affects what happens next. Jia and Benson used records of when Stack Overflow users earned badges and which types they received. In one test, they asked the model to predict the type of a held-out badge given its time and the preceding history.</p>
+<p>The model keeps a hidden state that summarizes the history. It evolves continuously between badges and jumps when a badge arrives. Neural networks learn how the state affects the rate and type of future events and how an observed event updates the state. The update lets two badge types affect the forecast differently. The continuous evolution lets the forecast change as time passes between events. <a href="https://proceedings.neurips.cc/paper_files/paper/2019/file/59b1deff341edb0b76ace57820cef237-Paper.pdf" target="_blank" rel="noopener noreferrer">Neural Jump Stochastic Differential Equations</a></p>
 
+${h('choose-model','Why the path between readings matters')}
+<p>Now suppose you observe the state only at scheduled times. Two successive readings are both zero, and an alarm sounds if the state reaches or exceeds \(1\) between them. A continuous path could rise to \(1\) and fall back before the next reading. A path with jumps could move from \(0\) to \(1.2\) and later drop back to \(0\). The readings alone do not tell you whether either crossing happened. To estimate its probability, you need a model for how the state moves between readings.</p>
+<p>Chapter 9 fits a continuous Brownian model and uses it to estimate this probability in the ${link('learning','crossing-between-readings','between-readings experiment')}. The jump model here shows why the choice of path dynamics matters when an event can carry the state across the threshold.</p>
+` + check('What happens when you increase jump size while keeping the event rate fixed?', 'Each event moves the state farther. The expected number of events stays the same.');
