@@ -36,6 +36,9 @@ ${h('integral-conversion','The Brownian correction survives')}
 ` + demos.convention + prose`
 <p>In the first plot, inspect the Brownian driving path. In the second, teal accumulates the left-value contributions and coral the symmetric contributions. Their terminal gap is exactly \(Q_n/2\) on this finite grid; its Brownian limit is \(T/2\). New sample changes the driver while preserving that identity.</p>
 <details class="read-more"><summary>The symmetric definition and its chain rule</summary><div>
+<p>A <em>partition</em> \(\pi=\{t_0,\ldots,t_n\}\) divides the time interval into steps, with \(0=t_0&lt;\cdots&lt;t_n=T\). Its <em>mesh</em> \(|\pi|\) is the length of the longest step.</p>
+\[|\pi|=\max_{0\leq i&lt;n}(t_{i+1}-t_i).\]
+<p>For example, the grid \(\{0,0.2,0.7,1\}\) has a mesh of \(0.5\), the length of the interval from \(0.2\) to \(0.7\). Taking \(|\pi|\to0\) means refining the grid so that even its longest interval tends to zero. The steps may have different lengths.</p>
 <p>For continuous semimartingales and suitable integrability, the Stratonovich integral is the limit in probability of symmetric integrand-endpoint sums:</p>
 \[\int_0^T H_t\circ\mathrm dW_t
 =\lim_{|\pi|\to0}\sum_i\frac{H_{t_i}+H_{t_{i+1}}}{2}\Delta W_i.\]
