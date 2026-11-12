@@ -167,36 +167,53 @@ ${h('comparison','One model, several descriptions')}
 
 
 export const beyond = demos => prose`
-${h('continuous-noise','What is special about Brownian noise?')}
-<p>Imagine two instruments recording a signal. One records an abrupt drop at a known event time. The other records a continuous trace whose successive changes tend to have the same sign. Both look noisy. Increasing Brownian noise strength can make its kicks larger, but it neither creates an instantaneous jump nor gives the next kick a memory. Compare these two modeled records:</p>
+${h('continuous-noise','Read the two traces')}
+<p>Chapter 6 modeled continuous motion driven by Brownian noise. Chapter 7 kept the Brownian driver and changed how the integral accumulates it. Now we’ll look at two features that call for a different model of the disturbances.</p>
 ` + demos.traces + prose`
-<p>Read the first trace on either side of its marked event. In the second, follow several successive changes. A short streak can occur by chance even for independent kicks; the correlation experiment below tests what persists across observations.</p>
-<details><summary>Which continuous noise does the Brownian classification cover?</summary>
-<p>Brownian motion is a useful model, not the definition of all stochastic calculus. A continuous process starting at zero with stationary independent increments is a drifted, scaled Brownian motion, including degenerate deterministic cases. With positive variance rate, subtracting the drift and rescaling the noise to unit variance per unit time yields standard Brownian motion.</p>
-<p>This classification is distinct from Lévy’s characterization of Brownian motion as a suitable continuous local martingale with quadratic variation \(t\). Either statement requires its full assumptions. If a system has jumps or correlated increments, we must change the model.</p>
-</details>
-${h('jumps','Allow sudden events')}
-<p>A Poisson process \(N_t\) counts events arriving at rate \(\lambda\). Its increment over duration \(h\) has distribution \(\operatorname{Poisson}(\lambda h)\). For small \(h\), one event has probability \(\lambda h+o(h)\) and two or more have probability \(O(h^2)\). A finite count increment can exceed one. The Poisson formula gives \(\mathbb P(\Delta N=1)=e^{-\lambda h}\lambda h\); subtracting the probabilities of zero and one event from one gives \(1-e^{-\lambda h}(1+\lambda h)=O(h^2)\).</p>
-<p>A compound-Poisson jump diffusion adds event sizes \(J_j\) to a continuous component:</p>
-\[X_t=\mu t+\sigma W_t+\sum_{j=1}^{N_t}J_j.\]
-<p>At a jump time, \(X\) changes by a finite amount. The shorthand \((\mathrm dN)^2=\mathrm dN\) records isolated unit jumps. For a smooth function, the change across an actual jump \(J\) is \(f(X_-+J)-f(X_-)\), not merely its first or second Taylor term. For the square function we can see what would go missing:</p>
-\[ (X_-+J)^2-X_-^2=2X_-J+J^2. \]
-<p>Here \(X_-\) means the position just before impact. Even when we localize the event perfectly in time, its height \(J\) does not shrink. The linear integral counts \(2X_-J\); the jump correction restores \(J^2\).</p>
+<p>In the first trace, follow the marked drop. The model includes an event that changes the state at one instant. In the second, look for stretches where consecutive changes continue in the same direction. The next two experiments let you vary each feature separately.</p>
+<details class="read-more"><summary>The assumptions behind Brownian noise</summary><div>
+<p>A continuous process starting at zero with stationary, independent increments is a drifted, scaled Brownian motion, including the deterministic case. With positive variance rate, subtracting its drift and rescaling its variance rate to one gives standard Brownian motion.</p>
+<p>Lévy’s characterization uses different assumptions. A continuous local martingale starting at zero with quadratic variation \(t\) is standard Brownian motion.</p>
+</div></details>
+
+${h('jumps','Add sudden events')}
+<p>Start with a continuous Brownian path and let an event move its position up or down instantly. A model that combines continuous diffusion with these sudden changes is called a <em>jump diffusion</em>. The <em>event rate</em> \(\lambda\) is the expected number of events per unit time. The <em>jump size</em> sets how far the state moves at each event.</p>
 ` + demos.jumps + prose`
-${h('semimartingales','A broader setting: semimartingales')}
-<p>Why can we still use much of the old calculus after adding jumps? We can record the continuous accumulation and account for each abrupt change separately. The broader class is called a semimartingale. A semimartingale can be decomposed as \(X=X_0+A+M\), with a finite-variation component \(A\) and a local martingale \(M\). This is the standard broad setting for Itô integration, encompassing many continuous models and processes with jumps.</p>
-<p>Continuous martingale fluctuations contribute through quadratic variation, finite-variation parts through their ordinary integrals, and jumps through explicit jump terms. This process class supports the usual robust stochastic integration theory, but does not by itself establish that a financial model is arbitrage-free.</p>
-${h('memory','Allow correlated increments')}
-<p>Now look at the second trace. It stays continuous. Here the new feature is how one displacement relates to the next one. Let \(H\) control both the size of a displacement over a short interval and the dependence between displacements. Fractional Brownian motion \(B_t^H\), with \(0<H<1\), is the centered Gaussian process determined by:</p>
-\[\mathbb E[B_s^HB_t^H]=\frac12\left(s^{2H}+t^{2H}-|t-s|^{2H}\right).\]
-<p>Its increments have variance \(|t-s|^{2H}\), so their typical scale is \(|t-s|^H\). At \(H=1/2\) it is standard Brownian motion. For equal-length increments separated by \(k\) steps, the normalized covariance is:</p>
-\[\rho_H(k)=\frac12\left((k+1)^{2H}-2k^{2H}+|k-1|^{2H}\right).\]
-<p>To get this formula, write each increment as a difference of positions, expand the product of two differences into four covariance terms, then divide by the common increment variance. For neighbors a quick check uses \(\operatorname{Var}(A+B)=2h^{2H}+2\operatorname{Cov}(A,B)=(2h)^{2H}\), giving \(\rho_H(1)=2^{2H-1}-1\). Predict the sign at \(H=0.75\), then compare the measured and theoretical bars.</p>
-<p>It is positive for \(H>1/2\) and negative for \(H<1/2\), for positive lags. Changing only the size of independent increments cannot produce this memory.</p>
+<p>Jia and Benson used neural networks to learn how a hidden state affects the rate of future events and how each event changes that state. Their model evolves continuously between events. They tested it on recorded event sequences, including Stack Overflow awards. <a href="https://proceedings.neurips.cc/paper_files/paper/2019/hash/59b1deff341edb0b76ace57820cef237-Abstract.html" target="_blank" rel="noopener noreferrer">Neural Jump Stochastic Differential Equations</a></p>
+<details class="read-more"><summary>Poisson event counts over a short interval</summary><div>
+<p>A Poisson process \(N_t\) counts events arriving at a constant rate \(\lambda\). Its count \(\Delta N\) over an interval of length \(h\) has a Poisson distribution with mean \(\lambda h\). Use the Poisson formula for one event, then subtract the probabilities of zero and one event from one to find the probability of two or more.</p>
+\[\begin{aligned}
+\mathbb P(\Delta N=1)&=e^{-\lambda h}\lambda h,\\
+\mathbb P(\Delta N\geq2)&=1-e^{-\lambda h}(1+\lambda h).
+\end{aligned}\]
+<p>For positive \(\lambda\), the probability of one event is \(\lambda h+O(h^2)\) as \(h\) shrinks. The probability of two or more events is \(O(h^2)\), so it shrinks faster. Multiple events are possible over a finite interval.</p>
+</div></details>
+<details class="read-more"><summary data-section="semimartingales">Itô calculus for a path with jumps</summary><div>
+<p>A compound-Poisson jump diffusion adds the sizes \(J_j\) of all events up to time \(t\) to a Brownian motion with drift.</p>
+\[X_t=\mu t+\sigma W_t+\sum_{j=1}^{N_t}J_j.\]
+<p>Write \(X_-\) for the value just before a jump of size \(J\). The change in a function \(f\) across the event is the full difference \(f(X_-+J)-f(X_-)\). For the square function, this difference expands into two terms.</p>
+\[(X_-+J)^2-X_-^2=2X_-J+J^2.\]
+<p>The linear term accounts for \(2X_-J\). The jump correction adds \(J^2\), which stays finite as we narrow the interval containing the event. For isolated unit jumps in a count \(N_t\), the shorthand \((\mathrm dN)^2=\mathrm dN\) records the squared jump size of one.</p>
+<p>The drift and finite sum of jumps have finite variation on a bounded time interval. The Brownian part is a martingale. A process made of a finite-variation part and a local martingale is called a <em>semimartingale</em>. Itô calculus can handle this jump model by accounting for the continuous quadratic variation and the individual jumps.</p>
+</div></details>
+
+${h('memory','Model persistent fluctuations')}
+<p>Return to the continuous trace. To model dependence between the driving increments, use <em>fractional Brownian motion</em>. Its Hurst parameter \(H\) controls both how increments scale with time and how strongly they are correlated. At \(H=1/2\) the increments over disjoint intervals are independent, as in standard Brownian motion. Above \(1/2\), positive correlations make changes more likely to continue in the same direction.</p>
+<p>The OU example in Chapter 6 already had persistence in its state values. Its drift links each state to the previous one even though the Brownian driver has independent increments. Correlated driving noise is another way to model persistence. In this experiment the bars measure correlation between the <em>increments of the driver</em>.</p>
 ` + demos.memory + prose`
-${h('other-integrals','Why the integration theory must change too')}
-<p>For \(H\ne1/2\), fractional Brownian motion is generally not a semimartingale. Ordinary Itô integration cannot simply be reused. Young integration handles many regular-integrand problems when \(H>1/2\). Rough-path constructions cover important rougher cases; the standard multidimensional Gaussian rough-path lift applies for \(H>1/4\). Smaller Hurst parameters need additional constructions or renormalization.</p>
-<p>Jump models can represent abrupt claims or shocks. Correlated-noise models can represent persistent or anti-persistent fluctuations. These are modeling possibilities, not evidence that any particular real-world dataset follows one of these processes.</p>
-<p>We now have the tools to specify and solve stochastic models. Section 9 changes the starting point: instead of knowing the coefficients, we observe data and ask a learner to estimate the dynamics. Section 10 will then use deliberately added noise to build a generative model.</p>
-` + check('Can independent increments scaled by a different power of time reproduce fractional Brownian motion?', 'No. The required correlations between increments are part of its definition. Both scaling and covariance must be represented.');
+<p>Fractional SDE-Net uses neural networks to model the dynamics and fractional Brownian motion to supply correlated noise. Hayashi and Nakagawa tested whether the generated trajectories reproduced long-range dependence in observed time series. <a href="https://arxiv.org/abs/2201.05974" target="_blank" rel="noopener noreferrer">Fractional SDE-Net</a></p>
+<details class="read-more"><summary>Derive the correlation bars</summary><div>
+<p>For fractional Brownian motion \(B^H\) with \(0&lt;H&lt;1\), the covariance of two positions is given by the following expression.</p>
+\[\mathbb E[B_s^HB_t^H]=\frac12\left(s^{2H}+t^{2H}-|t-s|^{2H}\right).\]
+<p>An increment over a time gap \(h\) has variance \(h^{2H}\) and standard deviation \(h^H\). Write two equal-length increments separated by \(k\) steps as differences of positions. Expanding their product gives four covariance terms. Divide the resulting covariance by \(h^{2H}\) to get the correlation at lag \(k\).</p>
+\[\rho_H(k)=\frac12\left((k+1)^{2H}-2k^{2H}+|k-1|^{2H}\right).\]
+<p>For adjacent increments \(A,B\), their sum spans two steps. Thus \(\operatorname{Var}(A+B)=(2h)^{2H}=2h^{2H}+2\operatorname{Cov}(A,B)\), giving \(\rho_H(1)=2^{2H-1}-1\). At positive lags the correlation is positive above \(H=1/2\), zero at \(H=1/2\) and negative below it.</p>
+</div></details>
+<details class="read-more"><summary data-section="other-integrals">Integration with fractional Brownian motion</summary><div>
+<p>Fractional Brownian motion with \(H\ne1/2\) lies outside the semimartingale setting used by the usual Itô integral. For sufficiently regular integrands and \(H&gt;1/2\), Young integration can define the integral by taking limits of pathwise sums. Fractional SDE-Net uses this setting. For rougher paths, rough-path constructions can define integrals when the driver is equipped with suitable additional information about its increments. <a href="https://arxiv.org/abs/2201.05974" target="_blank" rel="noopener noreferrer">Fractional SDE-Net, Section III</a></p>
+</div></details>
+
+${h('choose-model','From specifying dynamics to learning them')}
+<p>Chapter 9 starts with observations and asks what dynamics a learner can infer and check on held-out paths. In its ${link('learning','crossing-between-readings','between-readings experiment')}, the fitted model uses continuous Brownian paths to estimate the chance of crossing a threshold between two observations. A jump model or a driver with memory changes the possible paths between those readings.</p>
+` + check('What changes when you increase the jump rate or raise the Hurst parameter above one half?', 'The jump rate increases the expected event count. A Hurst parameter above one half gives the continuous driver positively correlated increments.');
 

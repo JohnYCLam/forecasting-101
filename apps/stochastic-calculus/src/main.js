@@ -322,7 +322,7 @@ document.querySelectorAll('button[data-new]').forEach(button=>{
 window.dispatchEvent(new Event('hub:controls-ready'));
 function drawChapter(id){document.querySelectorAll(`#chapter-${id} [data-lab]`).forEach(l=>renderers[l.dataset.lab]?.());}
 function destinationIn(article,section){
-  return Array.from(article.querySelectorAll('h2[data-section], [data-lab]')).find(el=>
+  return Array.from(article.querySelectorAll('[data-section], [data-lab]')).find(el=>
     el.dataset.section===section || (el.dataset.lab && `demo-${el.dataset.lab}`===section));
 }
 function navigate(scroll=true){
@@ -345,6 +345,8 @@ function navigate(scroll=true){
     const article=$(`chapter-${active}`);
     const destination=section && destinationIn(article,section);
     if(destination){
+      const disclosure=destination.closest('details');
+      if(disclosure)disclosure.open=true;
       if(destination.hasAttribute('data-lab'))destination.tabIndex=-1;
       destination.scrollIntoView({block:'start',behavior:'instant'});
       destination.focus({preventScroll:true});
