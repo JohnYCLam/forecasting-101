@@ -162,15 +162,13 @@ ${h('comparison','One model, several descriptions')}
 </tbody></table></div>
 <p>For an adapted, square-integrable integrand, the Itô integral's future increment has conditional mean zero. Its running total is a <em>martingale</em>: given current information, its best prediction is its current value. The other conventions do not generally share that property.</p>
 </div></details>
-<p>Throughout this chapter the noise itself remained Brownian. Changing how we accumulate it cannot create a sudden jump or correlated future increments. Section 8 asks when the driving noise must change.</p>
+<p>Throughout this chapter the driving noise remained Brownian. Section 8 keeps that continuous Brownian motion and adds events that can change the state instantly.</p>
 ` + check('Does changing the circle symbol preserve the process?',String.raw`Only after the drift is converted too. For scalar smooth coefficients, \(a_{\mathrm I}=a_{\mathrm S}+\tfrac12b\,\partial_xb\). Additive noise has \(\partial_xb=0\), so this correction vanishes.`);
 
 
 export const beyond = demos => prose`
-${h('continuous-noise','Read the two traces')}
-<p>Chapter 6 modeled continuous motion driven by Brownian noise. Chapter 7 kept the Brownian driver and changed how the integral accumulates it. Now we’ll look at two features that call for a different model of the disturbances.</p>
-` + demos.traces + prose`
-<p>In the first trace, follow the marked drop. The model includes an event that changes the state at one instant. In the second, look for stretches where consecutive changes continue in the same direction. The next two experiments let you vary each feature separately.</p>
+${h('continuous-noise','From continuous motion to sudden events')}
+<p>Chapter 6 used Brownian motion to model continuous fluctuations. Chapter 7 changed how we accumulate those fluctuations. A signal can also change abruptly, as when a valve opens and the pressure drops. We can model that event by adding a jump to the continuous path.</p>
 <details class="read-more"><summary>The assumptions behind Brownian noise</summary><div>
 <p>A continuous process starting at zero with stationary, independent increments is a drifted, scaled Brownian motion, including the deterministic case. With positive variance rate, subtracting its drift and rescaling its variance rate to one gives standard Brownian motion.</p>
 <p>Lévy’s characterization uses different assumptions. A continuous local martingale starting at zero with quadratic variation \(t\) is standard Brownian motion.</p>
@@ -197,23 +195,7 @@ ${h('jumps','Add sudden events')}
 <p>The drift and finite sum of jumps have finite variation on a bounded time interval. The Brownian part is a martingale. A process made of a finite-variation part and a local martingale is called a <em>semimartingale</em>. Itô calculus can handle this jump model by accounting for the continuous quadratic variation and the individual jumps.</p>
 </div></details>
 
-${h('memory','Model persistent fluctuations')}
-<p>Return to the continuous trace. To model dependence between the driving increments, use <em>fractional Brownian motion</em>. Its Hurst parameter \(H\) controls both how increments scale with time and how strongly they are correlated. At \(H=1/2\) the increments over disjoint intervals are independent, as in standard Brownian motion. Above \(1/2\), positive correlations make changes more likely to continue in the same direction.</p>
-<p>The OU example in Chapter 6 already had persistence in its state values. Its drift links each state to the previous one even though the Brownian driver has independent increments. Correlated driving noise is another way to model persistence. In this experiment the bars measure correlation between the <em>increments of the driver</em>.</p>
-` + demos.memory + prose`
-<p>Fractional SDE-Net uses neural networks to model the dynamics and fractional Brownian motion to supply correlated noise. Hayashi and Nakagawa tested whether the generated trajectories reproduced long-range dependence in observed time series. <a href="https://arxiv.org/abs/2201.05974" target="_blank" rel="noopener noreferrer">Fractional SDE-Net</a></p>
-<details class="read-more"><summary>Derive the correlation bars</summary><div>
-<p>For fractional Brownian motion \(B^H\) with \(0&lt;H&lt;1\), the covariance of two positions is given by the following expression.</p>
-\[\mathbb E[B_s^HB_t^H]=\frac12\left(s^{2H}+t^{2H}-|t-s|^{2H}\right).\]
-<p>An increment over a time gap \(h\) has variance \(h^{2H}\) and standard deviation \(h^H\). Write two equal-length increments separated by \(k\) steps as differences of positions. Expanding their product gives four covariance terms. Divide the resulting covariance by \(h^{2H}\) to get the correlation at lag \(k\).</p>
-\[\rho_H(k)=\frac12\left((k+1)^{2H}-2k^{2H}+|k-1|^{2H}\right).\]
-<p>For adjacent increments \(A,B\), their sum spans two steps. Thus \(\operatorname{Var}(A+B)=(2h)^{2H}=2h^{2H}+2\operatorname{Cov}(A,B)\), giving \(\rho_H(1)=2^{2H-1}-1\). At positive lags the correlation is positive above \(H=1/2\), zero at \(H=1/2\) and negative below it.</p>
-</div></details>
-<details class="read-more"><summary data-section="other-integrals">Integration with fractional Brownian motion</summary><div>
-<p>Fractional Brownian motion with \(H\ne1/2\) lies outside the semimartingale setting used by the usual Itô integral. For sufficiently regular integrands and \(H&gt;1/2\), Young integration can define the integral by taking limits of pathwise sums. Fractional SDE-Net uses this setting. For rougher paths, rough-path constructions can define integrals when the driver is equipped with suitable additional information about its increments. <a href="https://arxiv.org/abs/2201.05974" target="_blank" rel="noopener noreferrer">Fractional SDE-Net, Section III</a></p>
-</div></details>
-
 ${h('choose-model','From specifying dynamics to learning them')}
-<p>Chapter 9 starts with observations and asks what dynamics a learner can infer and check on held-out paths. In its ${link('learning','crossing-between-readings','between-readings experiment')}, the fitted model uses continuous Brownian paths to estimate the chance of crossing a threshold between two observations. A jump model or a driver with memory changes the possible paths between those readings.</p>
-` + check('What changes when you increase the jump rate or raise the Hurst parameter above one half?', 'The jump rate increases the expected event count. A Hurst parameter above one half gives the continuous driver positively correlated increments.');
+<p>Chapter 9 starts with observations and asks what dynamics a learner can infer and check on held-out paths. In its ${link('learning','crossing-between-readings','between-readings experiment')}, the fitted model uses continuous Brownian paths to estimate the chance of crossing a threshold between two observations. If a sudden event can carry the state across the threshold, a jump model can give a different crossing probability for the same readings.</p>
+` + check('What happens when you increase jump size while keeping the event rate fixed?', 'Each event moves the state farther. The expected number of events stays the same.');
 

@@ -65,17 +65,6 @@ export function jumpDiffusion(rate,size,seed,T=2,n=256,sigma=.4) {
     base.push([t1,sigma*w[i+1]]);jumped.push([t1,sigma*w[i+1]+total]);}
   return {base,jumped,events};
 }
-export const fractionalCorrelation=(H,k)=>.5*((k+1)**(2*H)-2*k**(2*H)+Math.abs(k-1)**(2*H));
-export function fractionalCholesky(H,n) {
-  const rows=[];for(let i=0;i<n;i++){const row=new Float64Array(i+1);for(let j=0;j<=i;j++){let v=fractionalCorrelation(H,i-j);for(let k=0;k<j;k++)v-=row[k]*(j===i?row[k]:rows[j][k]);if(i===j)row[j]=Math.sqrt(Math.max(v,0));else row[j]=v/rows[j][j];}rows.push(row);}return rows;
-}
-export function fractionalPath(H,n,seed,factor=fractionalCholesky(H,n)) {
-  const normal=gaussian(rng(seed)),z=Array.from({length:n},normal),increments=[],path=[0],scale=(1/n)**H;
-  for(let i=0;i<n;i++){let v=0;for(let j=0;j<=i;j++)v+=factor[i][j]*z[j];increments.push(v);path.push(path[i]+v*scale);}return {path,increments};
-}
-export function sampleCorrelation(values,k) {
-  const {mean}=moments(values);let a=0,b=0,c=0;for(let i=k;i<values.length;i++){const x=values[i]-mean,y=values[i-k]-mean;a+=x*y;b+=x*x;c+=y*y;}return a/Math.sqrt(b*c);
-}
 export const mixtureVariance=(g,t)=>.09+g*g*t;
 export const mixturePdf=(x,g,t)=>.5*(normalPdf(x,-2,Math.sqrt(mixtureVariance(g,t)))+normalPdf(x,2,Math.sqrt(mixtureVariance(g,t))));
 export const mixtureScore=(x,g,t)=>(2*Math.tanh(2*x/mixtureVariance(g,t))-x)/mixtureVariance(g,t);

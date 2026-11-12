@@ -1,6 +1,6 @@
 # Stochastic Calculus — interactive introduction
 
-This branch contains Sections 1–12. One Vite app contains the full teaching progression, 22 guided experiments, detailed derivations, applications, notation, companion code, primary references, and explicit source attribution. Plain JavaScript, CSS, and Canvas; no React or backend required.
+This branch contains Sections 1–12. One Vite app contains the full teaching progression, 20 guided experiments, detailed derivations, applications, notation, companion code, primary references, and explicit source attribution. Plain JavaScript, CSS, and Canvas; no React or backend required.
 
 Based on and adapted from **[Introduction to Stochastic Calculus by Ji-Ha Kim](https://jiha-kim.github.io/posts/introduction-to-stochastic-calculus/)**, licensed by the author under **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)**. This project rewrites and reorganizes the explanations, expands or corrects derivations and example code, rebuilds illustrations as interactive experiments, and adds numerical and ML examples. See [ATTRIBUTION.md](ATTRIBUTION.md) for the source credit, license, and description of changes.
 
@@ -35,7 +35,7 @@ The main source files are:
 - `src/content/ito.js`: finite increments, the multiplication table, the integral, and the Itô chain rule.
 - `src/content/calculus.js`: reading SDEs, the transformation strategy, OU and GBM solutions, and Euler approximation.
 - `src/content/technical-notes.js`: optional proofs and more technical background, kept in the reference chapter.
-- `src/content/applications.js`: Stratonovich and the lambda-family, jumps, and correlated noise.
+- `src/content/applications.js`: Stratonovich and the lambda-family, and models with jumps.
 - `src/content/generative.js`: Section 10, Fokker–Planck and score-based generation.
 - `src/content/learning.js`: Section 9, fitting dynamics and evaluating forecasts.
 - `src/content/pricing.js`: Section 11, Black–Scholes and Deep BSDE methods.
@@ -81,7 +81,7 @@ The second ML experiment fits cubic drift and constant diffusion from double-wel
 
 The third experiment fixes two known endpoint readings and infers crossings in their gap. Nested observations reveal the same source bridges. Independent exact conditional maxima on the 1,024 drawing intervals supply continuous event labels, avoiding a biased fine-grid-only reference. Checks cover irregular-increment fitting, the reflection-principle formula, maxima, nested-grid bias, calibration grouping and source-law agreement across different drawing grids. The selected illustrative path is deliberately chosen to show a missed crossing; all benchmark paths enter scores. This establishes behavior under the stated synthetic path law, not that endpoint data identify the real between-observation law.
 
-`npm test` checks formula rendering, source coverage destinations, introductory/demo ordering, the three scaling laws, histogram normalization and out-of-window accounting, exact finite-sum identities, binomial laws, seeded Gaussian moments, Brownian and OU moments, scalar drift conversion, fractional Gaussian covariance, Poisson jump rendering data, the analytic mixture score, and reverse-diffusion distribution recovery, and held-out Deep BSDE error against its analytic grid benchmark. A finite simulation illustrates a theorem; it does not establish the continuous-time result.
+`npm test` checks formula rendering, source coverage destinations, introductory/demo ordering, the three scaling laws, histogram normalization and out-of-window accounting, exact finite-sum identities, binomial laws, seeded Gaussian moments, Brownian and OU moments, scalar drift conversion, Poisson jump rendering data, the analytic mixture score, and reverse-diffusion distribution recovery, and held-out Deep BSDE error against its analytic grid benchmark. A finite simulation illustrates a theorem; it does not establish the continuous-time result.
 
 Section 6 follows one question: specify an SDE, solve a constant-coefficient case, learn the change-of-variables tool, apply it to OU and GBM, then test Euler–Maruyama against a coupled exact solution. Neuron firing is removed. The ML material is split across Sections 9–12, each with its own navigation entry, outline, and purpose. Old subsection and demo bookmarks redirect to their relocated content. The OU demo shows a chosen initial value returning toward zero; the Euler demo uses nested Brownian increments and exact weighted-integral coupling, with zero-drift and zero-noise checks.
 

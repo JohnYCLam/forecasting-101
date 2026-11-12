@@ -80,10 +80,6 @@ test('multiplicative model conversion preserves the exact solution',()=>{
   close(Math.exp(mu*t+sigma*w)/M.gbm(1,mu,sigma,t,w),Math.exp(.5*sigma*sigma*t));
   close(M.gbm(100,.12,0,10,99),100*Math.exp(1.2));
 });
-test('fractional covariance factorization matches the desired increment law',()=>{
-  for(const H of [.2,.5,.8]){const L=M.fractionalCholesky(H,48);for(let i=0;i<48;i++)for(let j=0;j<=i;j++){let v=0;for(let k=0;k<=j;k++)v+=L[i][k]*L[j][k];close(v,M.fractionalCorrelation(H,i-j),1e-10);}}
-  close(M.fractionalCorrelation(.5,1),0);assert.ok(M.fractionalCorrelation(.3,1)<0);assert.ok(M.fractionalCorrelation(.7,1)>0);
-});
 test('jump events use ordered times and exact vertical jump sizes',()=>{
   assert.equal(M.jumpDiffusion(0,.8,1).events.length,0);const d=M.jumpDiffusion(5,.8,17);assert.ok(d.events.length>0);
   let seen=0;for(let i=1;i<d.jumped.length;i++){const prev=d.jumped[i-1],next=d.jumped[i];if(prev[0]===next[0]){close(Math.abs(next[1]-prev[1]),.8);seen++;}}

@@ -195,14 +195,6 @@ prediction(){
   const truth=P.forecast(P.transition(sigma),x0,steps);
   out('pred-truth',`Analytic source reference at the selected endpoint: mean ${fmt(truth.mean[steps],4)}, standard deviation ${fmt(Math.sqrt(truth.variance[steps]),4)}. These values are for comparison after fitting.`);
 },
-traces(){
-  const w=cached('traces','w',()=>M.brownian(64,1,seed('traces'))[0]),before=.22*w[32],after=before-1;
-  const stepped=[];for(let i=0;i<=64;i++){if(i===32)stepped.push([.5,before]);stepped.push([i/64,.22*w[i]-(i>=32?1:0)]);}
-  const p=cached('traces','memory',()=>M.fractionalPath(.8,64,seed('traces')+1,M.fractionalCholesky(.8,64)).path);
-  const c=chart('trace-jump',[0,1],limits([stepped.map(a=>a[1])]),'Time t','Position');c?.line(stepped,C.teal,2);c?.point(.5,before,C.coral);c?.point(.5,after,C.blue);
-  lines('trace-memory',[p],1,limits([p]),[],{ylabel:'Position'});
-  out('trace-note',`At t = 0.5 the first record goes from ${fmt(before,2)} to ${fmt(after,2)} with no elapsed time. The second has no jump. Change the sample: the event size stays the same, but the streaks in the continuous record change.`);
-},
 blur(){
   const t=value('blur-time'),x=value('blur-x'),g=2,y=M.mixturePdf(x,g,t),score=M.mixtureScore(x,g,t);
   slider('blur-time');slider('blur-x');
@@ -295,8 +287,6 @@ jumps(){const rate=value('jump-rate'),size=value('jump-size');slider('jump-rate'
   if(pair.length>=2){c?.point(first.t,pair[0][1],C.coral);c?.point(first.t,pair[1][1],C.blue);}
   out('jump-note',pair.length<2?'No event on this sample. Increase the rate or draw another path.':`At the first event (t = ${fmt(first.t,3)}), the position changes from ${fmt(pair[0][1],2)} to ${fmt(pair[1][1],2)}. Its signed jump is ${fmt(first.jump,2)}.`);
   out('jump-count',d.events.length);out('jump-expected',fmt(rate*2,1));},
-memory(){const H=value('memory-h');slider('memory-h');const factor=cached('factor',H,()=>M.fractionalCholesky(H,256)),data=cached('memory',H,()=>M.fractionalPath(H,256,seed('memory'),factor));lines('memory-path',[data.path],1,limits([data.path]),[],{ylabel:'Bᴴ(t)'});
-  const c=chart('memory-corr',[.5,8.5],[-.6,.8],'Increment lag','Correlation'),sample=[],theory=[];for(let k=1;k<=8;k++){sample.push([k-.12,M.sampleCorrelation(data.increments,k)]);theory.push([k+.12,M.fractionalCorrelation(H,k)]);}c?.bars(sample,.22,C.teal,.75);c?.bars(theory,.22,C.coral,1,true);out('memory-h-stat',fmt(H,2));out('memory-corr-stat',fmt(M.fractionalCorrelation(H,1),3));},
 diffusion(){const g=value('diff-g'),progress=value('diff-progress'),idx=Math.round(progress*20),t=1-progress;slider('diff-g');slider('diff-progress',`${Math.round(progress*100)}%`);const data=cached('diffusion',g,()=>M.reverseDiffusion(g,seed('diffusion'))),upto=idx*50;
   const range=limits([...data.pathsS,...data.pathsO]);const c=chart('diff-sde',[0,1],range,'Reverse time s','Position'),d=chart('diff-ode',[0,1],range,'Reverse time s','Position');
   data.pathsS.forEach((path,i)=>{c?.line(path.slice(0,upto+1).map((y,k)=>[k/1000,y]),C.teal,1,[],.45);c?.point(0,path[0],C.teal);});data.pathsO.forEach(path=>{d?.line(path.slice(0,upto+1).map((y,k)=>[k/1000,y]),C.blue,1.2,[],.5);d?.point(0,path[0],C.blue);});
