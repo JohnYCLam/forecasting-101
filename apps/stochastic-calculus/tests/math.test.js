@@ -9,11 +9,11 @@ const close=(a,b,tol=1e-10)=>assert.ok(Math.abs(a-b)<tol,`${a} vs ${b} (toleranc
 test('complete lesson renders LaTeX before HTML insertion',()=>{
   let displayCount=0,total=0;const ids=new Set();
   for(const chapter of chapters){const html=chapter.html();displayCount+=(html.match(/class="katex-display"/g)||[]).length;total+=(html.match(/class="katex"/g)||[]).length;assert.ok(!html.includes('katex-error'),chapter.id);const withoutCode=html.replace(/<pre>[\s\S]*?<\/pre>/g,'');assert.ok(!/\\\(|\\\[/.test(withoutCode),`${chapter.id}: unrendered formula`);for(const [,id]of html.matchAll(/\sid="([^"]+)"/g)){assert.ok(!ids.has(id),`Duplicate element id: ${id}`);ids.add(id);}}
-  assert.ok(displayCount>=40);assert.ok(total>=200);
+  assert.ok(displayCount>=85);assert.ok(total>=400);
 });
 test('every source heading maps to an existing discussion or restored code appendix',()=>{
   const htmls=Object.fromEntries(chapters.map(ch=>[ch.id,ch.html()]));
-  assert.equal(sourceCoverage.length,44);assert.equal(codeExamples.length,9);
+  assert.equal(sourceCoverage.length,53);assert.equal(codeExamples.length,9);
   for(const row of sourceCoverage)assert.ok(htmls[row.chapter]?.includes(`data-section="${row.section}"`),`Missing destination for ${row.sourceTitle}`);
 });
 test('opening has no demo and the experiments follow their prerequisite explanations',()=>{
@@ -63,7 +63,7 @@ test('Gaussian generator is deterministic with the required moments',()=>{
   const z=M.gaussian(M.rng(17)),m=M.moments(Array.from({length:100000},z));close(m.mean,0,.015);close(m.variance,1,.02);
 });
 test('finite quadratic-variation and integral identities hold at every nested partition',()=>{
-  const w=M.brownian(4096,1,83)[0];for(const n of [8,64,512,4096]){const p=M.partition(w,n);close(p.left[n],.5*w[4096]**2-.5*p.q[n]);}
+  const w=M.brownian(4096,1,83)[0];for(const n of [8,64,512,4096]){const p=M.partition(w,n);close(p.left[n],.5*w[4096]**2-.5*p.q[n]);for(const lambda of [0,.2,.5,1]){const I=M.lambdaIntegral(p.path,lambda);close(I[n],.5*w[4096]**2+(lambda-.5)*p.q[n]);}}
 });
 test('Brownian endpoint and quadratic variation have their theoretical moments',()=>{
   const paths=M.brownian(256,2,123,6000),ends=paths.map(w=>w[256]),q=paths.map(w=>M.partition(w,256).q[256]);
@@ -73,9 +73,14 @@ test('OU transitions have correct variance and the Brownian limit',()=>{
   close(M.ouVariance(0,.8,4),2.56);close(M.ouVariance(1,.8,4),.32*(1-Math.exp(-8)));
   const paths=M.ou(1,.8,4,80,29,5000);close(M.moments(paths.map(p=>p[80])).variance,M.ouVariance(1,.8,4),.02);
 });
-test('GBM agrees with the log transformation and deterministic limit',()=>{
+test('multiplicative model conversion preserves the exact solution',()=>{
   const mu=.1,sigma=.65,t=2,w=-.3,aS=mu-.5*sigma*sigma;
   close(M.gbm(1,mu,sigma,t,w),Math.exp(aS*t+sigma*w));
   close(Math.exp(mu*t+sigma*w)/M.gbm(1,mu,sigma,t,w),Math.exp(.5*sigma*sigma*t));
   close(M.gbm(100,.12,0,10,99),100*Math.exp(1.2));
+});
+test('jump events use ordered times and exact vertical jump sizes',()=>{
+  assert.equal(M.jumpDiffusion(0,.8,1).events.length,0);const d=M.jumpDiffusion(5,.8,17);assert.ok(d.events.length>0);
+  let seen=0;for(let i=1;i<d.jumped.length;i++){const prev=d.jumped[i-1],next=d.jumped[i];if(prev[0]===next[0]){close(Math.abs(next[1]-prev[1]),.8);seen++;}}
+  assert.equal(seen,d.events.length);for(let i=1;i<d.events.length;i++)assert.ok(d.events[i].t>d.events[i-1].t);
 });

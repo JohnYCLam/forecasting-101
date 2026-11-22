@@ -53,3 +53,15 @@ export function ou(theta,sigma,T,n,seed,count=20,x0=0) {
   for(let m=0;m<count;m++){const path=[x0];for(let i=0;i<n;i++)path.push(decay*path[i]+sd*z());paths.push(path);}return paths;
 }
 export const gbm=(s0,mu,sigma,t,w)=>s0*Math.exp((mu-.5*sigma*sigma)*t+sigma*w);
+export function lambdaIntegral(w,lambda) {
+  const integral=[0];for(let i=1;i<w.length;i++)integral.push(integral[i-1]+((1-lambda)*w[i-1]+lambda*w[i])*(w[i]-w[i-1]));return integral;
+}
+export function jumpDiffusion(rate,size,seed,T=2,n=256,sigma=.4) {
+  const w=brownian(n,T,seed)[0],random=rng(seed+700),z=gaussian(rng(seed+800));const events=[];
+  if(rate>0){let t=0;while(true){t+=-Math.log(Math.max(random(),Number.MIN_VALUE))/rate;if(t>T)break;events.push({t,jump:random()<.5?-size:size});}}
+  const base=[],jumped=[];let j=0,total=0;
+  for(let i=0;i<n;i++){const t0=i*T/n,t1=(i+1)*T/n;let bt=t0,bw=w[i];if(i===0){base.push([0,0]);jumped.push([0,0]);}
+    while(j<events.length&&events[j].t<=t1){const e=events[j++],u=(e.t-bt)/(t1-bt);bw=bw+u*(w[i+1]-bw)+Math.sqrt(Math.max(0,(e.t-bt)*(t1-e.t)/(t1-bt)))*z();bt=e.t;base.push([e.t,sigma*bw]);jumped.push([e.t,sigma*bw+total]);total+=e.jump;jumped.push([e.t,sigma*bw+total]);}
+    base.push([t1,sigma*w[i+1]]);jumped.push([t1,sigma*w[i+1]+total]);}
+  return {base,jumped,events};
+}

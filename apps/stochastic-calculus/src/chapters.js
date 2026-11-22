@@ -4,6 +4,8 @@ import { introduction, randomWalk } from './content/foundations.js';
 import { scaling, brownian } from './content/continuous.js';
 import { sdes } from './content/calculus.js';
 import { ito } from './content/ito.js';
+import { stratonovich, beyond } from './content/applications.js';
+import { learnedDynamics } from './content/learning.js';
 import { reference } from './content/reference.js';
 
 const definitions = [
@@ -13,6 +15,9 @@ const definitions = [
   {id:'brownian', number:'4', label:'Brownian motion', title:'Unpredictable paths.<br>Predictable distributions.', deck:'Follow the limiting random walk, then see why ordinary velocity no longer works.', content:()=>brownian(demos)},
   {id:'ito', number:'5', label:'Itô calculus and its derivation', title:'The squares<br>that refuse to vanish.', deck:'Derive the product rules, build the integral, and obtain the chain rule from finite steps.', content:()=>ito(demos)},
   {id:'sde', number:'6', label:'Reading and solving SDEs', title:'Write the rule.<br>Find the evolution.', deck:'Read an SDE, use changes of variables to solve it, then check a numerical approximation.', content:()=>sdes(demos)},
+  {id:'stratonovich', number:'7', label:'Stratonovich and the λ-family', title:'Change the convention.<br>Keep track of the model.', deck:'Follow smooth forcing to symmetric accumulation, preserve the process by converting its drift, then explore the broader family.', content:()=>stratonovich(demos)},
+  {id:'beyond', number:'8', label:'Jumps in stochastic models', title:'When the state<br>changes in an instant.', deck:'Add sudden events to Brownian motion and see how they shape predictions.', content:()=>beyond(demos)},
+  {id:'learning', number:'9', label:'ML: learn random dynamics', title:'Observe the motion.<br>Learn its law.', deck:'Fit models from trajectories, then test their predictions of spread, switching, and hidden crossings.', content:learnedDynamics},
   {id:'reference', number:'A', label:'Sources, notation, and code', title:'Credit the foundation.<br>Follow the references.', deck:'Source attribution, licensing, references used in this lesson, notation, and companion code.', content:reference},
 ];
 

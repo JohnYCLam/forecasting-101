@@ -31,5 +31,47 @@ h2[data-section]{scroll-margin-top:25px}h2[data-section]:focus{outline:none}.sto
 .legend i.dashed{height:0;border-top:2px dashed #5169a5;background:transparent}
 [data-lab="scaling"]>.plot{margin-bottom:1.2rem}
 .ml-comparison>.plot,.ml-comparison>.plots{margin-top:20px}.ml-comparison table caption{text-align:left;color:var(--muted);padding:12px 0;font-size:12px}.ml-comparison table th{max-width:240px}.ml-comparison .table-wrap{margin-top:15px}.ml-comparison details p{font-size:13px}.ml-comparison .controls button{white-space:normal}
+#pred-gap-panel .control,#pred-gap-note{margin:10px 14px}#pred-band-gap{height:205px}
 .switching-comparison>.plot,.switching-comparison>.plots{margin-top:20px}.switching-comparison table caption{text-align:left;color:var(--muted);font-size:12px;padding:12px 0}.switching-comparison table{font-variant-numeric:tabular-nums}.switching-comparison table th{min-width:110px}.switching-comparison table td{min-width:85px}.switching-comparison details p{font-size:13px}.switching-comparison .legend{font-size:10px}
 .barrier-comparison>.plot,.barrier-comparison>.plots{margin-top:22px}.barrier-comparison .plot canvas{height:300px}.barrier-comparison table caption{text-align:left;color:var(--muted);font-size:12px;padding:12px 0}.barrier-comparison table{font-variant-numeric:tabular-nums}.barrier-comparison table th{min-width:135px}.barrier-comparison table td{min-width:90px}.barrier-comparison details p{font-size:13px}.barrier-comparison .controls button{white-space:normal}.barrier-comparison .legend{font-size:10px}
+
+.switch-playback{position:sticky;top:0;z-index:2;background:var(--white);padding:6px 0;border-bottom:1px solid var(--line)}
+@media(max-width:780px){.switch-playback{position:static}}
+
+/* Section 9 uses the same demo identity in its outline, narrative and labs. */
+[data-learning-demo="1"] { --demo-accent: var(--teal); }
+[data-learning-demo="2"] { --demo-accent: var(--blue); }
+[data-learning-demo="3"] { --demo-accent: var(--gold); }
+[data-learning-demo="4"] { --demo-accent: var(--coral); }
+
+.learning-demo { margin-block: clamp(40px, 6vw, 68px); }
+.course .learning-demo > h2 {
+  margin: 0 0 24px;
+  padding: 18px clamp(14px, 3vw, 28px) 22px;
+  border-top: 3px solid var(--demo-accent);
+  background: color-mix(in srgb, var(--demo-accent) 8%, var(--paper));
+  font-size: clamp(26px, 3.1vw, 38px);
+}
+.learning-demo-number {
+  display: block;
+  font: 700 12px/1.5 var(--sans);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--demo-accent) 72%, var(--ink));
+}
+.learning-demo-number { margin-bottom: 5px; }
+.learning-demo .lab { border-top: 2px solid var(--demo-accent); }
+#chapter-learning .chapter-outline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 10px;
+}
+#chapter-learning .chapter-outline > :is(.outline-label, a) { grid-column: 1 / -1; }
+.learning-demo-links {
+  padding: 10px 12px;
+  border-top: 2px solid var(--demo-accent);
+  background: color-mix(in srgb, var(--demo-accent) 5%, var(--paper));
+}
+.learning-demo-links a { display: block; line-height: 1.5; }
+.learning-demo-links a:first-child { color: var(--ink); font-weight: 700; }
+.learning-demo-links a + a { margin-top: 6px; color: var(--muted); }

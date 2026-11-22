@@ -20,10 +20,11 @@ test('experiments have one home and follow their required explanations',()=>{
   for(const html of Object.values(htmls))for(const [,lab]of html.matchAll(/data-lab="([^"]+)"/g)){
     assert.ok(!seen.has(lab),`Duplicate experiment ${lab}`);seen.add(lab);
   }
-  assert.equal(seen.size,10);
+  assert.equal(seen.size,18);
   assert.ok(htmls.sde.indexOf('data-section="general-ito"')<htmls.sde.indexOf('data-section="mean-reversion"'));
   assert.ok(htmls.sde.indexOf('data-section="numerics"')<htmls.sde.indexOf('data-lab="euler"'));
   assert.ok(!htmls.sde.includes('data-section="biology"'));
   assert.ok(!htmls.sde.includes('data-section="fokker-planck"'));
   assert.ok(!htmls.sde.includes('data-section="finance"'));
+  for(const lab of ['prediction','switching','barrier','valve'])assert.ok(htmls.learning.includes(`data-lab="${lab}"`));
 });
