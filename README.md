@@ -2,7 +2,7 @@
 
 One static Vercel site with a shared topic homepage and independently maintained Vite apps.
 
-This development checkout includes forecasting Sections 1–6 and calculus Sections 1–6. Main keeps forecasting Sections 1–5 and calculus Sections 1–6.
+This development checkout includes forecasting Sections 1–6 and calculus Sections 1–9. Main keeps forecasting Sections 1–5 and calculus Sections 1–9.
 
 | Path | Topic |
 | --- | --- |
