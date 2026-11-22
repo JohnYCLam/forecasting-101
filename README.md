@@ -29,9 +29,9 @@ Both apps retain their own development commands inside `apps/<topic>/`. Forecast
 
 ## Branches
 
-- `main`: forecasting Sections 1–5 and calculus Sections 1–6.
+- `main`: forecasting Sections 1–5 and calculus Sections 1–9.
 - `development/forecasting-section-6`: ongoing forecasting Section 6 and its reviews.
-- `development/calculus-sections-6-plus`: calculus Sections 7–12 and their references.
+- `development/calculus-sections-6-plus`: ongoing calculus Sections 10–12 and their references.
 - `archive/forecasting-working-2026-11-08`: the original forecasting working files captured before migration.
 
 Development content is physically absent from the published branch, including its public datasets and section-specific references. Both development branches use the shared homepage and theme.

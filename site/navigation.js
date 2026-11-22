@@ -10,7 +10,7 @@ export const upcomingTopics = {
   ],
   calculus: [
     {number:'7',label:'Stratonovich and the λ-family',status:'In progress'},
-    {number:'8',label:'Jumps, memory, and beyond',status:'In progress'},
+    {number:'8',label:'Jumps in stochastic models',status:'In progress'},
     {number:'9',label:'ML: learn random dynamics',status:'In progress'},
     {number:'10',label:'ML: distributions and generation',status:'In progress'},
     {number:'11',label:'ML: payoffs and equation solving',status:'In progress'},
