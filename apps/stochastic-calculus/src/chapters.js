@@ -21,4 +21,4 @@ const definitions = [
   {id:'reference', number:'A', label:'Sources, notation, and code', title:'Credit the foundation.<br>Follow the references.', deck:'Source attribution, licensing, references used in this lesson, notation, and companion code.', content:reference},
 ];
 
-export const chapters=definitions.map(({content,...chapter})=>({...chapter,html:()=>typeset(content())}));
+export const chapters=definitions.map(({content,...chapter})=>({...chapter,content,html:()=>typeset(content())}));

@@ -1,4 +1,5 @@
 import './style.css';
+import {mountCourseSearch} from './search/panel.js';
 import 'katex/dist/katex.min.css';
 import '../../../site/theme.css';
 import { chapters } from './lesson.js';
@@ -614,3 +615,4 @@ let resizeFrame;window.addEventListener('resize',()=>{cancelAnimationFrame(resiz
 window.addEventListener('beforeprint',()=>{refreshPalette();document.querySelectorAll('.chapter').forEach(el=>el.hidden=false);chapters.filter(c=>c.id!=='review').forEach(ch=>drawChapter(ch.id));document.querySelectorAll('details').forEach(d=>{d.dataset.wasOpen=d.open?'1':'0';d.open=true;});});
 window.addEventListener('afterprint',()=>{refreshPalette();document.querySelectorAll('details').forEach(d=>d.open=d.dataset.wasOpen==='1');navigate(false);});
 navigate(Boolean(location.hash.includes('/')));
+mountCourseSearch(() => navigate(true));

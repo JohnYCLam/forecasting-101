@@ -4,15 +4,26 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/search-runtime.mjs",
+    "prebuild": "node scripts/build-search-index.mjs --check && node scripts/search-runtime.mjs",
+    "search:index": "node scripts/build-search-index.mjs",
+    "search:evaluate": "node scripts/evaluate-search.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "vite build && node scripts/offline.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test"
   },
   "devDependencies": {
-    "vite": "8.3.2"
+    "vite": "8.3.8"
   },
   "dependencies": {
-    "katex": "0.19.1"
+    "@huggingface/transformers": "3.8.1",
+    "katex": "0.19.1",
+    "parse5": "7.3.0"
+  },
+  "overrides": {
+    "@huggingface/transformers": {
+      "sharp": "0.35.5"
+    }
   }
 }

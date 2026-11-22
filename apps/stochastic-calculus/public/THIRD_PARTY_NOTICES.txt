@@ -1,5 +1,12 @@
 Source attribution
 
+Course search uses the Apache-2.0 licensed sentence-transformers/all-MiniLM-L6-v2
+model and Xenova's INT8 ONNX conversion, revision 751bff37182d3f1213fa05d7196b954e230abad9.
+Hugging Face hosts the model and its license information. Transformers.js is licensed under Apache-2.0.
+ONNX Runtime is copyright Microsoft Corporation and is licensed under MIT.
+Model source: https://huggingface.co/Xenova/all-MiniLM-L6-v2
+Runtime sources: https://github.com/huggingface/transformers.js and https://github.com/microsoft/onnxruntime
+
 This interactive stochastic calculus lesson is based on and adapted from:
 
 Ji-Ha Kim. “Introduction to Stochastic Calculus.” Ji-Ha’s Blog.

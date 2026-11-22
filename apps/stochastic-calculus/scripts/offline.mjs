@@ -4,6 +4,9 @@ import { resolve, dirname, join, extname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const dist=fileURLToPath(new URL('../dist/',import.meta.url));
 let html=readFileSync(join(dist,'index.html'),'utf8');
+html=html.replace('<html lang="en">','<html lang="en" data-offline-preview>');
+const searchPassages=readFileSync(new URL('../src/search/generated/passages.json',import.meta.url),'utf8').replaceAll('<','\\u003c');
+html=html.replace('</body>',()=>'<script type="application/json" id="ask-passages">'+searchPassages+'</script></body>');
 const assets={};for(const name of readdirSync(join(dist,'examples'))){
   assets[name]=readFileSync(join(dist,'examples',name)).toString('base64');
 }

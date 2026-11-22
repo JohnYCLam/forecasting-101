@@ -1,0 +1,309 @@
+[
+  {
+    "query": "Why do squared Brownian steps add up to elapsed time?",
+    "expected": [
+      "#ito/quadratic-variation",
+      "#ito/multiplication-table",
+      "#reference/weighted-squares"
+    ]
+  },
+  {
+    "query": "What is the size of one Gaussian kick over a tiny interval?",
+    "expected": [
+      "#ito/finite-increments",
+      "#scaling/diffusive-scaling",
+      "#scaling/demo-scaling"
+    ]
+  },
+  {
+    "query": "Why does a noisy process get pulled back toward its average?",
+    "expected": [
+      "#sde/mean-reversion",
+      "#sde/demo-sde"
+    ]
+  },
+  {
+    "query": "Ito's lemma",
+    "expected": [
+      "#ito/ito-lemma",
+      "#sde/general-ito"
+    ]
+  },
+  {
+    "query": "Why does a stock's typical path lag behind its average?",
+    "expected": [
+      "#sde/volatility-drag",
+      "#sde/demo-gbm",
+      "#sde/gbm"
+    ]
+  },
+  {
+    "query": "How can a logger miss a threshold crossing between two samples?",
+    "expected": [
+      "#learning/crossing-between-readings",
+      "#learning/demo-barrier"
+    ]
+  },
+  {
+    "query": "Which simulation lets me move the evaluation point?",
+    "expected": [
+      "#stratonovich/demo-lambda",
+      "#stratonovich/lambda-family"
+    ]
+  },
+  {
+    "query": "Can a pressure valve open without the sensor logging the event?",
+    "expected": [
+      "#learning/valve-alarm",
+      "#learning/demo-valve",
+      "#beyond/jumps"
+    ]
+  },
+  {
+    "query": "Where can I see Pascal's triangle count coin toss paths?",
+    "expected": [
+      "#walk/pascal",
+      "#reference/b-2"
+    ]
+  },
+  {
+    "query": "What is the difference between drift and diffusion in an SDE?",
+    "expected": [
+      "#sde/sde-definition",
+      "#sde/additive",
+      "#sde/demo-drift"
+    ]
+  },
+  {
+    "query": "OU process",
+    "expected": [
+      "#sde/mean-reversion",
+      "#sde/demo-sde"
+    ]
+  },
+  {
+    "query": "How do I simulate GBM?",
+    "expected": [
+      "#sde/gbm",
+      "#sde/demo-gbm",
+      "#reference/c-3",
+      "#reference/b-4"
+    ]
+  },
+  {
+    "query": "Why must a random walk step shrink with the square root of time?",
+    "expected": [
+      "#scaling/diffusive-scaling",
+      "#scaling/demo-scaling"
+    ]
+  },
+  {
+    "query": "Can Brownian motion have an ordinary velocity?",
+    "expected": [
+      "#brownian/roughness",
+      "#reference/brownian-regularity"
+    ]
+  },
+  {
+    "query": "What does (dW)^2 mean in the multiplication table?",
+    "expected": [
+      "#ito/multiplication-table",
+      "#ito/read-the-differentials"
+    ]
+  },
+  {
+    "query": "How do I convert a Stratonovich drift to Ito drift?",
+    "expected": [
+      "#stratonovich/integral-conversion",
+      "#stratonovich/demo-conversion",
+      "#stratonovich/chain-rule"
+    ]
+  },
+  {
+    "query": "How many heads give the same final position?",
+    "expected": [
+      "#walk/binomial",
+      "#walk/pascal",
+      "#walk/demo-walk"
+    ]
+  },
+  {
+    "query": "Brownian bridge missed alarm experiment",
+    "expected": [
+      "#learning/demo-barrier",
+      "#learning/crossing-between-readings"
+    ]
+  },
+  {
+    "query": "How does Euler–Maruyama approximate an SDE?",
+    "expected": [
+      "#sde/numerics",
+      "#sde/demo-euler"
+    ]
+  },
+  {
+    "query": "Where is the source code for the Brownian path animation?",
+    "expected": [
+      "#reference/c-2"
+    ]
+  },
+  {
+    "query": "What happens when a fair coin is biased to the right?",
+    "expected": [
+      "#walk/discrete-drift",
+      "#walk/demo-walk"
+    ]
+  },
+  {
+    "query": "What is the central limit theorem?",
+    "expected": [
+      "#scaling/clt"
+    ]
+  },
+  {
+    "query": "Which features define a Wiener process?",
+    "expected": [
+      "#brownian/definition",
+      "#brownian/intuition"
+    ]
+  },
+  {
+    "query": "How does the variance of a Brownian position change with time?",
+    "expected": [
+      "#brownian/moments",
+      "#brownian/definition",
+      "#brownian/demo-brownian"
+    ]
+  },
+  {
+    "query": "Why are the left and midpoint stochastic integrals different?",
+    "expected": [
+      "#stratonovich/endpoint-choice",
+      "#stratonovich/integral-conversion",
+      "#stratonovich/demo-convention",
+      "#ito/integral"
+    ]
+  },
+  {
+    "query": "How do we derive the stochastic chain rule using Taylor expansion?",
+    "expected": [
+      "#ito/ito-lemma",
+      "#ito/algebraic-view"
+    ]
+  },
+  {
+    "query": "How does noise alter the growth rate of log wealth?",
+    "expected": [
+      "#sde/volatility-drag",
+      "#sde/gbm",
+      "#sde/demo-gbm"
+    ]
+  },
+  {
+    "query": "What if a price moves continuously most days but suddenly jumps?",
+    "expected": [
+      "#beyond/jumps",
+      "#beyond/jump-equation",
+      "#beyond/choose-model",
+      "#beyond/demo-jumps"
+    ]
+  },
+  {
+    "query": "How do Poisson events enter the equation?",
+    "expected": [
+      "#beyond/jumps",
+      "#beyond/jump-equation",
+      "#beyond/jump-solution"
+    ]
+  },
+  {
+    "query": "How do Bayesian prediction bands differ from point forecasts?",
+    "expected": [
+      "#learning/bayesian-regression",
+      "#learning/demo-prediction",
+      "#learning/learn-random-motion"
+    ]
+  },
+  {
+    "query": "Will a randomly moving ball ever visit the other valley before the deadline?",
+    "expected": [
+      "#learning/learn-switching",
+      "#learning/demo-switching"
+    ]
+  },
+  {
+    "query": "How do neural SDEs learn dynamics from trajectories?",
+    "expected": [
+      "#learning/neural-sde",
+      "#learning/learning-question"
+    ]
+  },
+  {
+    "query": "Who wrote the original lesson?",
+    "expected": [
+      "#reference/sources",
+      "#intro/applications"
+    ]
+  },
+  {
+    "query": "Where do I find a glossary of symbols?",
+    "expected": [
+      "#reference/notation"
+    ]
+  },
+  {
+    "query": "What's the SDE for additive Brownian noise with constant drift?",
+    "expected": [
+      "#sde/additive",
+      "#sde/demo-drift"
+    ]
+  },
+  {
+    "query": "How does midpoint sampling restore the ordinary chain rule?",
+    "expected": [
+      "#stratonovich/chain-rule",
+      "#stratonovich/endpoint-choice"
+    ]
+  },
+  {
+    "query": "How do physical collisions produce a random walk?",
+    "expected": [
+      "#scaling/physical-scaling",
+      "#brownian/intuition",
+      "#reference/physical-crossover",
+      "#intro/applications"
+    ]
+  },
+  {
+    "query": "What is a quadratic variation experiment I can interact with?",
+    "expected": [
+      "#ito/demo-qv"
+    ]
+  },
+  {
+    "query": "How do I fit a noise level using valve event logs?",
+    "expected": [
+      "#beyond/learn-event-dynamics",
+      "#learning/demo-valve"
+    ]
+  },
+  {
+    "query": "How can I compare the exact OU path with a numerical approximation?",
+    "expected": [
+      "#sde/demo-euler",
+      "#sde/numerics"
+    ]
+  },
+  {
+    "query": "How do I bake sourdough bread?",
+    "expected": []
+  },
+  {
+    "query": "Who won the soccer world cup?",
+    "expected": []
+  },
+  {
+    "query": "Can you show me an example of that?",
+    "expected": []
+  }
+]

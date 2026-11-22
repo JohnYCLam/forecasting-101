@@ -3,3 +3,5 @@ dist/
 
 # Local research and Appendix B review/revision notes; never part of the site.
 /research-local/
+/public/search-runtime/
+/public/search-models/
