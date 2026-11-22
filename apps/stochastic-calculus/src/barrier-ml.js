@@ -29,6 +29,12 @@ export function segmentCrossing(x,y,dt,sigma,barrier) {
   return Math.exp(-2*(barrier-x)*(barrier-y)/(sigma*sigma*dt));
 }
 
+export function extraReadingRisk(reading, time, sigma, barrier) {
+  const first = segmentCrossing(0, reading, time, sigma, barrier);
+  const second = segmentCrossing(reading, 0, 1 - time, sigma, barrier);
+  return {first, second, total: first + (1 - first) * second};
+}
+
 export function crossingProbability(observed,sigma,barrier) {
   const dt=1/(observed.length-1);let logSurvival=0;
   for(let i=1;i<observed.length;i++) {

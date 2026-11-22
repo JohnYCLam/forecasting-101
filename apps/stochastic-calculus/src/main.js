@@ -6,13 +6,15 @@ import * as M from './math.js';
 import * as B from './bsde.js';
 import * as P from './predictive-ml.js';
 import * as S from './switching-ml.js';
+import { sourceVisitCurve } from './switching-theory.js';
+import { drawValley } from './switching-landscape.js';
 import * as H from './barrier-ml.js';
+import { inferValve, historicalMinutes, fitValveHistory, valveRisks } from './valve-alarm.js';
 import { ouComparison } from './ou-comparison.js';
 import { pendingTopics } from '../../../site/navigation.js';
 import scope from '../../../course-scope.json' with { type: 'json' };
 let model=B.learner();
 const heldOut=B.testPaths();
-let barrierSelectedIndex=null;
 
 const $=id=>document.getElementById(id);
 const C={};
@@ -42,7 +44,7 @@ function chart(id,xlim,ylim,xlabel='Time t',ylabel='Value',options={}){
   const yt=options.yTicks??Array.from({length:Math.max(1,Math.floor((ylim[1]-Math.ceil(ylim[0]/step)*step)/step)+1)},(_,i)=>Math.ceil(ylim[0]/step)*step+i*step);
   ctx.font='11px system-ui';ctx.fillStyle=C.muted;ctx.lineWidth=1;
   const labelWidth=Math.max(...yt.map(y=>ctx.measureText(options.yFormat?options.yFormat(y):tick(y)).width),20);
-  const pad={l:Math.max(49,labelWidth+27),r:20,t:17,b:48},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+  const pad={l:options.leftPadding??Math.max(49,labelWidth+27),r:20,t:17,b:48},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
   const xp=x=>pad.l+(x-xlim[0])/(xlim[1]-xlim[0])*pw,yp=y=>h-pad.b-(y-ylim[0])/(ylim[1]-ylim[0])*ph;
   for(const y of yt){if(y<ylim[0]||y>ylim[1])continue;ctx.strokeStyle=C.line;ctx.beginPath();ctx.moveTo(pad.l,yp(y));ctx.lineTo(w-pad.r,yp(y));ctx.stroke();ctx.textAlign='right';ctx.fillText(options.yFormat?options.yFormat(y):tick(y),pad.l-8,yp(y)+3);}
   const xCount=pw<240?2:4;
@@ -53,6 +55,58 @@ function chart(id,xlim,ylim,xlabel='Time t',ylabel='Value',options={}){
   function clipped(draw){ctx.save();ctx.beginPath();ctx.rect(pad.l,pad.t,pw,ph);ctx.clip();draw();ctx.restore();}
   return {band(lower,upper,color=C.teal){clipped(()=>{ctx.fillStyle=color;ctx.globalAlpha=.14;ctx.beginPath();[...lower,...upper.toReversed()].forEach(([x,y],i)=>i?ctx.lineTo(xp(x),yp(y)):ctx.moveTo(xp(x),yp(y)));ctx.closePath();ctx.fill();});},line(points,color=C.teal,width=1.7,dash=[],alpha=1){clipped(()=>{ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=width;ctx.setLineDash(dash);ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(xp(x),yp(y)):ctx.moveTo(xp(x),yp(y)));ctx.stroke();});},bars(points,width,color=C.teal,alpha=.45,outline=false){clipped(()=>{ctx.fillStyle=color;ctx.strokeStyle=color;ctx.globalAlpha=alpha;for(const [x,y] of points){const xx=xp(x-width/2),ww=Math.max(.5,xp(x+width/2)-xx);if(outline){ctx.setLineDash([3,2]);ctx.lineWidth=1.6;ctx.strokeRect(xx,yp(Math.max(0,y)),ww,Math.abs(yp(y)-yp(0)));}else ctx.fillRect(xx,Math.min(yp(y),yp(0)),ww,Math.abs(yp(y)-yp(0)));}});},point(x,y,color=C.coral){clipped(()=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(xp(x),yp(y),4,0,Math.PI*2);ctx.fill();});}};
 }
+function sensorForecasts(sigma, count, x0, steps) {
+  const training = cached('prediction', `${sigma}:${count}`, () => {
+    const data = P.trainingData(sigma, count, seed('prediction'));
+    return { ...data, model: P.fit(data.pairs) };
+  });
+  return cached('prediction', `bands:${sigma}:${count}:${x0}:${steps}`, () => {
+    const prediction = P.forecast(training.model, x0, steps);
+    const bayes = P.bayesianForecast(training.model, x0, steps);
+    const lowerGap = bayes.lower.map((bound, i) => bound - prediction.lower[i]);
+    const upperGap = bayes.upper.map((bound, i) => bound - prediction.upper[i]);
+    const maxGap = Math.max(...lowerGap.map(Math.abs), ...upperGap.map(Math.abs));
+    return { training, prediction, bayes, lowerGap, upperGap, maxGap };
+  });
+}
+
+function drawBandDifferences(forecasts, duration, maxGap) {
+  const { lowerGap, upperGap } = forecasts;
+  const scale = maxGap > 0 ? maxGap * 1.12 : 1;
+  const ticks = maxGap > 0 ? undefined : [0];
+  const plot = chart('pred-band-gap', [0, duration], [-scale, scale], 'Time since forecast',
+    'Difference in reading', { leftPadding: 78, yTicks: ticks, yFormat: y => Number(y.toPrecision(3)).toString() });
+  if (!plot) return;
+  plot.line([[0, 0], [duration, 0]], C.gray, 1.5, [2, 4]);
+  plot.line(series(upperGap, duration), C.blue, 2.5);
+  plot.line(series(lowerGap, duration), C.coral, 2.5, [6, 4]);
+  const signed = x => (x > 0 ? '+' : '') + fmt(x, 5);
+  out('pred-gap-note', forecasts.maxGap === 0 ? 'The bounds agree at every time shown.'
+    : 'At time ' + fmt(duration, 1) + ', Bayesian minus SDE is ' + signed(upperGap.at(-1))
+      + ' for the upper bound and ' + signed(lowerGap.at(-1)) + ' for the lower bound, in sensor units.');
+}
+
+function drawPredictiveBands(fixed, bayes, duration) {
+  const view = $('pred-band-view').value;
+  const range = limits([fixed.lower, fixed.upper, bayes.lower, bayes.upper], 0.08, false);
+  const plot = chart('pred-bounds', [0, duration], range, 'Time since forecast', 'Sensor reading', { leftPadding: 78 });
+  if (!plot) return;
+  const bands = [];
+  if (view !== 'bayes') bands.push({ forecast: fixed, color: C.teal, dash: [] });
+  if (view !== 'sde') bands.push({ forecast: bayes, color: C.blue, dash: [6, 4] });
+  for (const { forecast, color } of bands) {
+    plot.band(series(forecast.lower, duration), series(forecast.upper, duration), color);
+  }
+  for (const { forecast, color, dash } of bands) {
+    plot.line(series(forecast.lower, duration), color, 1.6, dash);
+    plot.line(series(forecast.upper, duration), color, 1.6, dash);
+    plot.line(series(forecast.mean, duration), color, 2.5, dash);
+  }
+  const endpoint = f => '[' + fmt(f.lower.at(-1), 4) + ', ' + fmt(f.upper.at(-1), 4) + ']';
+  out('pred-width-note', 'At time ' + fmt(duration, 1) + ', the SDE prediction interval is '
+    + endpoint(fixed) + ' and the Bayesian prediction interval is ' + endpoint(bayes) + '.');
+}
+
 function lines(id,paths,T,ylim,reference=[],options={}){
   const c=chart(id,[0,T],ylim??limits(paths),'Time t',options.ylabel??'Position',options);if(!c)return;
   paths.forEach((p,i)=>c.line(series(p,T),options.color??C.teal,i===0?1.7:1,[],i===0?.9:.24));
@@ -79,6 +133,73 @@ function fixedScalingDensity(id,values,dx,sd,xlim){
   return hist;
 }
 
+let switchingReplay;
+let switchingTimer;
+
+function pauseSwitching() {
+  clearInterval(switchingTimer);
+  switchingTimer = null;
+  const play = $('switch-play');
+  if (play) play.textContent = 'Play';
+}
+
+const switchingLabels = { point: 'Drift only', sde: 'Learned SDE', kernel: 'Empirical transitions' };
+
+function selectSwitchingExamples(result) {
+  // Select only from the stored illustration paths; all hits enter the rates.
+  const hits = result.hits.slice(0, result.paths.length);
+  const choices = [
+    [hits.findIndex(Number.isFinite), 'Reaches the flag'],
+    [hits.findIndex(hit => !Number.isFinite(hit)), 'Stays below the flag']
+  ].filter(([index]) => index >= 0);
+  const select = $('switch-example');
+  select.replaceChildren(...choices.map(([index, label]) => new Option(label, String(index))));
+  select.disabled = choices.length === 1;
+  out('switch-example-note', result.paths.length === 1
+    ? 'The drift-only forecast has one trajectory from this start.'
+    : 'Replays are selected by outcome from the first ' + result.paths.length + ' stored trajectories. '
+      + (choices.length === 1 ? 'Only this outcome appears among them. ' : 'Try the other outcome from the same model. ')
+      + 'Event rates below use all 2,000 simulated futures.');
+}
+
+function drawSwitchingFrame() {
+  if (!switchingReplay) return;
+  const { predictions, duration, model } = switchingReplay;
+  const frame = value('switch-frame'), time = frame * S.OBS_STEP;
+  const result = predictions[model], example = value('switch-example');
+  const path = result.paths[example], hit = result.hits[example], reached = hit <= frame;
+  const color = { point: C.coral, sde: C.teal, kernel: C.blue }[model];
+  const extent = Math.max(1.7, ...path.map(x => Math.abs(x) + 0.10));
+  drawValley($('switch-valley'), path[frame], extent, S.THRESHOLD, reached, C, color);
+  const trace = chart('switch-walk', [0, duration], [-extent, extent], 'Time since forecast', 'Position');
+  trace?.line([[0, S.THRESHOLD], [duration, S.THRESHOLD]], C.gray, 1.7, [2, 4]);
+  trace?.line([[time, -extent], [time, extent]], C.muted, 1, [2, 4]);
+  trace?.line(path.slice(0, frame + 1).map((x, j) => [j * S.OBS_STEP, x]), color, 2.3);
+  if (reached) {
+    trace?.line([[hit * S.OBS_STEP, S.THRESHOLD], [hit * S.OBS_STEP, path[hit]]], C.gold, 2);
+    trace?.point(hit * S.OBS_STEP, S.THRESHOLD, C.gold);
+  }
+  trace?.point(time, path[frame], color);
+  slider('switch-frame', fmt(time, 2));
+  out('switch-frame-note', switchingLabels[model] + ' · time ' + fmt(time, 2) + ' · position '
+    + fmt(path[frame], 2) + ' · ' + (reached ? 'first recorded hit at time ' + fmt(hit * S.OBS_STEP, 2) : 'flag not yet reached') + '.');
+
+  if (!switchingTimer) $('switch-play').textContent = frame === path.length - 1 ? 'Replay' : 'Play';
+}
+
+function playSwitching() {
+  if (switchingTimer) { pauseSwitching(); return; }
+  const slider = $('switch-frame');
+  if (value('switch-frame') >= Number(slider.max)) slider.value = 0;
+  $('switch-play').textContent = 'Pause';
+  switchingTimer = setInterval(() => {
+    slider.value = value('switch-frame') + 1;
+    if (value('switch-frame') === Number(slider.max)) pauseSwitching();
+    drawSwitchingFrame();
+  }, 55);
+  drawSwitchingFrame();
+}
+
 const renderers={
 euler(){
   const theta=value('euler-theta'),sigma=value('euler-sigma'),n=2**value('euler-k');
@@ -92,42 +213,103 @@ euler(){
   d?.line(data.levels.map(level=>[Math.log2(level.n),level.rmse]),C.teal,2.3);d?.point(Math.log2(n),selected.rmse,C.coral);
   out('euler-step',fmt(data.T/n,5));out('euler-rmse',selected.rmse<1e-12?'0 · roundoff only':fmt(selected.rmse,5));
 },
-barrier(){
-  const intervals=2**value('barrier-observations'),barrier=value('barrier-threshold'),sigma=value('barrier-sigma'),count=value('barrier-count');
-  slider('barrier-observations',`${intervals} · gap ${fmt(1/intervals,3)}`);slider('barrier-threshold');slider('barrier-sigma');
-  const fitted=cached('barrier',`fit:${sigma}:${count}`,()=>H.fit(H.trainingData(sigma,count,seed('barrier'))));
-  const rows=cached('barrier-test','source',()=>H.testData(seed('barrier-test')));
-  const results=cached('barrier',`evaluation:${seed('barrier-test')}:${sigma}:${count}:${barrier}`,()=>Array.from({length:7},(_,k)=>H.evaluate(rows,2**k,sigma,fitted.sigma,barrier)));
-  const current=results[value('barrier-observations')],exact=H.segmentCrossing(0,0,1,sigma,barrier);
-  const missed=H.findMissed(rows,intervals,sigma,barrier,barrierSelectedIndex??-1);
-  if(barrierSelectedIndex===null)barrierSelectedIndex=missed??0;
-  $('barrier-example').disabled=missed===null;
-  const row=rows[barrierSelectedIndex],fine=H.path(seed('barrier-test'),barrierSelectedIndex).values;
-  const visible=H.observe(row,intervals,sigma),fineValues=Array.from(fine,x=>sigma*x);
-  const pathChart=chart('barrier-path',[0,1],limits([fineValues,[0,barrier]],.12,false),'Time · both endpoints known','Signal');
-  pathChart?.line([[0,barrier],[1,barrier]],C.teal,2,[6,4]);
-  pathChart?.line(series(fineValues),C.gray,1.5);pathChart?.line(series(visible),C.coral,2.8);
-  visible.forEach((x,i)=>pathChart?.point(i/intervals,x,C.blue));
-  const p=H.crossingProbability(visible,fitted.sigma,barrier),observedHit=visible.some(x=>x>=barrier),actualHit=sigma*row.continuousMax>=barrier;
-  out('barrier-example-note',`Test path ${barrierSelectedIndex+1}: ${observedHit?'the revealed readings already show a crossing':'none of the revealed readings reaches the threshold'}. Simulated continuous source event: ${actualHit?'crossed':'did not cross'}. Given only the revealed readings, the fitted model assigns ${fmt(100*p,1)}% crossing probability. Refine the observation grid to inspect this same path.`);
-  out('barrier-fit',`Learned from ${count.toLocaleString()} independent training increments with varied durations: drift ${fmt(fitted.mu,3)}, noise strength ${fmt(fitted.sigma,3)}. Test events were not used in fitting. Constant drift cancels in the conditional bridge calculation.`);
-  out('barrier-exact',`${fmt(100*exact,2)}%`);out('barrier-actual',`${fmt(100*current.actual,2)}%`);out('barrier-visible',`${fmt(100*current.seen,2)}%`);
-  for(const [name,rate,score]of [['naive',current.seen,current.seenBrier],['sde',current.predicted,current.bridgeBrier],['discrete',current.predicted,current.bridgeBrier]]) {
-    out(`barrier-${name}-rate`,`${fmt(100*rate,2)}%`);out(`barrier-${name}-score`,fmt(score,4));
+valve(){
+  const prior = value('valve-prior'), count = value('valve-count');
+  const fit = cached('valve', `${prior}:${count}`, () => {
+    const history = fitValveHistory(historicalMinutes(count, prior, seed('valve')));
+    return {...history, risks: valveRisks(history.sigma)};
+  });
+  const reference = inferValve(prior), prediction = inferValve(fit.prior, fit.risks);
+  const pct = p => fmt(100 * p, 2) + '%';
+  const frequency = (1 / prior).toLocaleString('en');
+  out('valve-target', `With one opening per ${frequency} minutes, a known drop of 0.60 and background noise strength 0.10, the theoretical chance of a low-pressure alarm is ${pct(reference.alarm)}. This is the target for the missing log.`);
+  out('valve-fit', `The training log contains ${fit.openings.toLocaleString('en')} openings in ${count.toLocaleString('en')} minutes. The fitted opening frequency is ${fmt(100 * fit.prior, 3)}% per minute and the fitted background noise strength is ${fmt(fit.sigma, 4)}.`);
+  out('valve-reference', pct(reference.alarm));
+  out('valve-baseline', pct(fit.risks.closed));
+  out('valve-alarm', pct(prediction.alarm));
+  const gap = 100 * (prediction.alarm - reference.alarm);
+  const difference = Math.abs(gap) < 0.01 ? 'within 0.01 percentage points of theory'
+    : fmt(Math.abs(gap), 2) + ' percentage points ' + (gap < 0 ? 'below' : 'above') + ' theory';
+  out('valve-interpretation', fit.openings === 0
+    ? 'These records contain no openings, so the empirical opening frequency is zero. With a missing log the jump model gives all the weight to continuous motion. A longer history may capture an opening.'
+    : `The jump model is ${difference}. The continuous-only baseline has the same noise estimate, but can explain the pressure fall only through Brownian motion.`);
+  const openings = fit.openings.toLocaleString('en');
+  const closures = (count - fit.openings).toLocaleString('en');
+  const ratio = Math.exp(fit.risks.logLikelihoodRatio).toLocaleString('en', {maximumFractionDigits: 0});
+  const weight = prediction.opened;
+  out('valve-history-odds', `Current training records: ${openings} opened and ${closures} stayed closed. The starting opening probability is ${openings} / ${count.toLocaleString('en')} = ${fmt(100 * fit.prior, 3)}%.`);
+  out('valve-likelihood', `With fitted noise strength ${fit.sigma.toFixed(7)}, the required fluctuation is ${fmt(0.50 / fit.sigma, 2)} standard deviations below zero if closed, or ${fmt(0.10 / fit.sigma, 2)} above zero if opened. The likelihood ratio L is about ${ratio} in favor of an opening.`);
+  out('valve-posterior', `P(opened given the pressure readings) ≈ (${openings} × ${ratio}) / [(${openings} × ${ratio}) + ${closures}] = ${pct(weight)}.`
+    + (fit.openings === 0 ? ' With zero openings in the training records, the fitted starting odds are zero. Multiplying them by this evidence leaves them at zero.' : ''));
+  out('valve-conditional-risks', `Using the current fit gives q₀ = ${pct(fit.risks.closed)} with the valve closed and q₁ ≈ ${pct(fit.risks.opened)} with one opening (numerical integration).`);
+  out('valve-mixture', `P(alarm given the pressure readings) ≈ ${(1-weight).toFixed(6)} × ${pct(fit.risks.closed)} + ${weight.toFixed(6)} × ${pct(fit.risks.opened)} ≈ ${pct(prediction.alarm)}. Displayed inputs are rounded.`);
+  out('valve-inference', fit.openings === 0
+    ? 'With no openings in the training sample, the fitted opening probability remains zero after the pressure readings.'
+    : `In the current fit, the pressure fall raises the opening probability from ${fmt(100 * fit.prior, 3)}% to ${pct(weight)}. The estimated alarm probability is ${pct(prediction.alarm)}.`);
+  if ($('valve-log').value === 'closed') {
+    out('valve-reading', `The record says the valve stayed closed. A hidden alarm now requires pressure to dip to 0.45 and recover to 0.50 through ordinary fluctuations. The fitted alarm estimate is ${pct(fit.risks.closed)}, compared with ${pct(prediction.alarm)} before finding the record.`);
+  } else {
+    out('valve-reading', `The record confirms one opening. We still do not know the pressure just before the drop. A drop from 1.04 would trigger the alarm, while a drop from 1.12 would land above the threshold. The fitted alarm estimate is ${pct(fit.risks.opened)}, compared with ${pct(prediction.alarm)} before finding the record.`);
   }
-  const ymax=Math.min(1,Math.max(.2,Math.ceil(Math.max(exact,current.actual,...results.map(r=>r.predicted))*12)/10));
-  const c=chart('barrier-refinement',[0,6],[0,ymax],'Observation intervals · nested grids','Crossing fraction',{xTicks:[0,1,2,3,4,5,6],xFormat:x=>2**x,yFormat:y=>`${Math.round(100*y)}%`});
-  c?.line([[0,current.actual],[6,current.actual]],C.gray,2,[5,3]);c?.line([[0,current.fine],[6,current.fine]],C.gold,1.7,[2,4]);
-  c?.line(results.map((r,k)=>[k,r.seen]),C.coral,2.5);c?.line(results.map((r,k)=>[k,r.predicted]),C.teal,2.5);
-  c?.point(value('barrier-observations'),current.seen,C.coral);c?.point(value('barrier-observations'),current.predicted,C.teal);
-  const calibration=H.reliability(current.predictions,current.labels),d=chart('barrier-calibration',[0,1],[0,1],'Predicted probability','Observed event frequency');
-  d?.line([[0,0],[1,1]],C.gray,1.5,[5,4]);
-  calibration.forEach(g=>d?.point(g.predicted,g.observed,C.teal));
-  out('barrier-grid-note',`At ${intervals} observation intervals, observation checks miss ${fmt(100*(current.actual-current.seen),2)} percentage points of continuous events in this test batch. Even the 1,024-point drawing detects only ${fmt(100*current.fine,2)}%; exact sampled segment maxima provide the continuous event labels (${fmt(100*current.actual,2)}%). Calibration groups shown contain ${calibration.map(g=>g.count.toLocaleString()).join(', ')} paths. More observations reveal the same underlying records; they do not refit the model.`);
+},
+barrier(){
+  const threshold = value('barrier-threshold'), sigma = value('barrier-sigma'), count = value('barrier-count');
+  slider('barrier-threshold');
+  slider('barrier-sigma');
+  const fitted = cached('barrier', `fit:${sigma}:${count}`, () => H.fit(H.trainingData(sigma, count, seed('barrier'))));
+  const reading = value('barrier-reading'), time = value('barrier-time');
+  slider('barrier-reading', fmt(reading, 2));
+  slider('barrier-time', fmt(time, 2));
+  const percent = p => p > 0 && p < 0.0001 ? 'less than 0.01%' : p < 1 && p > 0.9999 ? 'over 99.99%' : fmt(100 * p, 2) + '%';
+  const endpoints = H.segmentCrossing(0, 0, 1, sigma, threshold);
+  const fittedEndpoints = H.segmentCrossing(0, 0, 1, fitted.sigma, threshold);
+  out('barrier-fit', `From ${count.toLocaleString('en')} independent training increments the model estimates a noise strength of ${fmt(fitted.sigma, 3)}. The source setting is ${fmt(sigma, 3)}.`);
+  out('barrier-exact', percent(endpoints));
+  out('barrier-estimated', percent(fittedEndpoints));
+  out('barrier-visible', '0%');
+  out('barrier-mid-exact', percent(H.extraReadingRisk(0.60, 0.50, sigma, threshold).total));
+  out('barrier-mid-estimated', percent(H.extraReadingRisk(0.60, 0.50, fitted.sigma, threshold).total));
+  out('barrier-mid-visible', 0.60 >= threshold ? '100%' : '0%');
+  const difference = 100 * (fittedEndpoints - endpoints);
+  const gap = Math.abs(difference) < 0.01 ? 'within 0.01 percentage points of theory'
+    : fmt(Math.abs(difference), 2) + ' percentage points ' + (difference < 0 ? 'below' : 'above') + ' theory';
+  out('barrier-fit-result', 'With just the two zeros, the learned estimate is ' + gap + '. '
+    + 'A larger fitted noise strength makes a hidden excursion to the threshold more likely.');
+
+  const panel = chart('barrier-response', [-1, 1.5], [0, 1], 'Extra sensor reading', 'Chance of a touch',
+    { xTicks: [-1, -0.5, 0, 0.5, 1, 1.5], yFormat: p => Math.round(100 * p) + '%' });
+  panel?.line([[-1, endpoints], [1.5, endpoints]], C.gray, 1.7, [2, 4]);
+  for (const [noise, color, dash] of [[sigma, C.teal, []], [fitted.sigma, C.blue, [6, 4]]]) {
+    const curve = Array.from({length: 251}, (_, i) => {
+      const x = (i - 100) / 100;
+      return [x, H.extraReadingRisk(x, time, noise, threshold).total];
+    });
+    panel?.line(curve, color, 2, dash);
+    panel?.point(reading, H.extraReadingRisk(reading, time, noise, threshold).total, color);
+  }
+  const risk = H.extraReadingRisk(reading, time, sigma, threshold);
+  const learned = H.extraReadingRisk(reading, time, fitted.sigma, threshold).total;
+  out('barrier-evidence', `For a reading of ${fmt(reading, 2)} at time ${fmt(time, 2)}, theory gives ${percent(risk.total)} and the learned bridge gives ${percent(learned)}. `
+    + (reading >= threshold ? 'The reading confirms a touch.' : `The theoretical chance with only the two zeros is ${percent(endpoints)}.`));
+  out('barrier-gaps', `At the selected settings the first gap lasts ${fmt(time, 2)} (touch chance ${percent(risk.first)}), and the second lasts ${fmt(1-time, 2)} (touch chance ${percent(risk.second)}). Together they give ${percent(risk.total)}.`);
+  if (!$('barrier-diagnostics').open) return;
+  const rows = cached('barrier-test', 'source', () => H.testData(seed('barrier-test')));
+  const result = cached('barrier', `scores:${seed('barrier-test')}:${sigma}:${count}:${threshold}`,
+    () => H.evaluate(rows, 2, sigma, fitted.sigma, threshold));
+  out('barrier-naive-score', fmt(result.seenBrier, 4));
+  out('barrier-sde-score', fmt(result.bridgeBrier, 4));
+  const calibration = chart('barrier-calibration', [0, 1], [0, 1], 'Predicted probability', 'Observed alarm fraction');
+  calibration?.line([[0, 0], [1, 1]], C.gray, 1.5, [5,3]);
+  H.reliability(result.predictions, result.labels).forEach(group => calibration?.point(group.predicted, group.observed, C.teal));
 },
 switching(){
   const sigma=value('switch-noise'),count=value('switch-count'),x0=value('switch-start'),T=value('switch-horizon');
   slider('switch-noise');slider('switch-horizon',`${T} time units`);
+  const theory = cached('switching-theory', [sigma, x0, T].join(':'), () => sourceVisitCurve(sigma, x0, T));
+  const benchmark = theory.at(-1);
+  const theoreticalRate = benchmark === 0 ? '0%' : benchmark < 0.0001 ? 'less than 0.01%' : fmt(100 * benchmark, 2) + '%';
+  out('switch-theory', 'The theoretical chance is ' + theoreticalRate + ' from position ' + fmt(x0, 1)
+    + ' with noise strength ' + fmt(sigma, 1) + ' by time ' + fmt(T, 0) + ' (' + (theory.length - 1) + ' readings).');
   const training=cached('switching',`${sigma}:${count}`,()=>{
     const data=S.trainingData(sigma,count,seed('switching'));
     return {...data,model:S.fit(data.pairs),kernel:S.kernel(data.pairs)};
@@ -139,6 +321,40 @@ switching(){
   }));
   const test=cached('switching-test',`${sigma}:${x0}:${T}`,()=>S.simulate('source',{sigma},x0,T,S.ENSEMBLE,seed('switching-test'),S.SOURCE_STEP));
   const {point,sde,kernel}=predictions,range=[-2.6,2.6],cs=training.model.coefficients;
+  const model = $('switch-model').value;
+  if (switchingReplay?.predictions !== predictions || switchingReplay.model !== model) {
+    pauseSwitching();
+    selectSwitchingExamples(predictions[model]);
+    $('switch-frame').max = point.paths[0].length - 1;
+    $('switch-frame').value = 0;
+  }
+  switchingReplay = { predictions, duration: T, model };
+  drawSwitchingFrame();
+  const rate = p => fmt(100 * p, 2) + '%';
+  const outcome = result => result.hits.filter(Number.isFinite).length.toLocaleString('en')
+    + ' of ' + result.hits.length.toLocaleString('en') + ' paths reach the flag (' + rate(result.probability) + ').';
+  out('switch-point-outcome', 'Ends at ' + fmt(point.endpoints[0], 2) + '. '
+    + (point.probability ? 'Reaches the flag' : 'Stays below the flag') + ' (' + rate(point.probability) + ').');
+  out('switch-sde-outcome', outcome(sde));
+  out('switch-kernel-outcome', outcome(kernel));
+  out('switch-fit-check', 'At positions −0.5 and +0.5, the source pulls at −0.375 and +0.375 units per unit time. '
+    + 'The fitted drift gives ' + fmt(S.drift(training.model, -0.5), 3) + ' and ' + fmt(S.drift(training.model, 0.5), 3)
+    + '. The learned SDE estimates kick strength ' + fmt(training.model.sigma, 3) + ' against a source setting of '
+    + fmt(sigma, 3) + '. Replaying those learned movements over many steps tests whether the local fit also gets the visit rate right.');
+
+  const gap = p => {
+    const points = 100 * (p - benchmark);
+    if (points === 0) return 'matches the theoretical rate';
+    if (Math.abs(points) < 0.05) return 'is within 0.05 percentage points of theory';
+    return 'is ' + fmt(Math.abs(points), 1) + ' percentage points ' + (points < 0 ? 'below' : 'above') + ' the reference';
+  };
+  const spread = 100 * Math.abs(sde.probability - kernel.probability);
+  out('switch-interpretation', 'Against the theoretical probability of ' + theoreticalRate
+    + ', drift only ' + gap(point.probability) + ', the learned SDE ' + gap(sde.probability)
+    + ', and empirical transitions ' + gap(kernel.probability) + '. '
+    + (spread === 0 ? 'The two stochastic forecasts agree in this run.' : 'The two stochastic forecasts differ by ' + fmt(spread, 2) + ' percentage points.')
+    + (sigma === 0 ? ' With zero source noise the true path is deterministic; any remaining spread in the fitted models comes from estimation and the observation spacing.'
+      : ' The stochastic rates can move with the training records and simulated paths.'));
   lines('switch-training',training.paths.slice(0,12),4,range);
   const c=chart('switch-paths',[0,T],range,'Time since forecast','State');
   c?.line([[0,S.THRESHOLD],[T,S.THRESHOLD]],C.gray,1,[2,5]);
@@ -150,27 +366,51 @@ switching(){
   d?.bars(histograms.test.points,histograms.test.width*.95,C.gray,.65);
   d?.line(histograms.kernel.points,C.blue,2,[5,3]);d?.line(histograms.sde.points,C.teal,2.5);
   d?.line([[point.endpoints[0],0],[point.endpoints[0],top]],C.coral,2.4);
-  const p=chart('switch-hits',[0,T],[0,1],'Time since forecast','Probability of reaching right');
-  p?.line(series(test.cumulative,T),C.gray,3);p?.line(series(kernel.cumulative,T),C.blue,2,[6,4]);p?.line(series(sde.cumulative,T),C.teal,2.5);p?.line(series(point.cumulative,T),C.coral,2,[3,3]);
   out('switch-fit',`Cubic drift fitted from ${training.model.n.toLocaleString()} observed transitions: coefficients (${cs.map(x=>fmt(x,3)).join(', ')}), in order 1, x, x², x³. Learned noise strength ${fmt(training.model.sigma,3)}. All models use the same training records.`);
   for(const [name,result]of Object.entries(predictions)){
     const score=S.scores(result,test);
     out(`switch-${name}-prob`,`${fmt(100*result.probability,1)}%`);out(`switch-${name}-crps`,fmt(score.crps,4));out(`switch-${name}-brier`,fmt(score.brier,4));
   }
-  const sourceMean=test.mean.at(-1),sdeMean=sde.mean.at(-1),pointEnd=point.endpoints[0],q=test.probability;
+  const sourceMean=test.mean.at(-1),sdeMean=sde.mean.at(-1),pointEnd=point.endpoints[0];
   out('switch-mean',`At the final time: drift-only position ${fmt(pointEnd,2)}, average SDE position ${fmt(sdeMean,2)}, average unseen source position ${fmt(sourceMean,2)}. The SDE average need not follow the drift-only curve, even though they share exactly the same learned drift.`);
   const omitted=Object.entries(histograms).map(([name,h])=>`${name==='test'?'source':name==='sde'?'SDE':'empirical'} ${h.outside}`).join(', ');
-  out('switch-reference',`Observed in the 2,000 unseen source paths: ${fmt(100*q,1)}% reached +0.75 at least once. Approximate sampling margin: ±${fmt(100*1.96*Math.sqrt(q*(1-q)/S.ENSEMBLE),1)} percentage points (normal approximation; unreliable near 0% or 100%). All events are checked on the same 0.05-spaced observation grid. Endpoints outside the fixed display range: ${omitted}.`);
+  out('switch-reference',`Endpoint counts outside the plotted range (−2.6 to 2.6) are ${omitted}.`);
   out('switch-result',sigma===0?(x0===0?'With zero source noise and a start exactly at the hilltop, the source stays at zero. Fitted models may leave it because tiny drift errors grow at this unstable state. This setting exposes model error, rather than genuine random switching.':'At zero source noise, the source stays in the left valley. Small fitted residual noise can remain because finite-interval changes are only approximately described by a cubic Euler drift. Neither the coefficient estimate nor its residual is exact.'):'Both probabilistic models can predict branching futures. Compare their scores: the empirical model may match or beat the SDE. This experiment demonstrates the effect of nonlinear random dynamics, rather than a universal performance advantage for SDEs. Histogram lines and event estimates fluctuate with finite simulated ensembles.');
 },
 prediction(){
   const sigma=value('pred-noise'),count=value('pred-count'),x0=value('pred-start'),T=value('pred-horizon'),steps=Math.round(T/P.STEP);
   slider('pred-noise');slider('pred-start');slider('pred-horizon',`${fmt(T,1)} time units`);
-  const training=cached('prediction',`${sigma}:${count}`,()=>{
-    const data=P.trainingData(sigma,count,seed('prediction'));
-    return {...data,model:P.fit(data.pairs)};
-  });
-  const learned=training.model,prediction=P.forecast(learned,x0,steps);
+  const forecasts = sensorForecasts(sigma, count, x0, steps);
+  const { training, prediction, bayes } = forecasts;
+  const learned = training.model;
+  const comparison = P.compareOneStep(learned, x0);
+  drawPredictiveBands(prediction, bayes, T);
+  const comparing = $('pred-band-view').value === 'both';
+  $('pred-gap-panel').hidden = !comparing;
+  if (comparing) {
+    const shared = $('pred-gap-scale').value === 'shared';
+    const maxGap = shared
+      ? Math.max(...Array.from($('pred-count').options, option => sensorForecasts(sigma, Number(option.value), x0, steps).maxGap))
+      : forecasts.maxGap;
+    drawBandDifferences(forecasts, T, maxGap);
+  }
+  $('pred-band-horizon').value = T;
+  slider('pred-band-horizon', fmt(T, 1));
+  const interval = width => '[' + fmt(comparison.mean - width, 4) + ', ' + fmt(comparison.mean + width, 4) + ']';
+  $('pred-bayes-count').value = String(count);
+  out('pred-center', count + ' training paths · starting reading ' + fmt(x0, 1) + ' · source noise ' + fmt(sigma, 1) + ' · shared one-step forecast mean ' + fmt(comparison.mean, 4));
+  out('pred-fixed-future', interval(comparison.fixedFuture));
+  out('pred-bayes-future', interval(comparison.bayesFuture));
+  out('pred-bayes-mean', interval(comparison.bayesMean));
+  const distance = Math.abs(2.10 - comparison.mean);
+  const inSde = distance <= comparison.fixedFuture;
+  const inBayes = distance <= comparison.bayesFuture;
+  const readings = inSde === inBayes
+    ? (inSde ? 'inside both prediction intervals' : 'outside both central prediction intervals')
+    : (inBayes ? 'inside only the Bayesian prediction interval' : 'inside only the SDE prediction interval');
+  const meanInterval = distance <= comparison.bayesMean ? 'inside' : 'outside';
+  out('pred-reading-answer', 'With these settings, 2.10 is ' + readings + ' for one sensor. It is '
+    + meanInterval + ' the Bayesian credible interval for the average next reading.');
   const tests=cached('prediction-test',`${sigma}:${x0}`,()=>P.sample(P.transition(sigma),x0,40,2000,seed('prediction-test')));
   const shown=tests.slice(0,12).map(p=>p.slice(0,steps+1)),evaluation=P.evaluate(prediction,tests);
   const range=limits([...shown,prediction.lower,prediction.upper],.1,false);
@@ -189,9 +429,10 @@ prediction(){
   c?.bars(hist.points,hist.width*.92,C.gray,.7);c?.line(curve,C.teal,2.6);
   for(const edge of [prediction.lower[steps],prediction.upper[steps]])c?.line([[edge,0],[edge,top]],C.blue,1.5,[4,4]);
   c?.line([[mu,0],[mu,top]],C.coral,2.4);
-  out('pred-fit',`Fitted from ${count} training paths (${learned.n.toLocaleString()} transitions): a = ${fmt(learned.a,4)}, b = ${fmt(learned.b,4)}, residual standard deviation s = ${fmt(Math.sqrt(learned.variance),4)}. Test outcomes are held out.`);
+  out('pred-fit', `Fit from ${learned.n.toLocaleString()} training pairs · slope a = ${fmt(learned.a,4)} · intercept b = ${fmt(learned.b,4)} · step noise s = ${fmt(Math.sqrt(learned.variance),4)}.`);
   out('pred-rmse-point',fmt(evaluation.rmse,4));out('pred-rmse-stochastic',fmt(evaluation.rmse,4));out('pred-sd',fmt(sd,4));out('pred-coverage',`${fmt(100*evaluation.coverage,1)}% · target 90%`);
-  out('pred-result',sigma===0?'With no source noise, both models recover the same deterministic motion. The predictive interval collapses; coverage is 100% here because every future is identical, rather than the nominal 90% for a continuous spread.':`Both models have identical mean RMSE because their mean forecasts are identical. The stochastic model additionally predicts a spread: ${fmt(100*evaluation.coverage,1)}% of unseen endpoints fall inside its nominal 90% interval. Small training samples can miss that target.`);
+  const intervalAtEnd = '[' + fmt(prediction.lower[steps],3) + ', ' + fmt(prediction.upper[steps],3) + ']';
+  out('pred-result', `At time ${fmt(T,1)}, both forecasts give a mean of ${fmt(mu,3)}. The fitted SDE transition gives a 90% prediction interval ${intervalAtEnd}. It contains ${fmt(100*evaluation.coverage,1)}% of the 2,000 unseen readings.`);
   const truth=P.forecast(P.transition(sigma),x0,steps);
   out('pred-truth',`Analytic source reference at the selected endpoint: mean ${fmt(truth.mean[steps],4)}, standard deviation ${fmt(Math.sqrt(truth.variance[steps]),4)}. These values are for comparison after fitting.`);
 },
@@ -303,7 +544,22 @@ $('main').innerHTML=chapters.map((ch,i)=>`<article class="chapter" data-id="${ch
 document.querySelectorAll('.chapter').forEach(ch=>{
   const outline=ch.querySelector('.chapter-outline');if(!outline)return;
   const label=document.createElement('span');label.className='outline-label';label.textContent='IN THIS SECTION';outline.append(label);
-  ch.querySelectorAll('h2[data-section]').forEach(heading=>{const a=document.createElement('a');a.href=`#${ch.dataset.id}/${heading.dataset.section}`;a.textContent=heading.textContent;outline.append(a);});
+  const demoGroups = new Map();
+  ch.querySelectorAll('h2[data-section]').forEach(heading => {
+    const anchor = document.createElement('a');
+    anchor.href = `#${ch.dataset.id}/${heading.dataset.section}`;
+    anchor.textContent = heading.textContent.trim();
+    const demo = heading.closest('.learning-demo');
+    if (!demo) { outline.append(anchor); return; }
+    if (!demoGroups.has(demo)) {
+      const group = document.createElement('div');
+      group.className = 'learning-demo-links';
+      group.dataset.learningDemo = demo.dataset.learningDemo;
+      outline.append(group);
+      demoGroups.set(demo, group);
+    }
+    demoGroups.get(demo).append(anchor);
+  });
 });
 document.querySelectorAll('button[data-new]').forEach(button=>{
   button.textContent=button.textContent.replace(' ↻','');
@@ -316,6 +572,7 @@ function destinationIn(article,section){
     el.dataset.section===section || (el.dataset.lab && `demo-${el.dataset.lab}`===section));
 }
 function navigate(scroll=true){
+  pauseSwitching();
   clearInterval(replayTimer);let [id,section]=location.hash.slice(1).split('/');
   // Preserve bookmarked subsection and demo links when a discussion moves chapters.
   if(section){
@@ -346,7 +603,23 @@ function navigate(scroll=true){
     }
   }
 }
-document.addEventListener('input',e=>{const lab=e.target.closest('[data-lab]');if(!lab)return;clearInterval(replayTimer);if(e.target.id==='diff-g')clear('diffusion');renderers[lab.dataset.lab]?.();});
+document.addEventListener('toggle', e => {
+  if (e.target.matches('details[data-charts]') && e.target.open) {
+    const lab = e.target.closest('[data-lab]');
+    renderers[lab.dataset.lab]();
+  }
+}, true);
+$('pred-gap-scale')?.addEventListener('input', () => renderers.prediction());
+$('pred-band-view')?.addEventListener('input', () => renderers.prediction());
+$('pred-band-horizon')?.addEventListener('input', e => {
+  $('pred-horizon').value = e.target.value;
+  renderers.prediction();
+});
+$('pred-bayes-count')?.addEventListener('input', e => {
+  $('pred-count').value = e.target.value;
+  renderers.prediction();
+});
+document.addEventListener('input',e=>{if(e.target.id==='switch-example'){pauseSwitching();$('switch-frame').value=0;drawSwitchingFrame();return;}if(e.target.id==='switch-frame'){pauseSwitching();drawSwitchingFrame();return;}const lab=e.target.closest('[data-lab]');if(!lab)return;clearInterval(replayTimer);if(e.target.id==='diff-g')clear('diffusion');renderers[lab.dataset.lab]?.();});
 document.addEventListener('click',e=>{
   const btn=e.target.closest('button');if(!btn)return;
   if(btn.dataset.new){const id=btn.dataset.new;seeds[id]=(seed(id)+7919)>>>0;clear(id);if(id==='coin'){coinCount=0;coinSequence++;coinMessage='A new sequence is ready. Reveal its tosses below.';}renderers[id]?.();}
@@ -357,12 +630,12 @@ document.addEventListener('click',e=>{
   if(btn.id==='bsde-train'){B.train(model);renderers.bsde();}
   if(btn.id==='bsde-reset'){model=B.learner();renderers.bsde();}
   if(btn.id==='pred-test'){seeds['prediction-test']=(seed('prediction-test')+7919)>>>0;clear('prediction-test');renderers.prediction();}
+  if(btn.id==='switch-play')playSwitching();
   if(btn.id==='switch-test'){seeds['switching-test']=(seed('switching-test')+7919)>>>0;clear('switching-test');renderers.switching();}
-  if(btn.id==='barrier-test'){seeds['barrier-test']=(seed('barrier-test')+7919)>>>0;clear('barrier-test');barrierSelectedIndex=null;renderers.barrier();}
-  if(btn.id==='barrier-example'){
-    const rows=cached('barrier-test','source',()=>H.testData(seed('barrier-test')));
-    const next=H.findMissed(rows,2**value('barrier-observations'),value('barrier-sigma'),value('barrier-threshold'),barrierSelectedIndex??-1);
-    if(next!==null)barrierSelectedIndex=next;renderers.barrier();
+  if (btn.id === 'barrier-test') {
+    seeds['barrier-test'] = (seed('barrier-test') + 7919) >>> 0;
+    clear('barrier-test');
+    renderers.barrier();
   }
 });
 window.addEventListener('hashchange',()=>navigate());

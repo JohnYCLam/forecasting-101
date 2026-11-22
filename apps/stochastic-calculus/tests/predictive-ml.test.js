@@ -28,6 +28,49 @@ test('learned forecast gives calibrated endpoint intervals on independently gene
   assert.deepEqual(P.sample(P.transition(.7),2,40,3,991),tests.slice(0,3));
 });
 
+test('one-step Bayesian intervals distinguish the future from its conditional mean', () => {
+  const model = P.fit(P.trainingData(.7, 8, 73).pairs);
+  const x = model.inputMean;
+  const result = P.compareOneStep(model, x);
+  const next = P.forecast(model, x, 1);
+  close(result.mean, next.mean[1]);
+  close(result.fixedFuture, next.upper[1] - result.mean);
+  // 95th percentile of Student t with 158 degrees of freedom.
+  const scale = Math.sqrt(model.variance * model.n / (model.n - 2));
+  close(result.bayesMean / (scale / Math.sqrt(model.n)), 1.654555, .00001);
+  close(result.bayesFuture / result.bayesMean, Math.sqrt(model.n + 1));
+  assert.ok(result.bayesFuture > result.fixedFuture);
+  assert.ok(P.compareOneStep(model, x + 2).bayesMean > result.bayesMean);
+  const noiseless = P.compareOneStep(P.fit(P.trainingData(0, 8, 73).pairs), 2);
+  assert.equal(noiseless.bayesFuture, 0);
+  assert.equal(noiseless.bayesMean, 0);
+});
+
+test('Bayesian forecast bands start at the reading and preserve the exact one-step comparison', () => {
+  const model = P.fit(P.trainingData(.7, 8, 73).pairs);
+  const x = 2, band = P.bayesianForecast(model, x, 40), one = P.compareOneStep(model, x);
+  assert.equal(band.lower[0], x);
+  assert.equal(band.upper[0], x);
+  close(band.lower[1], one.mean - one.bayesFuture);
+  close(band.upper[1], one.mean + one.bayesFuture);
+  // Holding a slope draw across steps adds Var(a) * (x - inputMean) at step two.
+  const slopeVariance = model.n * model.variance / ((model.n - 4) * model.inputSumSquares);
+  close(band.mean[2], P.forecast(model, x, 2).mean[2] + slopeVariance * (x - model.inputMean));
+  for (let k = 1; k <= 40; k++) assert.ok(band.lower[k] < band.mean[k] && band.mean[k] < band.upper[k]);
+  const exact = P.fit(P.trainingData(0, 8, 73).pairs);
+  assert.deepEqual(P.bayesianForecast(exact, x, 40).lower, P.forecast(exact, x, 40).mean);
+});
+
+test('later predictive quantiles integrate fresh disturbances and a shared uncertain intercept', () => {
+  // With effectively known unit slope, the k-step Student-t scale is analytic.
+  const model = { n: 160, a: 1, b: 0.1, variance: 0.25, inputMean: 0, inputSumSquares: 1e24 };
+  const band = P.bayesianForecast(model, 2, 20);
+  const k = 20, center = 2 + k * model.b;
+  const halfWidth = 1.654554875 * Math.sqrt(160 * 0.25 / 158 * (k + k ** 2 / 160));
+  close(band.upper[k], center + halfWidth, 1e-5);
+  close(band.lower[k], center - halfWidth, 1e-5);
+});
+
 test('zero process noise collapses the forecast band and survives fitting roundoff', () => {
   const fitted=P.fit(P.trainingData(0,8,73).pairs),prediction=P.forecast(fitted,2,40);
   const paths=P.sample(P.transition(0),2,40,30,991),result=P.evaluate(prediction,paths);

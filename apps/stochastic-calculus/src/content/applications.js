@@ -167,32 +167,13 @@ ${h('comparison','One model, several descriptions')}
 
 
 export const beyond = demos => prose`
-${h('continuous-noise','From continuous motion to sudden events')}
-<p>Chapter 6 used Brownian motion to model continuous fluctuations. Chapter 7 compared two ways of accumulating those fluctuations. Here we keep the continuous motion and ask what happens when an event also changes the state abruptly.</p>
-<p>Imagine a pressure reading that fluctuates slightly while a valve is closed. When the valve opens, the pressure drops much faster than it usually moves. A jump model treats that drop as instantaneous. The pressure just before the event and the pressure just after it can differ at the same event time.</p>
-<details class="read-more"><summary>The assumptions behind Brownian noise</summary><div>
-<p>A continuous process starting at zero with stationary, independent increments is a drifted, scaled Brownian motion, including the deterministic case. With positive variance rate, subtracting its drift and rescaling its variance rate to one gives standard Brownian motion.</p>
-<p>Lévy’s characterization uses different assumptions. A continuous local martingale starting at zero with quadratic variation \(t\) is standard Brownian motion.</p>
-</div></details>
+${h('continuous-noise','What happens when a valve opens?')}
+<p>A pressure sensor reads \(1.00\) at noon. While the valve is closed, the pressure wanders up and down. When the valve opens, pressure drops so rapidly that, on the sensor’s time scale, we model the drop as instantaneous. The fluctuations continue from the new level. How can we describe both kinds of motion with one equation?</p>
 
-${h('jumps','Add sudden events')}
-<p>Start with a continuous baseline \(Y_t=X_0+\mu t+\sigma W_t\). It starts at \(X_0\), drifts at rate \(\mu\), and fluctuates with Brownian noise of scale \(\sigma\). Now let \(N_t\) count the events up to and including time \(t\), and let \(J_j\) be the signed change caused by event \(j\). The model combines the baseline and all jumps that have happened so far.</p>
-\[X_t=Y_t+\sum_{j=1}^{N_t}J_j.\]
-<p>This combination is a <em>jump diffusion</em>. Before the first event, the sum is zero and \(X_t=Y_t\). Suppose the baseline is \(1.0\) when the first event occurs and the jump size is \(-0.6\). The state drops immediately to \(1.0-0.6=0.4\). If the baseline later rises to \(1.2\) and no new event has happened, the state is \(1.2-0.6=0.6\). The path still moves continuously between events, with the accumulated jump sizes carried forward.</p>
-<p>In the demo, events arrive according to a Poisson process with constant <em>rate</em> \(\lambda\). A rate of \(3\) means an average of \(3\) events per unit time, or \(6\) across the two time units shown, when you repeat the experiment. The exact times and count vary across samples. The jump size control sets the magnitude of each vertical move. Each event independently takes an upward or downward sign with equal probability.</p>
+${h('jumps','Watch a jump change the path')}
+<p>The two curves below share the same Brownian fluctuations. One also receives sudden changes called <em>jumps</em>. Set the event rate to zero to see the curves coincide. Then raise the rate and follow the solid curve through its first vertical step. What happens to the gap between the curves after that step?</p>
 ` + demos.jumps + prose`
-<p>At any time, the signed gap from the baseline to the path with jumps equals the sum of the jumps so far. An upward move and a downward move of the same size cancel, so the lines can meet again even after several events.</p>
-<details class="read-more"><summary data-section="learn-event-dynamics">Machine learning example · Predict a badge from recorded events</summary><div>
-<p>A badge record tells us the time and type of each event. In the timeline below, the second event has time \(t=4\) days and type \(k=B\). Jia and Benson use these records to track \(z(t)\), a list of numbers the model learns to keep for one user. This is the quantity that plays the role of the demo’s \(X_t\). The records show us the badges. The model calculates \(z(t)\).</p>
-<div class="table-wrap"><table><caption>An illustrative badge record for one user</caption><thead><tr><th scope="col">Day 1</th><th scope="col">Day 4</th><th scope="col">Day 10</th></tr></thead><tbody><tr><td>Badge A</td><td>Badge B</td><td>Badge type hidden</td></tr></tbody></table></div>
-<p>The demo builds its path from continuous changes and jumps. The badge model uses the same idea. In the paper’s equation below, \(z\) on the right is the state just before an update. The two functions \(f\) and \(w\) are learned from badge histories.</p>
-\[\mathrm dz=\underbrace{f(z,t)\,\mathrm dt}_{\text{change as time passes}}+\underbrace{w(z,k,t)\,\mathrm dN}_{\text{change when a badge arrives}}.\]
-<ul><li><strong>Between days 1 and 4.</strong> \(N\) counts awards. Its change \(\mathrm dN\) is zero throughout this gap, so only the first term acts. Starting from the state after badge A, the model follows the rate of change \(f\) for three days. The demo adds Brownian fluctuations through \(\sigma W_t\). Here the motion between events is determined by \(f\) and the starting state.</li>
-<li><strong>At day 4.</strong> The count increases from one to two. For this single award, \(\mathrm dN=1\), and the model adds \(w(z,B,4)\) to the state. That update plays the role of the demo’s signed jump \(J_2\). The letter B identifies the observed badge type. The size and direction of the update come from \(w\).</li>
-<li><strong>Just before the day 10 badge is revealed.</strong> The model has carried the updated state forward six more days. From that state it gives a probability \(p(k\mid z)\) to each of 22 badge types and predicts the most likely one. Only after scoring that prediction does the observed type enter the next state update.</li></ul>
-<p>What makes this a stochastic equation? If we used the model to generate a new history, both the arrival time and badge type would be random. The demo uses a constant event rate \(\lambda\). The badge model learns a rate \(\lambda(z)\) that depends on the user’s current state. In the day 10 prediction the time is already given, so the question concerns the badge type. <a href="https://arxiv.org/pdf/1905.10403#page=4" target="_blank" rel="noopener noreferrer">Jia and Benson, Section 3.1</a></p>
-<p>Across held-out badges, its first choice was right <strong>47.3%</strong> of the time. The two comparison models scored 45.9% and 46.3%. That amounts to about one extra correct prediction per 100 badges over the stronger comparison model. These accuracies are calculated from the error rates in Table 2. <a href="https://proceedings.neurips.cc/paper_files/paper/2019/file/59b1deff341edb0b76ace57820cef237-Paper.pdf#page=7" target="_blank" rel="noopener noreferrer">Jia and Benson, Neural Jump Stochastic Differential Equations</a></p>
-</div></details>
+<p>Until the next event, both curves move by the same amount and the gap stays fixed. The demo lets jumps go up or down, each with equal probability. The jump size control sets the height of each step. The rate \(\lambda\) sets how often steps occur on average. At a rate of three per time unit, you expect six events over the two units shown.</p>
 <details class="read-more"><summary>Poisson event counts over a short interval</summary><div>
 <p>Over an interval of length \(h\), the event count \(\Delta N\) has a Poisson distribution with mean \(\lambda h\). The probabilities of zero and one event come from that distribution. Subtract both from one to get the probability of two or more.</p>
 \[\begin{aligned}
@@ -203,15 +184,53 @@ ${h('jumps','Add sudden events')}
 <p>For \(\lambda=3\) and \(h=0.1\), the mean count is \(0.3\). The probabilities of zero, one, and at least two events are about \(74.1\%\), \(22.2\%\), and \(3.7\%\), respectively. As \(h\) shrinks, the probability of one event is \(\lambda h+O(h^2)\) and the probability of at least two is \(O(h^2)\).</p>
 <p>The chance that the next event is more than \(h\) time units away is the chance of zero events during those \(h\) units, \(e^{-\lambda h}\). This is the tail probability of an exponential waiting time. The simulator samples successive waiting times this way to place the jumps along the path.</p>
 </div></details>
-<details class="read-more"><summary data-section="semimartingales">Itô calculus for a path with jumps</summary><div>
-<p>Between events, the continuous part follows the same Itô rule as in Chapter 6. At an event, let \(X_-\) be the state immediately before the jump and \(J\) its signed size. A function \(f\) changes by the full difference \(f(X_-+J)-f(X_-)\). For the square function this gives</p>
-\[(X_-+J)^2-X_-^2=2X_-J+J^2.\]
-<p>When the valve opens, the pressure falls from \(1.0\) to \(0.4\). Its square changes by \(0.4^2-1.0^2=-0.84\). You can check the two terms above directly. The first gives \(2(1.0)(-0.6)=-1.20\), and the squared jump adds \(0.36\), bringing the total to \(-0.84\).</p>
-<p>To follow the squared pressure over a whole minute, use Chapter 6’s rule for the small fluctuations between valve openings. At each opening, square the readings on either side of the drop and subtract the earlier square from the later one. Add each of those changes to the changes between openings.</p>
+
+${h('jump-equation','Write the pressure equation')}
+<p>For the valve, use a simpler jump rule. Each opening drops pressure by \(0.60\). Let \(X_t\) be the pressure \(t\) minutes after noon. With zero drift, the continuous change from Chapter 6 is \(\sigma\,\mathrm dW_t\), where \(\sigma\) sets the size of the Brownian fluctuations.</p>
+<p>We also need to record when each drop occurs. Let \(N_t\) count valve openings since noon. Between readings at \(a\) and \(b\), the increment \(N_b-N_a\) counts the openings during that interval. In the SDE, \(\mathrm dN_t\) records these increments at the event times. It contributes zero between openings and one at each opening. Multiplying by \(-0.60\) gives the corresponding pressure change.</p>
+\[\mathrm dX_t=\underbrace{\sigma\,\mathrm dW_t}_{\text{continuous fluctuation}}-\underbrace{0.60\,\mathrm dN_t}_{\text{drop at each opening}}.\]
+
+${h('jump-solution','Solve the equation and follow one minute')}
+<p>Add the changes from noon to time \(t\). The Brownian increments sum to \(W_t-W_0\), and the count increments sum to \(N_t-N_0\). With \(W_0=N_0=0\) and initial pressure \(X_0=1.00\), this gives the pressure at any time along a sample path.</p>
+\[X_t=1.00+\sigma W_t-0.60\,N_t.\]
+<p>Follow one possible minute. The Brownian changes in the table are in pressure units, so they already include the factor \(\sigma\).</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">Time</th><th scope="col">Change</th><th scope="col">Pressure</th></tr></thead><tbody>
+<tr><td>Noon</td><td>Starting reading</td><td>1.00</td></tr>
+<tr><td>Just before opening</td><td>Brownian fluctuations add 0.04</td><td>1.04</td></tr>
+<tr><td>At the opening</td><td>The count rises to one. Pressure drops by 0.60.</td><td>0.44</td></tr>
+<tr><td>One minute after noon</td><td>Brownian fluctuations add another 0.06</td><td>0.50</td></tr>
+</tbody></table></div>
+<p>At the instant of opening, the Brownian path is continuous. The vertical drop comes entirely from the valve. Across the whole minute, the Brownian movement adds \(0.04+0.06=0.10\), and the valve subtracts \(0.60\). The solution gives \(X_1=1.00+0.10-0.60=0.50\).</p>
+<p>Return to the demo. If event \(j\) moves the state by a signed amount \(J_j\), replace the fixed drops by the sum of the jumps so far. This gives the demo’s two curves, the baseline \(X_0+\sigma W_t\) and the jump diffusion</p>
+\[X_t=X_0+\sigma W_t+\sum_{j=1}^{N_t}J_j.\]
+<p>The sum is exactly the gap you saw between the curves. A constant drift \(\mu\) would add \(\mu t\) to both.</p>
+
+<details class="read-more"><summary data-section="learn-event-dynamics">Use a valve log to estimate the Brownian noise level</summary><div>
+<p>Now work backward from the two sensor readings. The observed change was \(0.50-1.00=-0.50\). If the valve log independently records a jump of \(-0.60\), subtract it to recover the Brownian contribution over the minute, \(-0.50-(-0.60)=+0.10\). Minute 2 below is the minute we just followed.</p>
+<div class="table-wrap"><table><caption>Three illustrative minutes, in pressure units</caption><thead><tr><th scope="col">Minute</th><th scope="col">Observed change</th><th scope="col">Sum of logged jumps</th><th scope="col">Brownian change</th></tr></thead><tbody><tr><td>1</td><td>+0.10</td><td>0</td><td>+0.10</td></tr><tr><td>2</td><td>−0.50</td><td>−0.60</td><td>+0.10</td></tr><tr><td>3</td><td>−0.10</td><td>0</td><td>−0.10</td></tr></tbody></table></div>
+<p>With time measured in minutes, a one-minute Brownian increment has mean zero and variance one. The expected square of \(\sigma\,\Delta W\) is therefore \(\sigma^2\). To estimate \(\sigma\), average the squared changes in the last column and take the square root.</p>
+\[\widehat{\sigma}=\sqrt{\frac{0.10^2+0.10^2+(-0.10)^2}{3}}=0.10.\]
+<p>Using the observed changes directly would give \(0.30\), because the estimate would include the valve drop. For a future minute with no jump, the two calculations give standard deviations of \(0.10\) using the log and \(0.30\) using the raw readings. These three minutes illustrate the arithmetic. A longer log would let us check the forecast against later readings.</p>
+</div></details>
+<details class="read-more"><summary>If the jump is hidden, how much evidence is there that one happened?</summary><div>
+<p>Suppose the valve log is missing for the minute when pressure fell from \(1.00\) to \(0.50\). Earlier records give us a one-minute Brownian standard deviation of \(0.10\). For this example, assume zero drift, at most one opening in the minute, and a drop of \(0.60\) whenever the valve opens. The Brownian fluctuations are independent of the opening.</p>
+<p>If the valve stayed closed, Brownian motion alone had to produce \(-0.50\), a fall of five standard deviations. If the valve opened, Brownian motion had to contribute \(-0.50-(-0.60)=+0.10\), a rise of one standard deviation. Both explanations fit the endpoints. Which gives more weight to readings near the change we saw?</p>
+<p>For a normal distribution, the density at \(z\) standard deviations from the mean is proportional to \(e^{-z^2/2}\). Both explanations have the same noise level, so the common factor cancels when we divide their densities at the observed change.</p>
+\[\frac{\text{density with one opening}}{\text{density with no opening}}
+=\frac{e^{-1^2/2}}{e^{-5^2/2}}=e^{12}\approx 163{,}000.\]
+<p>This <em>likelihood ratio</em> measures how strongly the reading favors one opening. To turn it into a probability, we also need to know how often the valve opens. Suppose earlier logs show an opening in one out of every 1,000 comparable minutes. The odds before seeing the reading are \(1:999\). Multiply those odds by the likelihood ratio to get about \(163:1\) in favor of an opening, or a probability of about \(99.4\%\).</p>
+<p>If openings occur in only one out of a million comparable minutes, the same calculation gives about \(14\%\). The pressure reading supplies the same evidence in both cases. The estimated chance of an opening changes because the starting odds differ.</p>
+</div></details>
+<details class="read-more"><summary data-section="semimartingales">How does the square of pressure change at the opening?</summary><div>
+<p>Chapter 6 used Itô’s rule to track a function of a continuously moving state. At the valve opening we know the pressure on both sides, so we can calculate the change in its square directly as \(0.44^2-1.04^2=-0.888\).</p>
+<p>Write \(x=1.04\) for the pressure just before the opening and \(J=-0.60\) for the jump. Expanding the square gives \((x+J)^2-x^2=2xJ+J^2\). Here the first term gives \(-1.248\) and the second adds \(0.36\). To track squared pressure over the whole minute, use the continuous rule between openings and add the full change at each opening.</p>
+</div></details>
+<details class="read-more"><summary>The assumptions behind Brownian noise</summary><div>
+<p>A continuous process starting at zero with stationary, independent increments is a drifted, scaled Brownian motion, including the deterministic case. With positive variance rate, subtracting its drift and rescaling its variance rate to one gives standard Brownian motion.</p>
+<p>Lévy’s characterization uses different assumptions. A continuous local martingale starting at zero with quadratic variation \(t\) is standard Brownian motion.</p>
 </div></details>
 
-${h('choose-model','What could two readings miss?')}
-<p>Look back at the two curves in the jump demo. With the whole trace visible, you can see whether either curve reached a given height. Now imagine covering the middle of the plot so that only the first and last readings are visible.</p>
-<p>Suppose both readings are zero and an alarm sounds whenever the signal reaches or exceeds \(1\). The signal could have stayed below \(1\) the whole time. It could also have jumped to \(1.2\) and back, or climbed continuously above \(1\) and fallen again. All three stories give the same two readings. How likely the alarm was to sound depends on how the signal moves during the gap.</p>
-<p>In Chapter 9’s ${link('learning','crossing-between-readings','between-readings experiment')}, the signal moves continuously. You fit a Brownian model using earlier observations, estimate the chance of a crossing between two new readings, and reveal more of the path to see how the estimate changes.</p>
-` + check('If the alarm sounded between two zero readings, must the signal have jumped?', 'A continuous rise above the threshold and a return to zero would also trigger the alarm. The alarm tells us the signal reached the threshold, but the two readings leave its route open.');
+${h('choose-model','What could two pressure readings miss?')}
+<p>Now take away the valve log. You see \(1.00\) at noon and \(0.50\) a minute later. The path in the table dipped below \(0.45\) and recovered. A continuous path could also connect those readings while staying above \(0.45\) the whole time. Would a low-pressure alarm set at \(0.45\) have sounded?</p>
+<p>The readings leave both possibilities open. Chapter 9’s ${link('learning','crossing-between-readings','between-readings experiment')} tackles this question for a continuous Brownian signal and an upper threshold. Its ${link('learning','valve-alarm','fourth example')} returns to these pressure readings and calculates the low-pressure alarm probability when the valve log is missing.</p>
+` + check('Would a continuous path from 1.00 to 0.50 have to stay above 0.45?', 'It could dip below 0.45 and rise again before the next reading. Even knowing the path is continuous leaves the crossing uncertain.');

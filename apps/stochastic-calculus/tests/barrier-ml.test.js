@@ -20,6 +20,16 @@ test('bridge crossing formula matches reflection examples and conditional gap co
   assert.ok(H.crossingProbability([0,0],.4,1.5)>0);
 });
 
+test('one extra reading splits the bridge at its actual time',()=>{
+  const risk=t=>H.extraReadingRisk(.6,t,1,1);
+  close(risk(.5).total, H.crossingProbability([0,.6,0],1,1));
+  close(risk(.25).first,Math.exp(-3.2));
+  close(risk(.25).second,Math.exp(-.8/.75));
+  close(risk(.25).total,risk(.75).total);
+  close(risk(.25).first,risk(.75).second);
+  assert.equal(H.extraReadingRisk(1,.1,1,1).total,1);
+});
+
 test('source bridges pin both endpoints and exact maxima include every drawing-point crossing',()=>{
   for(const row of rows) {
     assert.equal(row.observed[0],0);assert.equal(row.observed.at(-1),0);

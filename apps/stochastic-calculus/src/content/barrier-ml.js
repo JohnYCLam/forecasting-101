@@ -1,53 +1,102 @@
-import { prose, h } from './helpers.js';
+import { prose } from './helpers.js';
 
 export const barrierMl = () => prose`
-${h('crossing-between-readings','What happened between the readings?')}
-<p>The switching experiment counted events only at observation times. Now ask a different question: did the signal cross a threshold <em>at any time between</em> the readings? A price can touch a barrier and recover before the next recorded price. In a continuously monitored barrier contract, that touch changes the payoff.</p>
-<p>Both endpoint readings have already arrived. The signal was zero at time 0 and is zero again at time 1. Drawing a straight line between them misses every excursion. Under a Brownian diffusion with noise strength 1, the chance it reached +1 during the gap is nevertheless \(e^{-2}\), about 13.5%.</p>
-<p>We will learn drift and noise strength from a separate set of irregularly spaced increments, then infer crossings in 4,000 unseen records. The source records all have the same two endpoint readings. Revealing more readings lets us check how much the missing path still matters.</p>
+<p>In Example 2 the logger recorded visits to a flag. Here a sensor alarm triggers as soon as the signal touches a threshold, and the logger can miss the touch. <strong>Can a model estimate the chance of a missed alarm using training records that contain only sensor readings?</strong></p>
 </div>
-<section class="lab barrier-comparison" data-lab="barrier" aria-labelledby="barrier-title">
-  <div class="lab-header"><div><span class="lab-kicker">INFER AN EVENT INSIDE A GAP</span><h3 id="barrier-title">What happened while the sensor was silent?</h3><p>Both endpoints are known. Predict a hidden crossing, then reveal more of the same paths.</p></div></div>
+<div data-lab="barrier">
+<div class="story">
+  <h3>What does the model learn from the training data?</h3>
+  <p>Each training example gives the change in the sensor reading and the time elapsed. We assume the continuous sensor model from Example 1, \(\mathrm dX_t=\mu\,\mathrm dt+\sigma\,\mathrm dW_t\). The learner fits the drift \(\mu\) from the average change per unit time. It learns the noise strength \(\sigma\) from how far the changes scatter around that trend, accounting for each interval’s duration. Training requires no alarm labels.</p>
+  <p>For a new interval with two known readings, we assume the signal between them follows a <em>Brownian bridge</em>. Fixing both ends cancels the constant drift. The fitted noise strength then determines how much the signal can wander between those readings, and hence its chance of touching the threshold.</p>
   <div class="controls">
-    <div class="control"><label for="barrier-observations">Observation intervals <output id="barrier-observations-value"></output></label><input id="barrier-observations" type="range" min="0" max="6" step="1" value="0"></div>
-    <div class="control"><label for="barrier-threshold">Crossing threshold <output id="barrier-threshold-value"></output></label><input id="barrier-threshold" type="range" min="0.3" max="1.5" step="0.1" value="1"></div>
-    <div class="control"><label for="barrier-sigma">Source noise strength <output id="barrier-sigma-value"></output></label><input id="barrier-sigma" type="range" min="0.4" max="1.4" step="0.1" value="1"></div>
-    <div class="control"><label for="barrier-count">Training increments</label><select id="barrier-count"><option value="128">128 increments</option><option value="1024" selected>1,024 increments</option><option value="8192">8,192 increments</option></select></div>
+    <div class="control"><label for="barrier-count">Training increments</label><select id="barrier-count"><option value="128">128</option><option value="1024" selected>1,024</option><option value="8192">8,192</option></select></div>
+    <button type="button" data-new="barrier">New training data + refit</button>
   </div>
-  <div class="controls"><button type="button" data-new="barrier">New training data + refit</button><button type="button" id="barrier-test">New unseen paths</button><button type="button" id="barrier-example">Find another missed crossing</button></div>
-  <p class="method" id="barrier-fit" role="status" aria-live="polite"></p>
-  <div class="stats"><div class="stat"><span class="stat-label">Exact source risk with only the two endpoints</span><strong id="barrier-exact"></strong></div><div class="stat"><span class="stat-label">Simulated continuous crossings · all 4,000 paths</span><strong id="barrier-actual"></strong></div><div class="stat"><span class="stat-label">Crossings visible at the selected observation grid</span><strong id="barrier-visible"></strong></div></div>
-  <div class="plot"><div class="plot-title">Inspect one test path · observation refinement keeps this path fixed</div><canvas id="barrier-path" role="img" aria-label="A hidden Brownian bridge excursion compared with sparse readings and straight-line interpolation"></canvas><div class="legend"><span><i class="gray"></i>Hidden source path · 1,024-point drawing</span><span><i class="coral"></i>Straight lines between readings</span><span><i class="blue"></i>Revealed readings</span><span><i></i>Crossing threshold · dashed</span></div></div>
-  <p class="notice" id="barrier-example-note" role="status" aria-live="polite"></p>
-  <p class="method">The initial example is selected to show a crossing missed by the sparse readings, if one is available. This illustration is deliberately selected; every score below uses all 4,000 test paths. The “Find another” button changes only the illustration. It does not change the fit or evaluation.</p>
-  <div class="plots">
-    <div class="plot"><div class="plot-title">Do more readings remove the missed-crossing bias?</div><canvas id="barrier-refinement" role="img" aria-label="Observed and bridge-corrected crossing fractions on seven nested observation grids"></canvas><div class="legend"><span><i class="coral"></i>Observation checks / straight lines</span><span><i></i>Fitted diffusion + bridges</span><span><i class="gray"></i>Continuous source fraction</span><span><i class="gold"></i>1,024-point source checks · lower bound</span></div></div>
-    <div class="plot"><div class="plot-title">Are the individual crossing probabilities calibrated?</div><canvas id="barrier-calibration" role="img" aria-label="Predicted crossing probabilities compared with simulated event frequencies"></canvas><div class="legend"><span><i class="gray"></i>Perfect calibration · diagonal</span><span><i></i>Groups of at least 20 test paths</span></div></div>
-  </div>
-  <p class="method" id="barrier-grid-note"></p>
-  <div class="table-wrap"><table><caption>Same observations and fitted coefficients · evaluated against continuous source events</caption><thead><tr><th>Method</th><th>Average estimated crossing fraction</th><th>Mean Brier score ↓</th></tr></thead><tbody><tr><th>Observation checks / straight lines</th><td id="barrier-naive-rate"></td><td id="barrier-naive-score"></td></tr><tr><th>Fitted SDE + Brownian bridges</th><td id="barrier-sde-rate"></td><td id="barrier-sde-score"></td></tr><tr><th>Discrete Gaussian transitions + same bridges</th><td id="barrier-discrete-rate"></td><td id="barrier-discrete-score"></td></tr></tbody></table></div>
-  <p class="notice">The two corrected rows agree because they use the same conditional path law. An SDE label is not the advantage. Specifying what happens between observations lets both implementations estimate the missing events.</p>
-  <p class="try"><strong>Try this.</strong> With noise and threshold both at 1, begin with one observation interval: all recorded values are zero, yet some paths crossed +1. Refine toward 64 intervals. The observation-only count rises; the corrected crossing fraction should stay nearer the continuous source fraction. A finite sample and fitted noise strength prevent exact agreement. Then change the threshold, noise or training-data size.</p>
-  <details><summary>The learned model, bridge formula and independent event labels</summary>
-    <p>Training increments come from a constant-coefficient diffusion, observed at varied durations \(h_i\):</p>
-    \[\mathrm dX_t=\mu\,\mathrm dt+\sigma\,\mathrm dW_t,\qquad
-    \Delta X_i\sim\mathcal N(\mu h_i,\sigma^2h_i).\]
-    <p>Gaussian maximum likelihood learns two numbers from those increments alone:</p>
-    \[\widehat\mu=\frac{\sum_i\Delta X_i}{\sum_i h_i},\qquad
-    \widehat\sigma^2=\frac1N\sum_i\frac{(\Delta X_i-\widehat\mu h_i)^2}{h_i}.\]
-    <p>This is statistical parameter learning, not a neural network. No test crossings are used in fitting. The training source has drift 0.2; the test bridges are conditioned to return to zero after one time unit. Constant drift cancels when both endpoints are fixed, so only the fitted diffusion strength enters the conditional crossing calculation.</p>
-    <p>For two endpoint readings \(x,y&lt;b\), separated by \(h\), the Brownian-bridge probability of reaching an upper threshold \(b\) is</p>
-    \[q(x,y;h)=\exp\!\left[-\frac{2(b-x)(b-y)}{\sigma^2h}\right].\]
-    <p>For zero drift, the reflection principle obtains this as the ratio of a Gaussian transition density to the reflected endpoint and the ordinary transition density. Expanding the squared distances in that ratio gives \(2(b-x)(b-y)/(\sigma^2h)\). The conditioned bridge law is the same for any constant drift. If either endpoint already reaches the threshold, the event is certain.</p>
-    <p>Conditional on all revealed readings, the bridges on disjoint gaps are independent. Thus the chance of at least one crossing is</p>
-    \[p_{\mathrm{cross}}=1-\prod_i\big(1-q(X_{t_i},X_{t_{i+1}};h_i)\big).\]
-    <p>The test source is generated independently of training. Exact Gaussian bridge values are sampled at 1,024 drawing intervals; 64 nested observation intervals are retained, then thinned. Checking the drawing alone would still miss some continuous crossings. To obtain continuous source event labels, an independent uniform \(U_i\) samples the exact maximum on each drawing interval with endpoints \(a_i,c_i\):</p>
-    \[M_i=\frac{a_i+c_i+\sqrt{(a_i-c_i)^2-2\sigma^2h_i\log U_i}}2.\]
-    <p>The event label is 1 if any sampled maximum reaches the threshold. This construction completes the simulated path between drawing points; it uses the true source scale, not the fitted estimate. The gold line shows the lower bound from drawing points alone. The exact whole-interval reference with endpoints zero is \(\exp(-2b^2/\sigma^2)\).</p>
-    <p>Both corrected rows use the same bridge probabilities and therefore have identical scores; the discrete row is not a separately trained competitor. Brier score averages \((p-o)^2\) over independent test records. The calibration plot groups predicted probabilities into eight fixed bins and omits groups smaller than 20. These groups are diagnostic checks, not extra training data.</p>
-    <p>The benchmark validates the calculation under the stated synthetic diffusion law. It does not establish that real signals are Brownian, or that sparse endpoint data identify the between-observation path law. Noisy measurement, jumps, changing coefficients or a different physical model require a different inference method. Parameter uncertainty is not included in these point-estimate predictions.</p>
-    <p>The bridge crossing formula is given in Section 3.4 of <a href="https://wrap.warwick.ac.uk/id/eprint/30043/1/WRAP_Casella1_07-26w.pdf" target="_blank" rel="noreferrer">Casella and Roberts</a>. <a href="https://github.com/lballabio/QuantLib/blob/master/ql/pricingengines/barrier/mcbarrierengine.hpp" target="_blank" rel="noreferrer">QuantLib’s barrier engine</a> documents its Brownian-bridge correction for missed barrier touches.</p>
+  <p class="insight" id="barrier-fit" role="status"></p>
+  <h3>How close does the learned model get?</h3>
+  <p>The new interval lasts one time unit and both endpoint readings are zero. At the default threshold of \(+1\) and source noise strength of \(1\), theory gives a <strong>13.53%</strong> chance of a touch. A straight line joining the zeros predicts a quiet interval. The learned model uses its own estimate of the noise strength in the bridge formula. Compare its prediction against theory for two sets of readings.</p>
+  <div class="table-wrap"><table><caption>Chance of an alarm in the same interval, using the current fit and sensor settings</caption>
+    <thead><tr><th>Available readings</th><th>Theory</th><th>Straight line</th><th>Learned bridge</th></tr></thead>
+    <tbody><tr><th>Only the two zeros</th><td id="barrier-exact"></td><td id="barrier-visible"></td><td id="barrier-estimated"></td></tr>
+    <tr><th>Also +0.60 halfway through</th><td id="barrier-mid-exact"></td><td id="barrier-mid-visible"></td><td id="barrier-mid-estimated"></td></tr></tbody>
+  </table></div>
+  <p id="barrier-fit-result"></p>
+  <p>Try <strong>New training data + refit</strong> and read across the first row again. A fresh sample can change the fitted noise strength and its prediction while the theoretical target stays fixed. Reading down the learned column shows a different operation. The midpoint adds evidence about this interval while the fit stays fixed.</p>
+  <details><summary>Change the source noise or alarm threshold</summary>
+    <div class="controls">
+      <div class="control"><label for="barrier-threshold">Alarm threshold <output id="barrier-threshold-value"></output></label><input id="barrier-threshold" type="range" min="0.3" max="1.5" step="0.1" value="1"></div>
+      <div class="control"><label for="barrier-sigma">Source noise strength <output id="barrier-sigma-value"></output></label><input id="barrier-sigma" type="range" min="0.4" max="1.4" step="0.1" value="1"></div>
+    </div>
   </details>
-</section><div class="story">
-<p>Predicting recorded values and inferring an unrecorded event are different tasks. Here the continuous-time assumption supplies information needed for the second task. A discrete model with the same conditional bridges obtains the same answer.</p>
+</div>
+<details id="barrier-diagnostics" data-charts class="barrier-comparison"><summary>Optional · How well do the probabilities predict alarms across many paths?</summary>
+  <p>This check uses both endpoints and the actual midpoint of each of 4,000 independent test paths. The fit is fixed during evaluation. The test simulator supplies an alarm label for each path so we can check the predictions. Each method assigns that path a chance of touching the threshold. Its Brier score is the average squared difference between that probability and the simulated outcome (1 for a touch, 0 otherwise). Lower scores are better.</p>
+  <div class="table-wrap"><table><thead><tr><th>Method</th><th>Mean Brier score</th></tr></thead><tbody><tr><th>Straight-line baseline</th><td id="barrier-naive-score"></td></tr><tr><th>Learned bridge model</th><td id="barrier-sde-score"></td></tr></tbody></table></div>
+  <div class="plot"><div class="plot-title">How often does an alarm trigger at each predicted probability?</div><canvas id="barrier-calibration" role="img" aria-label="Average learned probability versus observed alarm frequency for groups of test paths"></canvas></div>
+  <p class="method">Each dot groups paths with similar learned probabilities. A group on the diagonal has the predicted fraction of alarms. Groups contain at least 20 paths.</p>
+  <button type="button" id="barrier-test">New unseen test paths</button>
+</details>
+<div class="story">
+  <details>
+    <summary>Optional calculation · Why is the chance of a missed alarm 13.53%?</summary>
+  <p>Start with the continuous sensor model from Example 1. This isolates what Brownian fluctuations can do between readings. The drift \(\mu\) gives its average change per unit time, and the noise strength \(\sigma\) sets the size of the fluctuations:</p>
+  \[\mathrm dX_t=\mu\,\mathrm dt+\sigma\,\mathrm dW_t.\]
+  <p>Fix the start and end readings. The paths joining them still wander in the middle. Their conditional motion is called a <em>Brownian bridge</em>. For two zero readings one time unit apart, the probability of touching a positive threshold \(b\) is \(\exp(-2b^2/\sigma^2)\). With the default \(b=1\) and \(\sigma=1\), this gives \(e^{-2}\approx13.53\%\).</p>
+    <p>With the default settings, the sensor starts at 0, ends at 0 one time unit later, and has noise strength \(\sigma=1\). Among paths with those two readings, what fraction touch \(+1\)? Fixing the endpoints removes the constant drift. Those paths have the same bridge law as driftless Brownian motion.</p>
+    <p><strong>Reflect a path at its first touch.</strong> Picture a path that reaches \(+1\) and then returns to 0. Keep everything up to its first touch. Mirror the rest across the line at \(+1\). The final reading 0 becomes \(2\times1-0=2\). Conversely, every continuous path from 0 to 2 passes through \(+1\). Mirroring it after its first touch recovers a path that touches \(+1\) and ends at 0. Brownian increments are symmetric after that touch, so the paired paths carry equal weight.</p>
+    <p><strong>Turn the pairing into a probability.</strong> Imagine counting paths whose final reading falls in a narrow band around 0. Among these, the paths that touch \(+1\) pair with all paths ending in an equally wide band around 2. As the bands shrink, the fraction becomes the endpoint density at 2 divided by the endpoint density at 0.</p>
+    <p>After one time unit with unit noise, the driftless endpoint has standard normal density \(\phi(z)=e^{-z^2/2}/\sqrt{2\pi}\). The density ratio simplifies to</p>
+    \[\frac{\phi(2)}{\phi(0)}
+      =\frac{e^{-2^2/2}}{e^{-0^2/2}}
+      =e^{-2}\approx 0.135335.\]
+    <p>So <strong>13.53%</strong> is the chance the alarm triggered during the gap, given only the two zeros. This is the reference for the two endpoints alone.</p>
+  </details>
+</div>
+<details data-charts><summary>Can an extra reading make a missed alarm more likely?</summary>
+<div class="story">
+  <p>Suppose the logger recovers a third reading. Halfway through the time unit, the signal was \(+0.60\). The alarm threshold is still \(+1\), and both end readings are still zero. Now we know the signal came within \(0.40\) of the alarm. A touch followed by a return to zero is easier to explain. How much does that change the probability?</p>
+  <p><strong>One gap becomes two.</strong> With the default noise strength \(\sigma=1\), consider the first half, from 0 to \(0.60\). Its ends lie \(1.00\) and \(0.40\) below the threshold. For a bridge whose endpoints are distances \(d_1,d_2\) below the threshold, the chance of a touch during a gap of length \(h\) is \(\exp[-2d_1d_2/(\sigma^2h)]\). With \(h=0.50\) this gives</p>
+  \[q_{\rm first}=\exp\!\left(-\frac{2(1.00)(0.40)}{1^2(0.50)}\right)
+      =e^{-1.6}\approx20.19\%.\]
+  <p>The return from \(0.60\) to 0 has the same distances in reverse and the same duration, so it has the same touch probability. Given the midpoint, the two bridges are independent. The alarm stays silent only if <em>both</em> halves miss. That gives</p>
+  \[P(\text{touch in either half})=1-(1-e^{-1.6})^2\approx36.30\%.\]
+  <p>The extra reading raises the theoretical chance from <strong>13.53% to 36.30%</strong>. With the default training data, substituting the fitted noise strength gives <strong>12.34% to 33.98%</strong>. These are updated estimates for the same alarm over the same time unit.</p>
+  <h3>How much does the reading’s value matter?</h3>
+  <p>Try other midpoint readings. At the default settings, a midpoint of <strong>0</strong> lowers the theoretical chance to <strong>3.63%</strong> because the signal would have to travel up to \(+1\) and back within a single half. A midpoint of <strong>+0.90</strong> raises it to <strong>89.13%</strong>. At \(+1\) the reading itself confirms the alarm. Each point on the curve answers “what if the logger had recorded this value?”</p>
+</div>
+<section class="lab barrier-comparison" aria-labelledby="barrier-title">
+  <div class="lab-header"><div><h3 id="barrier-title">Alarm probability versus the extra reading</h3></div></div>
+  <div class="plot"><canvas id="barrier-response" role="img" aria-label="Probability of a touch versus the extra sensor reading, for theory and the fitted bridge" aria-describedby="barrier-evidence"></canvas>
+    <div class="legend"><span><i></i>Theory</span><span><i class="blue"></i>Learned bridge · dashed</span><span><i class="gray"></i>Theory with endpoints alone · dotted</span></div>
+  </div>
+  <div class="controls">
+    <div class="control"><label for="barrier-reading">Extra reading <output id="barrier-reading-value"></output></label><input id="barrier-reading" type="range" min="-1" max="1.5" step="0.01" value="0.60"></div>
+    <div class="control"><label for="barrier-time">Time of extra reading <output id="barrier-time-value"></output></label><input id="barrier-time" type="range" min="0.05" max="0.95" step="0.05" value="0.50"></div>
+  </div>
+  <p class="method" id="barrier-evidence" role="status"></p>
+</section>
+<div class="story">
+  <h3>What if the extra reading comes earlier or later?</h3>
+  <p>Keep the extra reading at \(+0.60\) and move its time from \(0.50\) to \(0.25\). The first gap now lasts \(0.25\), leaving less time for a hidden excursion. The second lasts \(0.75\), leaving more. At the default settings the two touch probabilities become <strong>4.08%</strong> and <strong>34.42%</strong>. Combining them gives <strong>37.09%</strong> for the full time unit.</p>
+  <p>For a reading \(m\) at any interior time \(t\), call the two gap probabilities \(q_1=q(0,m;t)\) and \(q_2=q(m,0;1-t)\). The whole-interval chance is still \(1-(1-q_1)(1-q_2)\). Try \(t=0.75\) with the same reading. Because both endpoints are zero, it swaps the two gap probabilities and gives exactly the same total as \(t=0.25\).</p>
+  <p id="barrier-gaps" class="method" role="status"></p>
+</div>
+</details>
+<div class="story">
+  <details><summary>Optional calculation · From training increments to a missed-alarm probability</summary>
+    <p>An increment of duration \(h_i\) follows \(\Delta X_i\sim\mathcal N(\mu h_i,\sigma^2 h_i)\). For \(N\) increments the Gaussian maximum-likelihood estimates are</p>
+    \[\widehat\mu=\frac{\sum_i\Delta X_i}{\sum_i h_i},\qquad
+      \widehat\sigma^2=\frac1N\sum_i\frac{(\Delta X_i-\widehat\mu h_i)^2}{h_i}.\]
+    <p>For readings \(x,y\) below threshold \(b\), separated by time \(h\), reflection of Brownian paths at the threshold gives the single-gap touch probability</p>
+    \[q(x,y;h)=\exp\!\left[-\frac{2(b-x)(b-y)}{\sigma^2h}\right].\]
+    <p>With a midpoint reading \(m\), both gaps last \(1/2\). Conditional on all three readings, the two bridges are independent. Multiply the chances of missing in both gaps, then subtract from one:</p>
+    \[p_{\rm touch}=1-\big(1-q(0,m;1/2)\big)\big(1-q(m,0;1/2)\big).\]
+    <p>With more readings, multiply one miss probability per gap. Any reading at or above the threshold establishes a touch. Use the known \(\sigma\) for theory and \(\widehat\sigma\) for the learned estimate. A discrete Gaussian model with the same assumptions inside each gap gives the same result.</p>
+    <p>For the optional scoring check, the simulator samples continuous maxima within 1,024 fine intervals to include touches between observations. Test paths are generated independently of training. The calculation assumes Brownian fluctuations, constant coefficients and accurate sensor readings.</p>
+    <p>The single-gap formula appears in §3.4 of <a href="https://wrap.warwick.ac.uk/id/eprint/30043/1/WRAP_Casella1_07-26w.pdf" target="_blank" rel="noreferrer">Casella and Roberts</a>. A practical application to barrier options appears in <a href="https://github.com/lballabio/QuantLib/blob/master/ql/pricingengines/barrier/mcbarrierengine.hpp" target="_blank" rel="noreferrer">QuantLib’s barrier engine</a>.</p>
+  </details>
+</div>
+</div>
+<div class="story">
+<p>Two endpoints can be consistent with both a quiet interval and a missed alarm. The training data tell us how much the signal typically fluctuates. The bridge assumption turns that learned noise strength and the available readings into a probability for the unseen interval. <a href="#learning/valve-alarm">Example 4</a> adds Section 8’s valve back into the equation and asks how a missing jump changes the alarm estimate.</p>
 `;
